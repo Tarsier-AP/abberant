@@ -109,7 +109,7 @@ const links = [
       class="mobile-menu"
       aria-label="Мобильная навигация"
     >
-      <div class="mobile-menu__inner container">
+      <div class="mobile-menu__inner">
         <RouterLink
           v-for="link in links"
           :key="link.to"
@@ -161,9 +161,9 @@ const links = [
 .header__inner {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   min-height: var(--header-height);
-  padding-block: 6px;
+  padding-block: 8px;
 }
 
 .logo {
@@ -182,7 +182,7 @@ const links = [
   flex: 1;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .nav__link {
@@ -198,7 +198,7 @@ const links = [
   display: flex;
   flex: none;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   margin-left: auto;
 }
 
@@ -206,8 +206,8 @@ const links = [
   display: grid;
   flex: none;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 48px;
+  height: 48px;
   padding: 0;
   color: inherit;
   background: transparent;
@@ -217,13 +217,13 @@ const links = [
 }
 
 .icon-btn svg {
-  width: 20px;
-  height: 20px;
+  width: 28px;
+  height: 28px;
 }
 
 .theme-toggle svg {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
 }
 
 .icon-btn:hover {
@@ -243,8 +243,8 @@ const links = [
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 84px;
-  height: 36px;
+  width: 99px;
+  height: 48px;
   background: var(--color-card);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -259,9 +259,9 @@ const links = [
   display: none;
   flex-direction: column;
   justify-content: space-between;
-  width: 36px;
-  height: 36px;
-  padding: 7px 4px;
+  width: 48px;
+  height: 48px;
+  padding: 8px 4px;
   background: transparent;
   border: 0;
   border-radius: var(--radius);
@@ -271,28 +271,30 @@ const links = [
 .burger span {
   display: block;
   width: 100%;
-  height: 3px;
+  height: 4px;
   background: var(--color-burger);
   border-radius: 8px;
 }
 
 .mobile-menu {
+  padding: 8px;
   background: var(--color-header);
+  border-radius: 0 0 12px 12px;
 }
 
 .mobile-menu__inner {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding-bottom: 8px;
+  gap: 12px;
+  width: 100%;
 }
 
 .mobile-menu__link {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 32px;
-  padding: 6px 10px;
+  min-height: 35px;
+  padding: 8px 12px;
   background: var(--color-card);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -323,8 +325,8 @@ const links = [
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 36px;
-  padding: 3px 12px;
+  min-height: 43px;
+  padding: 12px 8px;
   background: var(--color-card);
   border: 0;
   border-radius: var(--radius);
@@ -334,8 +336,8 @@ const links = [
 }
 
 .mobile-menu__action svg {
-  width: 20px;
-  height: 20px;
+  width: 28px;
+  height: 28px;
 }
 
 .mobile-menu__action:hover {
@@ -351,6 +353,11 @@ const links = [
 @media (max-width: 1023px) {
   .header--open {
     border-radius: 0 0 12px 12px;
+  }
+
+  .header--open .header__inner {
+    width: 100%;
+    padding-inline: 8px;
   }
 
   .nav,

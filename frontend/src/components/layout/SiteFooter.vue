@@ -80,9 +80,8 @@ const groups: FooterGroup[] = [
 
 <style scoped>
 .footer {
-  width: min(1024px, 100%);
+  width: 100%;
   padding: 8px;
-  margin-inline: auto;
   background: var(--color-surface);
   border-radius: 8px 8px 0 0;
 }
@@ -155,17 +154,6 @@ const groups: FooterGroup[] = [
       'documents documents'
       'copy copy';
     grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (max-width: 767px) {
-  .footer__inner {
-    grid-template-areas:
-      'about'
-      'social'
-      'documents'
-      'copy';
-    grid-template-columns: 1fr;
   }
 }
 </style>

@@ -25,7 +25,19 @@ defineProps<ArticleSection>()
 
 .section__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--card-gap);
+}
+
+@media (max-width: 1023px) {
+  .section__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .section__grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
