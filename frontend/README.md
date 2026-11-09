@@ -37,6 +37,13 @@ npm install
 npm run dev
 ```
 
+> If the dev server exits with `Illegal instruction (core dumped)` (the native Rolldown
+> binding is not supported by the CPU), force the WASI binding:
+>
+> ```sh
+> NAPI_RS_FORCE_WASI=true npm run dev
+> ```
+
 ### Type-Check, Compile and Minify for Production
 
 ```sh
@@ -48,3 +55,18 @@ npm run build
 ```sh
 npm run lint
 ```
+
+## Theming
+
+The UI uses the CSS custom properties defined in `src/assets/main.css`. Use the sun
+button in the navbar to switch between light and dark themes. The choice is stored in
+`localStorage` under `abberant-theme`; without a stored choice the operating system
+color scheme is used.
+
+To force a theme, set `data-theme` on the root element:
+
+```html
+<html lang="ru" data-theme="dark">
+```
+
+Use `data-theme="light"` to force the light theme even when the system prefers dark.
