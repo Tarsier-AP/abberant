@@ -119,6 +119,45 @@ export const walkthroughs: ArticleSection[] = [
   ]),
 ]
 
+const reviews: Article[] = [
+  article(
+    'review-1',
+    'Обзор Elden Ring: Shadow of the Erdtree — достойное продолжение легенды',
+    54,
+    '2026-06-25',
+  ),
+  article(
+    'review-2',
+    'Обзор Dragon’s Dogma 2: свобода, которая иногда пугает',
+    37,
+    '2026-06-22',
+  ),
+  article(
+    'review-3',
+    'Обзор Senua’s Saga: Hellblade II — кино, в которое можно играть',
+    29,
+    '2026-06-19',
+  ),
+]
+
+export { reviews }
+
+/** Reviews feed groups; every group has its own archive page. */
+export const reviewGroups: ArticleSection[] = [
+  {
+    id: 'recent',
+    title: 'Недавние',
+    href: '/reviews/recent',
+    articles: [...reviews].sort((a, b) => b.date.localeCompare(a.date)),
+  },
+  {
+    id: 'popular',
+    title: 'Популярные',
+    href: '/reviews/popular',
+    articles: [...reviews].sort((a, b) => b.comments - a.comments),
+  },
+]
+
 export const sections: ArticleSection[] = [
   {
     id: 'news',
@@ -147,26 +186,7 @@ export const sections: ArticleSection[] = [
     id: 'reviews',
     title: 'Обзоры',
     href: '/reviews',
-    articles: [
-      article(
-        'review-1',
-        'Обзор Elden Ring: Shadow of the Erdtree — достойное продолжение легенды',
-        54,
-        '2026-06-25',
-      ),
-      article(
-        'review-2',
-        'Обзор Dragon’s Dogma 2: свобода, которая иногда пугает',
-        37,
-        '2026-06-22',
-      ),
-      article(
-        'review-3',
-        'Обзор Senua’s Saga: Hellblade II — кино, в которое можно играть',
-        29,
-        '2026-06-19',
-      ),
-    ],
+    articles: reviews,
   },
   {
     id: 'walkthroughs',
