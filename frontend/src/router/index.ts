@@ -11,6 +11,7 @@ const router = createRouter({
     { path: '/news', component: PlaceholderView, meta: { title: 'Новости' } },
     { path: '/reviews', component: PlaceholderView, meta: { title: 'Обзоры' } },
     { path: '/walkthroughs', component: WalkthroughsView },
+    { path: '/walkthroughs/:section', component: WalkthroughsView },
     { path: '/help', component: PlaceholderView, meta: { title: 'Помощь' } },
     { path: '/login', component: PlaceholderView, meta: { title: 'Вход' } },
     { path: '/about', component: PlaceholderView, meta: { title: 'О нас' } },
