@@ -4,6 +4,7 @@ import HomeView from '@/views/HomeView.vue'
 import NewsView from '@/views/NewsView.vue'
 import WalkthroughsView from '@/views/WalkthroughsView.vue'
 import ReviewsView from '@/views/ReviewsView.vue'
+import HelpView from '@/views/HelpView.vue'
 import PlaceholderView from '@/views/PlaceholderView.vue'
 
 const router = createRouter({
@@ -16,7 +17,7 @@ const router = createRouter({
     { path: '/reviews/:section', component: ReviewsView },
     { path: '/walkthroughs', component: WalkthroughsView },
     { path: '/walkthroughs/:section', component: WalkthroughsView },
-    { path: '/help', component: PlaceholderView, meta: { title: 'Помощь' } },
+    { path: '/help', component: HelpView, meta: { title: 'Помощь по сайту' } },
     { path: '/login', component: PlaceholderView, meta: { title: 'Вход' } },
     { path: '/about', component: PlaceholderView, meta: { title: 'О нас' } },
     { path: '/career', component: PlaceholderView, meta: { title: 'Карьера в Abberant' } },
