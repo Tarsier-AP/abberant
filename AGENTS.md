@@ -56,10 +56,10 @@ Card grids are rendered by `HomeSection` (`src/components/home/HomeSection.vue`)
 
 - Default grid (`/`, and index pages): 3 columns at `>=1024px`, 2 at `768–1023px`, 1 at `<=767px`. The default caps each section at two rows, hiding cards with `nth-child` rules (6/4/2 cards respectively).
 - `show-all`: disables the two-row cap. Use it on filtered/archive pages so every card on the current page is visible. Filtered `/news`, `/reviews`, and `/walkthroughs` pages pass it.
-- `wide`: switches the desktop grid to 4 columns while tablet stays 2 and mobile stays 1. `/news` uses it with `show-all`; the «Все» section shows 8 latest cards (4×2 on desktop, 1×8 at 375px).
+- News pages (`/news`, `/news/:platform`) use the default 3-column grid with six cards per section/page, giving 3×2 on desktop. `PAGE_LIMIT = 6` there.
 - `dense`: legacy archive variant (2 columns on mobile/tablet, 3 on desktop, no row cap). No current view uses it; prefer the default grid plus `show-all`.
 
-Pagination limits: filtered news, reviews, and walkthrough feeds slice cards at `PAGE_LIMIT = 8` per page. The `/walkthroughs` index groups whole sections instead and pages by preview-card count.
+Pagination limits: filtered news pages slice cards at `PAGE_LIMIT = 6` per page; filtered review and walkthrough feeds use `PAGE_LIMIT = 8`. The `/walkthroughs` index groups whole sections instead and pages by preview-card count.
 
 ## TypeScript notes
 

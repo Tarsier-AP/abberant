@@ -3,7 +3,7 @@ import type { ArticleSection } from '@/types/article'
 import SectionHeader from '@/components/ui/SectionHeader.vue'
 import ArticleCard from '@/components/article/ArticleCard.vue'
 
-defineProps<ArticleSection & { dense?: boolean; showAll?: boolean; wide?: boolean }>()
+defineProps<ArticleSection & { dense?: boolean; showAll?: boolean }>()
 </script>
 
 <template>
@@ -15,7 +15,6 @@ defineProps<ArticleSection & { dense?: boolean; showAll?: boolean; wide?: boolea
       :class="{
         'section__grid--dense': dense,
         'section__grid--all': showAll,
-        'section__grid--wide': wide,
       }"
     >
       <ArticleCard v-for="item in articles" :key="item.id" :article="item" />
@@ -72,11 +71,6 @@ defineProps<ArticleSection & { dense?: boolean; showAll?: boolean; wide?: boolea
 @media (min-width: 1024px) {
   .section__grid--dense {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  /* News feeds: four columns, so eight cards fill exactly two rows. */
-  .section__grid--wide {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 </style>
