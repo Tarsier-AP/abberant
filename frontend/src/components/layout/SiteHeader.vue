@@ -206,8 +206,8 @@ const links = [
   display: grid;
   flex: none;
   place-items: center;
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   padding: 0;
   color: inherit;
   background: transparent;
@@ -217,13 +217,13 @@ const links = [
 }
 
 .icon-btn svg {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
 }
 
 .theme-toggle svg {
-  width: 28px;
-  height: 28px;
+  width: 22px;
+  height: 22px;
 }
 
 .icon-btn:hover {
@@ -243,12 +243,12 @@ const links = [
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 99px;
-  height: 48px;
+  width: 84px;
+  height: 40px;
   background: var(--color-card);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  font: 400 14px/17px Roboto, sans-serif;
+  font: 400 13px/16px Roboto, sans-serif;
 }
 
 .signin:hover {
@@ -325,19 +325,19 @@ const links = [
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 43px;
-  padding: 12px 8px;
+  min-height: 36px;
+  padding: 8px;
   background: var(--color-card);
   border: 0;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  font: 400 14px/17px Roboto, sans-serif;
+  font: 400 13px/16px Roboto, sans-serif;
   cursor: pointer;
 }
 
 .mobile-menu__action svg {
-  width: 28px;
-  height: 28px;
+  width: 22px;
+  height: 22px;
 }
 
 .mobile-menu__action:hover {

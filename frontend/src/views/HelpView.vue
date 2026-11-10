@@ -79,38 +79,38 @@ const questions: HelpQuestion[] = [
 }
 
 .help__title {
-  font: 700 32px/39px Inter, sans-serif;
+  font: 700 28px/34px Inter, sans-serif;
 }
 
 .help__lead {
   max-width: 760px;
   color: var(--color-muted);
-  font: 400 16px/24px Roboto, sans-serif;
+  font: 400 15px/22px Roboto, sans-serif;
 }
 
 .help__card {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 20px;
+  gap: 10px;
+  padding: 16px;
   background: var(--color-card);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }
 
 .help__heading {
-  font: 700 24px/28px Roboto, sans-serif;
+  font: 700 21px/26px Roboto, sans-serif;
 }
 
 .help__text {
   max-width: 820px;
-  font: 400 16px/24px Roboto, sans-serif;
+  font: 400 15px/22px Roboto, sans-serif;
 }
 
 .help__list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   max-width: 820px;
   counter-reset: benefit;
 }
@@ -118,8 +118,8 @@ const questions: HelpQuestion[] = [
 .help__item {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  font: 400 16px/24px Roboto, sans-serif;
+  gap: 10px;
+  font: 400 15px/22px Roboto, sans-serif;
   counter-increment: benefit;
 }
 
@@ -128,25 +128,25 @@ const questions: HelpQuestion[] = [
   display: grid;
   flex: none;
   place-items: center;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   color: var(--color-bg);
   background: var(--color-text);
   border-radius: 50%;
-  font: 700 13px/1 Roboto, sans-serif;
+  font: 700 12px/1 Roboto, sans-serif;
 }
 
 @media (max-width: 767px) {
   .help__title {
-    font: 700 28px/34px Inter, sans-serif;
+    font: 700 24px/30px Inter, sans-serif;
   }
 
   .help__card {
-    padding: 16px;
+    padding: 14px;
   }
 
   .help__heading {
-    font: 700 20px/24px Roboto, sans-serif;
+    font: 700 18px/22px Roboto, sans-serif;
   }
 }
 </style>
