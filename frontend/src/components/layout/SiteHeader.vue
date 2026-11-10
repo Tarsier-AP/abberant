@@ -277,7 +277,7 @@ const links = [
 }
 
 .mobile-menu {
-  padding: 8px;
+  padding: 8px 16px;
   background: var(--color-header);
   border-radius: 0 0 12px 12px;
 }
@@ -353,11 +353,6 @@ const links = [
 @media (max-width: 1023px) {
   .header--open {
     border-radius: 0 0 12px 12px;
-  }
-
-  .header--open .header__inner {
-    width: 100%;
-    padding-inline: 8px;
   }
 
   .nav,
