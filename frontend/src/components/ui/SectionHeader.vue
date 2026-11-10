@@ -6,47 +6,46 @@ defineProps<{
 </script>
 
 <template>
-  <div class="section-header">
+  <RouterLink class="section-header" :to="href">
     <h2 class="section-header__title">{{ title }}</h2>
-    <RouterLink
-      class="section-header__link"
-      :to="href"
-      :aria-label="`Все материалы раздела «${title}»`"
+    <svg
+      class="section-header__arrow"
+      width="8"
+      height="15"
+      viewBox="0 0 8 15"
+      fill="none"
+      aria-hidden="true"
     >
-      <svg width="8" height="15" viewBox="0 0 8 15" fill="none" aria-hidden="true">
-        <path
-          d="m1 1 6 6.5L1 14"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-      </svg>
-    </RouterLink>
-  </div>
+      <path
+        d="m1 1 6 6.5L1 14"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+  </RouterLink>
 </template>
 
 <style scoped>
 .section-header {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
+  width: fit-content;
+  padding-inline: 6px;
+  border-radius: 4px;
+}
+
+.section-header:hover {
+  background: var(--color-surface);
 }
 
 .section-header__title {
   font: 700 24px/28px Roboto, sans-serif;
 }
 
-.section-header__link {
-  display: grid;
+.section-header__arrow {
   flex: none;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-}
-
-.section-header__link:hover {
-  background: var(--color-surface);
 }
 </style>
