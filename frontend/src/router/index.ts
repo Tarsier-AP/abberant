@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 import HomeView from '@/views/HomeView.vue'
+import WalkthroughsView from '@/views/WalkthroughsView.vue'
 import PlaceholderView from '@/views/PlaceholderView.vue'
 
 const router = createRouter({
@@ -9,7 +10,7 @@ const router = createRouter({
     { path: '/', name: 'home', component: HomeView },
     { path: '/news', component: PlaceholderView, meta: { title: 'Новости' } },
     { path: '/reviews', component: PlaceholderView, meta: { title: 'Обзоры' } },
-    { path: '/walkthroughs', component: PlaceholderView, meta: { title: 'Прохождения' } },
+    { path: '/walkthroughs', component: WalkthroughsView },
     { path: '/help', component: PlaceholderView, meta: { title: 'Помощь' } },
     { path: '/login', component: PlaceholderView, meta: { title: 'Вход' } },
     { path: '/about', component: PlaceholderView, meta: { title: 'О нас' } },

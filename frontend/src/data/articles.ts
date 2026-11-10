@@ -46,6 +46,61 @@ export const headlines: Headline[] = [
   },
 ]
 
+/** Archive feed for `/walkthroughs`: recent and popular walkthroughs. */
+export const walkthroughs: ArticleSection[] = [
+  {
+    id: 'walkthroughs-recent',
+    title: 'Недавние',
+    href: '/walkthroughs',
+    articles: [
+      article('walkthrough-1', 'Как пройти все испытания в Ghost of Tsushima', 15, '2026-06-18'),
+      article(
+        'walkthrough-2',
+        'Полное прохождение Baldur’s Gate 3: советы и секреты',
+        63,
+        '2026-06-15',
+      ),
+      article(
+        'walkthrough-3',
+        'Гайд по ресурсам в Fallout 4: где найти всё самое нужное',
+        21,
+        '2026-06-12',
+      ),
+    ],
+  },
+  {
+    id: 'walkthroughs-popular',
+    title: 'Популярные',
+    href: '/walkthroughs',
+    articles: [
+      article(
+        'walkthrough-4',
+        'Все концовки Elden Ring: Shadow of the Erdtree и как их открыть',
+        54,
+        '2026-06-10',
+      ),
+      article(
+        'walkthrough-5',
+        'Прохождение Starfield: побочные квесты и лучшие награды',
+        41,
+        '2026-06-07',
+      ),
+      article(
+        'walkthrough-6',
+        'Секреты Cyberpunk 2077: где найти лучшую экипировку',
+        37,
+        '2026-06-04',
+      ),
+    ],
+  },
+]
+
+/**
+ * Mock page count for the archive. There is no backend yet, so every page
+ * renders the same feed while navigation itself stays functional.
+ */
+export const walkthroughPageCount = 20
+
 export const sections: ArticleSection[] = [
   {
     id: 'news',
