@@ -6,14 +6,11 @@ import HomeSection from '@/components/home/HomeSection.vue'
 import PagePagination from '@/components/ui/PagePagination.vue'
 import { newsSections } from '@/data/articles'
 
-/** Maximum number of article cards on one filtered feed page. */
-const PAGE_LIMIT = 8
+/** Maximum number of article cards on one news page (3x2 on desktop). */
+const PAGE_LIMIT = 6
 
-/** Number of cards shown for each platform on the /news index. */
-const PREVIEW_LIMIT = 3
-
-/** The "Все" section on /news shows the eight latest stories. */
-const ALL_PREVIEW_LIMIT = 8
+/** Number of cards shown for each section on the /news index. */
+const PREVIEW_LIMIT = 6
 
 const route = useRoute()
 const router = useRouter()
@@ -55,11 +52,8 @@ const groups = computed<ArticleSection[]>(() => {
 
   return newsSections.map((section) => ({
     ...section,
-    // "Все" shows the eight latest stories; platform sections stay compact.
-    articles:
-      section.id === 'all'
-        ? section.articles.slice(0, ALL_PREVIEW_LIMIT)
-        : section.articles.slice(0, PREVIEW_LIMIT),
+    // Every section fills two desktop rows with six cards.
+    articles: section.articles.slice(0, PREVIEW_LIMIT),
   }))
 })
 
@@ -98,7 +92,7 @@ watch(
   <div ref="root" class="news container">
     <h1 class="visually-hidden">{{ heading }}</h1>
 
-    <HomeSection v-for="group in groups" :key="group.id" v-bind="group" show-all wide />
+    <HomeSection v-for="group in groups" :key="group.id" v-bind="group" show-all />
 
     <PagePagination
       v-if="totalPages > 1"
