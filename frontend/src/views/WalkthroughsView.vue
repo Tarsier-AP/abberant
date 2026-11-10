@@ -120,7 +120,12 @@ watch(
   <div ref="root" class="walkthroughs container">
     <h1 class="visually-hidden">{{ heading }}</h1>
 
-    <HomeSection v-for="section in pageSections" :key="section.id" v-bind="section" dense />
+    <HomeSection
+      v-for="section in pageSections"
+      :key="section.id"
+      v-bind="section"
+      :show-all="Boolean(currentSection)"
+    />
 
     <PagePagination
       v-if="totalPages > 1"

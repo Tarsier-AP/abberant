@@ -158,29 +158,69 @@ export const reviewGroups: ArticleSection[] = [
   },
 ]
 
+function newsSection(id: string, title: string, entries: ArticleEntry[]): ArticleSection {
+  return {
+    id,
+    title,
+    href: `/news/${id}`,
+    articles: entries.map(([title, comments, date], index) =>
+      article(`news-${id}-${index + 1}`, title, comments, date),
+    ),
+  }
+}
+
+/**
+ * Platform feeds for `/news`. The `all` section is assembled from every
+ * platform below, newest first, and is also reused by the home page.
+ */
+const newsPlatforms: ArticleSection[] = [
+  newsSection('pc', 'PC', [
+    ['Steam Next Fest: 12 демо, которые стоит попробовать в июле', 14, '2026-07-01'],
+    ['Анонсирован ремастер культовой стратегии 2000-х', 27, '2026-06-28'],
+    ['Новый патч для Baldur’s Gate 3 исправил сохранения на Steam Deck', 9, '2026-06-24'],
+  ]),
+  newsSection('xbox', 'Xbox Series X|S', [
+    ['Game Pass пополнится шестью играми в июле', 31, '2026-06-30'],
+    ['Obsidian показала новый геймплей Avowed 2', 18, '2026-06-26'],
+    ['Xbox Series X|S получит поддержку новых видеокодеков', 7, '2026-06-21'],
+  ]),
+  newsSection('playstation', 'PlayStation 5', [
+    ['State of Play: главные анонсы и даты релизов', 42, '2026-06-29'],
+    ['Ghost of Yotei получит бесплатное сюжетное дополнение осенью', 36, '2026-06-25'],
+    ['PlayStation 5 Pro: первые тесты обновлённого PSSR', 23, '2026-06-20'],
+  ]),
+  newsSection('nintendo', 'Nintendo', [
+    ['Nintendo Direct: всё, что показали на презентации', 39, '2026-06-27'],
+    ['Новая часть Mario Kart получила дату релиза', 25, '2026-06-23'],
+    ['Switch 2: подробности обратной совместимости с играми', 16, '2026-06-19'],
+  ]),
+  newsSection('vr', 'VR', [
+    ['Meta Quest 3: обновление улучшает трекинг рук', 11, '2026-06-22'],
+    ['Half-Life: Alyx получила неофициальный кооперативный мод', 33, '2026-06-18'],
+    ['Sony представила новый VR-контроллер для PS5', 8, '2026-06-15'],
+  ]),
+  newsSection('hardware', 'Железо', [
+    ['Обзор RTX 5080: стоит ли апгрейдиться в 2026 году', 47, '2026-06-26'],
+    ['AMD снижает цены на процессоры Ryzen', 19, '2026-06-17'],
+    ['Тесты: SSD PCIe 5.0 в играх почти не даёт прироста', 12, '2026-06-14'],
+  ]),
+]
+
+export const latestNews: Article[] = newsPlatforms
+  .flatMap((section) => section.articles)
+  .sort((a, b) => b.date.localeCompare(a.date))
+
+export const newsSections: ArticleSection[] = [
+  { id: 'all', title: 'Все', href: '/news/all', articles: latestNews },
+  ...newsPlatforms,
+]
+
 export const sections: ArticleSection[] = [
   {
     id: 'news',
     title: 'Новости',
     href: '/news',
-    articles: [
-      article('news-1', 'Прохождение кампании Fable займёт 15-20 часов', 12, '2026-07-01'),
-      article('news-2', '12 минут геймплея «Баллад прошлого» для «Ведьмака 3»', 24, '2026-06-30'),
-      article(
-        'news-3',
-        'Основатель студии разработчиков Warlock рассказал, как игра сохраняет дух настольной D&D',
-        6,
-        '2026-06-29',
-      ),
-      article('news-4', 'Устанавливаем DLSS 5 на любую игру (почти)', 32, '2026-06-28'),
-      article('news-5', 'Анонсирована новая часть культовой RPG — первые подробности', 18, '2026-06-27'),
-      article(
-        'news-6',
-        'Обновление 2.0 для Starfield: что изменилось и стоит ли возвращаться',
-        41,
-        '2026-06-26',
-      ),
-    ],
+    articles: latestNews.slice(0, 6),
   },
   {
     id: 'reviews',

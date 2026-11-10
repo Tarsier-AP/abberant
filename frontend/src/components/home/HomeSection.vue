@@ -3,14 +3,21 @@ import type { ArticleSection } from '@/types/article'
 import SectionHeader from '@/components/ui/SectionHeader.vue'
 import ArticleCard from '@/components/article/ArticleCard.vue'
 
-defineProps<ArticleSection & { dense?: boolean }>()
+defineProps<ArticleSection & { dense?: boolean; showAll?: boolean; wide?: boolean }>()
 </script>
 
 <template>
   <section :id="id" class="section">
     <SectionHeader :title="title" :href="href" />
 
-    <div class="section__grid" :class="{ 'section__grid--dense': dense }">
+    <div
+      class="section__grid"
+      :class="{
+        'section__grid--dense': dense,
+        'section__grid--all': showAll,
+        'section__grid--wide': wide,
+      }"
+    >
       <ArticleCard v-for="item in articles" :key="item.id" :article="item" />
     </div>
   </section>
@@ -33,7 +40,7 @@ defineProps<ArticleSection & { dense?: boolean }>()
   gap: var(--card-gap);
 }
 
-.section__grid:not(.section__grid--dense) > :nth-child(n + 7) {
+.section__grid:not(.section__grid--dense):not(.section__grid--all) > :nth-child(n + 7) {
   display: none;
 }
 
@@ -42,7 +49,7 @@ defineProps<ArticleSection & { dense?: boolean }>()
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .section__grid:not(.section__grid--dense) > :nth-child(n + 5) {
+  .section__grid:not(.section__grid--dense):not(.section__grid--all) > :nth-child(n + 5) {
     display: none;
   }
 }
@@ -52,7 +59,7 @@ defineProps<ArticleSection & { dense?: boolean }>()
     grid-template-columns: 1fr;
   }
 
-  .section__grid:not(.section__grid--dense) > :nth-child(n + 3) {
+  .section__grid:not(.section__grid--dense):not(.section__grid--all) > :nth-child(n + 3) {
     display: none;
   }
 }
@@ -65,6 +72,11 @@ defineProps<ArticleSection & { dense?: boolean }>()
 @media (min-width: 1024px) {
   .section__grid--dense {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* News feeds: four columns, so eight cards fill exactly two rows. */
+  .section__grid--wide {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 </style>

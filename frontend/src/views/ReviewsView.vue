@@ -91,7 +91,12 @@ watch(
   <div ref="root" class="reviews container">
     <h1 class="visually-hidden">{{ heading }}</h1>
 
-    <HomeSection v-for="group in groups" :key="group.id" v-bind="group" dense />
+    <HomeSection
+      v-for="group in groups"
+      :key="group.id"
+      v-bind="group"
+      :show-all="Boolean(currentGroup)"
+    />
 
     <PagePagination
       v-if="totalPages > 1"
