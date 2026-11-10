@@ -36,7 +36,7 @@ NAPI_RS_FORCE_WASI=true npm run build
 - `build` runs `type-check` and `vite build` in parallel via `npm-run-all2`.
 - For a focused lint check, run `npx eslint <path>`; there is no per-file typecheck.
 - There is no test runner, test script, or test directory. Do not invent a test command; add Vitest only if tests are requested.
-- `npm run lint` currently fails on the empty leftover `src/components/Header.vue` (`vue/multi-word-component-names`). Prefer deleting that unused file. ESLint also warns that `.oxlintrc.json` is missing; that is not the failure.
+- `npm run lint` currently passes; ESLint only warns that `.oxlintrc.json` is missing. The old empty `src/components/Header.vue` has been removed.
 - `npm run format` uses Prettier but the repo has no Prettier config, so it currently rewrites every file with Prettier defaults (semicolons, double quotes). Avoid it unless doing a deliberate formatting-only change; match existing style manually.
 
 ## Architecture and conventions
@@ -49,6 +49,17 @@ NAPI_RS_FORCE_WASI=true npm run build
 - Styling relies on CSS custom properties from `src/assets/main.css`. Theme is selected by `data-theme="light|dark"` on `<html>`, persisted under localStorage key `abberant-theme`; the initial value is set inline in `index.html` and toggled in `SiteHeader.vue`. Add new colors to both theme blocks rather than hard-coding them.
 - Dates are ISO strings displayed as `dd.mm.yyyy` via `src/utils/date.ts`.
 - `src/stores/counter.ts` is unused Vue template scaffolding; do not use it as a state-management pattern to copy.
+
+### Grid system
+
+Card grids are rendered by `HomeSection` (`src/components/home/HomeSection.vue`) and its `ArticleSection` data.
+
+- Default grid (`/`, and index pages): 3 columns at `>=1024px`, 2 at `768–1023px`, 1 at `<=767px`. The default caps each section at two rows, hiding cards with `nth-child` rules (6/4/2 cards respectively).
+- `show-all`: disables the two-row cap. Use it on filtered/archive pages so every card on the current page is visible. Filtered `/news`, `/reviews`, and `/walkthroughs` pages pass it.
+- `wide`: switches the desktop grid to 4 columns while tablet stays 2 and mobile stays 1. `/news` uses it with `show-all`; the «Все» section shows 8 latest cards (4×2 on desktop, 1×8 at 375px).
+- `dense`: legacy archive variant (2 columns on mobile/tablet, 3 on desktop, no row cap). No current view uses it; prefer the default grid plus `show-all`.
+
+Pagination limits: filtered news, reviews, and walkthrough feeds slice cards at `PAGE_LIMIT = 8` per page. The `/walkthroughs` index groups whole sections instead and pages by preview-card count.
 
 ## TypeScript notes
 
