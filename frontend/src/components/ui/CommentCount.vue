@@ -61,7 +61,7 @@ const to = computed(() =>
 }
 
 .comments--link:hover .comments__count {
-  text-decoration: underline;
+  text-decoration: none;
   text-underline-offset: 2px;
 }
 
