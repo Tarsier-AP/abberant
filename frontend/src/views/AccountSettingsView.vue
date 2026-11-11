@@ -184,28 +184,20 @@ onMounted(() => {
               <circle cx="24" cy="17" r="8" opacity="0.7" />
               <path d="M8 46c0-8.837 7.163-16 16-16s16 7.163 16 16" opacity="0.7" />
             </svg>
+
+            <span class="account-settings__avatar-overlay" aria-hidden="true">
+              Изменить
+            </span>
           </button>
 
-          <div class="account-settings__profile-actions">
-            <span class="account-settings__profile-title">Фото профиля</span>
-            <div class="account-settings__profile-buttons">
-              <button
-                class="account-settings__profile-button"
-                type="button"
-                @click="avatarInput?.click()"
-              >
-                Загрузить фото
-              </button>
-              <button
-                v-if="auth.account.avatar"
-                class="account-settings__profile-button account-settings__profile-button--muted"
-                type="button"
-                @click="removeAvatar"
-              >
-                Удалить
-              </button>
-            </div>
-          </div>
+          <button
+            v-if="auth.account.avatar"
+            class="account-settings__profile-button account-settings__profile-button--muted"
+            type="button"
+            @click="removeAvatar"
+          >
+            Удалить фото
+          </button>
 
           <input
             ref="avatarInput"
@@ -430,6 +422,7 @@ onMounted(() => {
 }
 
 .account-settings__avatar {
+  position: relative;
   display: flex;
   flex: none;
   align-items: center;
@@ -461,21 +454,22 @@ onMounted(() => {
   height: 48px;
 }
 
-.account-settings__profile-actions {
+.account-settings__avatar-overlay {
+  position: absolute;
+  inset: 0;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  background: rgb(0 0 0 / 55%);
+  font: 500 11px/13px Roboto, sans-serif;
+  opacity: 0;
+  transition: opacity 0.2s ease;
 }
 
-.account-settings__profile-title {
-  font: 500 14px/18px Roboto, sans-serif;
-}
-
-.account-settings__profile-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.account-settings__avatar:hover .account-settings__avatar-overlay,
+.account-settings__avatar:focus-visible .account-settings__avatar-overlay {
+  opacity: 1;
 }
 
 .account-settings__profile-button {
