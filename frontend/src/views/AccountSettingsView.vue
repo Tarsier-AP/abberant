@@ -401,7 +401,6 @@ onMounted(() => {
   max-width: 800px;
   margin-inline: auto;
   padding: 8px;
-  background: var(--color-card);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }
