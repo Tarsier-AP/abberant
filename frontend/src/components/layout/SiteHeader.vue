@@ -270,9 +270,9 @@ const links = [
   display: none;
   flex-direction: column;
   justify-content: space-between;
-  width: 48px;
-  height: 48px;
-  padding: 8px 4px;
+  width: 40px;
+  height: 40px;
+  padding: 9px 8px;
   background: transparent;
   border: 0;
   border-radius: var(--radius);
@@ -282,7 +282,7 @@ const links = [
 .burger span {
   display: block;
   width: 100%;
-  height: 4px;
+  height: 3px;
   background: var(--color-burger);
   border-radius: 8px;
 }
