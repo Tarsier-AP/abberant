@@ -10,9 +10,25 @@ const router = useRouter()
 const auth = useAuthStore()
 
 const token = computed(() => (typeof route.query.token === 'string' ? route.query.token : ''))
-const activated = ref(
-  token.value ? auth.activateAccount(token.value) : auth.account?.activated === true,
+const username = computed(() =>
+  typeof route.query.username === 'string' ? route.query.username : '',
 )
+
+function resolveActivation() {
+  if (!token.value) return auth.account?.activated === true
+
+  if (auth.activateAccount(token.value)) return true
+
+  return (
+    Boolean(username.value) &&
+    auth.createAccountFromActivation({
+      login: token.value,
+      username: username.value,
+    })
+  )
+}
+
+const activated = ref(resolveActivation())
 
 if (token.value && activated.value) {
   void router.replace({ name: 'home' })

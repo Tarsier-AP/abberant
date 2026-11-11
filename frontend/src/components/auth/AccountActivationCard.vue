@@ -4,6 +4,7 @@ import AuthCard from './AuthCard.vue'
 
 const props = defineProps<{
   login: string
+  username: string
 }>()
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -19,7 +20,7 @@ const destination = computed(() =>
 const activationUrl = computed(() => {
   const origin = typeof window === 'undefined' ? '' : window.location.origin
 
-  return `${origin}/activate?token=${encodeURIComponent(props.login)}`
+  return `${origin}/activate?token=${encodeURIComponent(props.login)}&username=${encodeURIComponent(props.username)}`
 })
 </script>
 
@@ -35,7 +36,7 @@ const activationUrl = computed(() => {
 
       <RouterLink
         class="account-activation__url"
-        :to="{ name: 'activate', query: { token: login } }"
+        :to="{ name: 'activate', query: { token: login, username } }"
       >
         {{ activationUrl }}
       </RouterLink>

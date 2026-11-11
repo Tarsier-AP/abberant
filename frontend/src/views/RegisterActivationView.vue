@@ -8,6 +8,7 @@ const router = useRouter()
 const auth = useAuthStore()
 
 const login = computed(() => auth.account?.login ?? '')
+const username = computed(() => auth.account?.username ?? '')
 
 onMounted(() => {
   if (!auth.account) {
@@ -18,7 +19,7 @@ onMounted(() => {
 
 <template>
   <div class="register-activation">
-    <AccountActivationCard v-if="login" :login="login" />
+    <AccountActivationCard v-if="login" :login="login" :username="username" />
   </div>
 </template>
 

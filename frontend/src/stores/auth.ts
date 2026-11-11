@@ -92,6 +92,22 @@ export const useAuthStore = defineStore('auth', () => {
     return true
   }
 
+  function createAccountFromActivation(data: PendingRegistration) {
+    if (account.value) return false
+
+    account.value = {
+      login: data.login,
+      username: data.username,
+      activated: true,
+      twoFactorEnabled: false,
+      twoFactorMethod: 'sms',
+    }
+
+    writeStored(ACCOUNT_KEY, account.value)
+
+    return true
+  }
+
   function activateAccount(login?: string) {
     if (!account.value) return false
     if (login !== undefined && !matchesAccount(login)) return false
@@ -136,6 +152,7 @@ export const useAuthStore = defineStore('auth', () => {
     startRegistration,
     cancelRegistration,
     completeRegistration,
+    createAccountFromActivation,
     activateAccount,
     setTwoFactor,
     setTwoFactorMethod,
