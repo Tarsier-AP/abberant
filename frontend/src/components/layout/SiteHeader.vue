@@ -89,10 +89,20 @@ const links = [
         </button>
 
         <RouterLink
-          class="signin"
+          class="icon-btn account"
           :to="{ name: auth.account?.activated ? 'account-settings' : 'login' }"
+          :aria-label="auth.account?.activated ? 'Аккаунт' : 'Войти'"
+          :title="auth.account?.activated ? 'Аккаунт' : 'Войти'"
         >
-          {{ auth.account?.activated ? 'Аккаунт' : 'Войти' }}
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2" />
+            <path
+              d="M4 20c0-4.418 3.582-8 8-8s8 3.582 8 8"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+          </svg>
         </RouterLink>
 
         <button
@@ -250,19 +260,12 @@ const links = [
   background: var(--color-card-hover);
 }
 
-.signin {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 84px;
-  height: 40px;
+.account {
   background: var(--color-card);
-  border-radius: var(--radius);
   box-shadow: var(--shadow);
-  font: 400 13px/16px Roboto, sans-serif;
 }
 
-.signin:hover {
+.account:hover {
   background: var(--color-card-hover);
 }
 
@@ -369,7 +372,7 @@ const links = [
   .nav,
   .search,
   .theme-toggle,
-  .signin {
+  .account {
     display: none;
   }
 
