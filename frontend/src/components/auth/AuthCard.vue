@@ -29,6 +29,8 @@ defineProps<{
 
 .auth-card__title {
   padding: 8px;
+  background: var(--color-auth-input);
+  border-radius: var(--radius);
   font: 700 26px/32px Inter, sans-serif;
   text-align: center;
 }
