@@ -136,15 +136,15 @@ function handleSubmit() {
         </p>
       </div>
 
-      <div class="login-form__links">
-        <RouterLink class="login-form__link" to="/password-reset">Забыли пароль?</RouterLink>
-        <RouterLink class="login-form__link" to="/register">Зарегистрируйтесь</RouterLink>
-      </div>
-
       <div class="login-form__actions">
         <button class="login-form__submit" type="submit" :disabled="loading">
           {{ loading ? 'Проверяем…' : 'Далее' }}
         </button>
+      </div>
+      
+      <div class="login-form__links">
+        <RouterLink class="login-form__link" to="/password-reset">Забыли пароль?</RouterLink>
+        <RouterLink class="login-form__link" to="/register">Зарегистрируйтесь</RouterLink>
       </div>
     </form>
   </AuthCard>
@@ -205,7 +205,7 @@ function handleSubmit() {
 .login-form__links {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 8px;
   padding: 8px;
 }
