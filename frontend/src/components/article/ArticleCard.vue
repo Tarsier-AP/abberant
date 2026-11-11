@@ -30,17 +30,6 @@ const shareUrl = computed(() => new URL(props.article.url, window.location.origi
       <time class="card__date" :datetime="article.date">{{ date }}</time>
       <CommentCount :count="article.comments" />
       <ShareButton :url="shareUrl" label="Поделиться статьёй" />
-      <RouterLink class="card__open" :to="article.url" aria-label="Открыть статью">
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-          <path
-            d="M10.5 1.5 1.5 10.5M10.5 1.5H4M10.5 1.5V8"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </RouterLink>
     </div>
   </article>
 </template>
@@ -91,18 +80,5 @@ const shareUrl = computed(() => new URL(props.article.url, window.location.origi
 .card__date {
   flex: 1;
   font: 500 14px/16px Roboto, sans-serif;
-}
-
-.card__open {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-}
-
-.card__open:hover {
-  background: var(--color-card);
 }
 </style>
