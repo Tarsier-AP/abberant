@@ -8,6 +8,7 @@ import HelpView from '@/views/HelpView.vue'
 import LoginView from '@/views/LoginView.vue'
 import RegisterView from '@/views/RegisterView.vue'
 import RegisterPasswordView from '@/views/RegisterPasswordView.vue'
+import TwoFactorView from '@/views/TwoFactorView.vue'
 import PlaceholderView from '@/views/PlaceholderView.vue'
 
 const router = createRouter({
@@ -23,9 +24,9 @@ const router = createRouter({
     { path: '/help', component: HelpView, meta: { title: 'Помощь по сайту' } },
     { path: '/login', name: 'login', component: LoginView, meta: { title: 'Вход' } },
     {
-      path: '/login/2fa',
+      path: '/2fa',
       name: 'two-factor',
-      component: PlaceholderView,
+      component: TwoFactorView,
       meta: { title: 'Двухфакторная аутентификация' },
     },
     {

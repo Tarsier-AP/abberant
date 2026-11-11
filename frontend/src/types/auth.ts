@@ -9,3 +9,5 @@ export interface RegisterCredentials {
   acceptedTerms: boolean
   acceptedPolicy: boolean
 }
+
+export type TwoFactorMethod = 'authenticator' | 'sms' | 'email'
