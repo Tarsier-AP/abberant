@@ -21,7 +21,7 @@ function handleSubmit(credentials: RegisterCredentials) {
   timer = setTimeout(() => {
     loading.value = false
     void router.push({
-      name: 'two-factor',
+      name: 'register-password',
       state: {
         login: credentials.login,
         username: credentials.username,
