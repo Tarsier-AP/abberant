@@ -49,7 +49,18 @@ const to = computed(() =>
   font: 400 13px/16px Inter, sans-serif;
 }
 
+.comments--link {
+  margin: -2px -4px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+
 .comments--link:hover {
+  background: var(--color-card);
+}
+
+.comments--link:hover .comments__count {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
