@@ -1,17 +1,22 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import AuthCard from '@/components/auth/AuthCard.vue'
 import { useAuthStore } from '@/stores/auth'
 import type { TwoFactorMethod } from '@/types/auth'
 
 const route = useRoute()
+const router = useRouter()
 const auth = useAuthStore()
 
 const token = computed(() => (typeof route.query.token === 'string' ? route.query.token : ''))
 const activated = ref(
   token.value ? auth.activateAccount(token.value) : auth.account?.activated === true,
 )
+
+if (token.value && activated.value) {
+  void router.replace({ name: 'home' })
+}
 
 function handleTwoFactorChange(event: Event) {
   auth.setTwoFactor((event.target as HTMLInputElement).checked)
