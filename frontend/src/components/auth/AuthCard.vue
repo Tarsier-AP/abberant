@@ -23,7 +23,7 @@ defineProps<{
   flex-direction: column;
   gap: 8px;
   width: 100%;
-  max-width: 485px;
+  max-width: 440px;
   padding: 8px;
   background: var(--color-surface);
   border-radius: var(--radius);
