@@ -28,7 +28,7 @@ const shareUrl = computed(() => new URL(props.article.url, window.location.origi
 
     <div class="card__meta">
       <time class="card__date" :datetime="article.date">{{ date }}</time>
-      <CommentCount :count="article.comments" />
+      <CommentCount :count="article.comments" :url="article.url" />
       <ShareButton :url="shareUrl" label="Поделиться статьёй" />
     </div>
   </article>

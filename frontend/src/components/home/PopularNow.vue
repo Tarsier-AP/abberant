@@ -12,7 +12,7 @@ defineProps<{ items: Headline[] }>()
     <ul class="popular__list">
       <li v-for="item in items" :key="item.id" class="popular__item">
         <RouterLink class="popular__link" :to="item.url">{{ item.title }}</RouterLink>
-        <CommentCount :count="item.comments" />
+        <CommentCount :count="item.comments" :url="item.url" />
       </li>
     </ul>
   </section>

@@ -1,9 +1,24 @@
 <script setup lang="ts">
-defineProps<{ count: number }>()
+import { computed } from 'vue'
+import { RouterLink } from 'vue-router'
+
+const props = defineProps<{
+  count: number
+  url?: string
+}>()
+
+const to = computed(() =>
+  props.url ? { path: props.url, hash: '#comments' } : undefined,
+)
 </script>
 
 <template>
-  <span class="comments">
+  <component
+    :is="to ? RouterLink : 'span'"
+    class="comments"
+    :class="{ 'comments--link': to }"
+    :to="to"
+  >
     <svg
       class="comments__icon"
       width="14"
@@ -22,7 +37,7 @@ defineProps<{ count: number }>()
     </svg>
     <span class="visually-hidden">Комментарии:</span>
     <span class="comments__count">{{ count }}</span>
-  </span>
+  </component>
 </template>
 
 <style scoped>
@@ -32,6 +47,11 @@ defineProps<{ count: number }>()
   align-items: center;
   gap: 4px;
   font: 400 13px/16px Inter, sans-serif;
+}
+
+.comments--link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .comments__icon {
