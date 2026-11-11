@@ -3,10 +3,12 @@ import { computed } from 'vue'
 import type { Article } from '@/types/article'
 import { formatDate } from '@/utils/date'
 import CommentCount from '@/components/ui/CommentCount.vue'
+import ShareButton from '@/components/ui/ShareButton.vue'
 
 const props = defineProps<{ article: Article }>()
 
 const date = computed(() => formatDate(props.article.date))
+const shareUrl = computed(() => new URL(props.article.url, window.location.origin).href)
 </script>
 
 <template>
@@ -27,6 +29,7 @@ const date = computed(() => formatDate(props.article.date))
     <div class="card__meta">
       <time class="card__date" :datetime="article.date">{{ date }}</time>
       <CommentCount :count="article.comments" />
+      <ShareButton :url="shareUrl" label="Поделиться статьёй" />
       <RouterLink class="card__open" :to="article.url" aria-label="Открыть статью">
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
           <path
