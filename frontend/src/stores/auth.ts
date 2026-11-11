@@ -5,9 +5,11 @@ import type { TwoFactorMethod } from '@/types/auth'
 export interface AuthAccount {
   login: string
   username: string
+  additionalEmail: string
   activated: boolean
   twoFactorEnabled: boolean
   twoFactorMethod: TwoFactorMethod
+  smsNotifications: boolean
 }
 
 export interface PendingRegistration {
@@ -53,7 +55,9 @@ export const useAuthStore = defineStore('auth', () => {
     storedAccount
       ? {
           ...storedAccount,
+          additionalEmail: storedAccount.additionalEmail ?? '',
           twoFactorMethod: storedAccount.twoFactorMethod ?? 'sms',
+          smsNotifications: storedAccount.smsNotifications ?? true,
         }
       : null,
   )
@@ -81,9 +85,11 @@ export const useAuthStore = defineStore('auth', () => {
     account.value = {
       login: pendingRegistration.value.login,
       username: pendingRegistration.value.username,
+      additionalEmail: '',
       activated: false,
       twoFactorEnabled: false,
       twoFactorMethod: 'sms',
+      smsNotifications: true,
     }
 
     cancelRegistration()
@@ -98,9 +104,11 @@ export const useAuthStore = defineStore('auth', () => {
     account.value = {
       login: data.login,
       username: data.username,
+      additionalEmail: '',
       activated: true,
       twoFactorEnabled: false,
       twoFactorMethod: 'sms',
+      smsNotifications: true,
     }
 
     writeStored(ACCOUNT_KEY, account.value)
@@ -132,6 +140,20 @@ export const useAuthStore = defineStore('auth', () => {
     writeStored(ACCOUNT_KEY, account.value)
   }
 
+  function setAdditionalEmail(email: string) {
+    if (!account.value) return
+
+    account.value.additionalEmail = email
+    writeStored(ACCOUNT_KEY, account.value)
+  }
+
+  function setSmsNotifications(enabled: boolean) {
+    if (!account.value) return
+
+    account.value.smsNotifications = enabled
+    writeStored(ACCOUNT_KEY, account.value)
+  }
+
   function matchesAccount(login: string) {
     if (!account.value) return false
 
@@ -156,6 +178,8 @@ export const useAuthStore = defineStore('auth', () => {
     activateAccount,
     setTwoFactor,
     setTwoFactorMethod,
+    setAdditionalEmail,
+    setSmsNotifications,
     matchesAccount,
     reset,
   }

@@ -10,6 +10,7 @@ import RegisterView from '@/views/RegisterView.vue'
 import RegisterPasswordView from '@/views/RegisterPasswordView.vue'
 import RegisterActivationView from '@/views/RegisterActivationView.vue'
 import AccountActivateView from '@/views/AccountActivateView.vue'
+import AccountSettingsView from '@/views/AccountSettingsView.vue'
 import TwoFactorView from '@/views/TwoFactorView.vue'
 import PlaceholderView from '@/views/PlaceholderView.vue'
 
@@ -54,6 +55,12 @@ const router = createRouter({
       name: 'activate',
       component: AccountActivateView,
       meta: { title: 'Активация аккаунта' },
+    },
+    {
+      path: '/account/settings',
+      name: 'account-settings',
+      component: AccountSettingsView,
+      meta: { title: 'Настройки аккаунта' },
     },
     {
       path: '/password-reset',

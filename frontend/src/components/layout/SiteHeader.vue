@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import ThemeIcon from '@/components/ui/ThemeIcon.vue'
+import { useAuthStore } from '@/stores/auth'
 
 type Theme = 'light' | 'dark'
 
 const THEME_KEY = 'abberant-theme'
 
 const menuOpen = ref(false)
+const auth = useAuthStore()
 
 function readStoredTheme(): Theme | null {
   try {
@@ -86,7 +88,12 @@ const links = [
           <ThemeIcon />
         </button>
 
-        <RouterLink class="signin" to="/login">Войти</RouterLink>
+        <RouterLink
+          class="signin"
+          :to="{ name: auth.account?.activated ? 'account-settings' : 'login' }"
+        >
+          {{ auth.account?.activated ? 'Аккаунт' : 'Войти' }}
+        </RouterLink>
 
         <button
           class="burger"
@@ -140,8 +147,12 @@ const links = [
             <ThemeIcon />
           </button>
 
-          <RouterLink class="mobile-menu__action" to="/login" @click="menuOpen = false">
-            Войти
+          <RouterLink
+            class="mobile-menu__action"
+            :to="{ name: auth.account?.activated ? 'account-settings' : 'login' }"
+            @click="menuOpen = false"
+          >
+            {{ auth.account?.activated ? 'Аккаунт' : 'Войти' }}
           </RouterLink>
         </div>
       </div>

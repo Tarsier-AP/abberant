@@ -3,7 +3,6 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AuthCard from '@/components/auth/AuthCard.vue'
 import { useAuthStore } from '@/stores/auth'
-import type { TwoFactorMethod } from '@/types/auth'
 
 const route = useRoute()
 const router = useRouter()
@@ -33,14 +32,6 @@ const activated = ref(resolveActivation())
 if (token.value && activated.value) {
   void router.replace({ name: 'home' })
 }
-
-function handleTwoFactorChange(event: Event) {
-  auth.setTwoFactor((event.target as HTMLInputElement).checked)
-}
-
-function handleMethodChange(event: Event) {
-  auth.setTwoFactorMethod((event.target as HTMLSelectElement).value as TwoFactorMethod)
-}
 </script>
 
 <template>
@@ -56,26 +47,20 @@ function handleMethodChange(event: Event) {
 
           <section class="activate__settings" aria-labelledby="activate-settings-title">
             <h2 id="activate-settings-title" class="activate__settings-title">
-              Настройки аккаунта (демо)
+              Настройки аккаунта
             </h2>
 
-            <label class="activate__checkbox">
-              <input
-                type="checkbox"
-                :checked="auth.account.twoFactorEnabled"
-                @change="handleTwoFactorChange"
-              />
-              Двухфакторная аутентификация
-            </label>
+            <p class="activate__text">
+              В настройках аккаунта можно включить двухфакторную аутентификацию и выбрать
+              способ подтверждения.
+            </p>
 
-            <label v-if="auth.account.twoFactorEnabled" class="activate__method">
-              <span>Способ подтверждения</span>
-              <select :value="auth.account.twoFactorMethod" @change="handleMethodChange">
-                <option value="sms">SMS</option>
-                <option value="email">Электронная почта</option>
-                <option value="authenticator">Приложение-аутентификатор</option>
-              </select>
-            </label>
+            <RouterLink
+              class="activate__settings-link"
+              :to="{ name: 'account-settings' }"
+            >
+              Перейти в настройки
+            </RouterLink>
           </section>
 
           <RouterLink class="activate__submit" :to="{ name: 'login' }">
@@ -130,37 +115,16 @@ function handleMethodChange(event: Event) {
   font: 700 14px/18px Roboto, sans-serif;
 }
 
-.activate__checkbox {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font: 400 14px/18px Roboto, sans-serif;
-  cursor: pointer;
+.activate__settings-link {
+  align-self: flex-start;
+  color: var(--color-auth-link);
+  font: 500 14px/18px Roboto, sans-serif;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
-.activate__checkbox input {
-  width: 16px;
-  height: 16px;
-  margin: 0;
-  accent-color: var(--color-accent);
-  cursor: pointer;
-}
-
-.activate__method {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font: 400 13px/16px Roboto, sans-serif;
-}
-
-.activate__method select {
-  min-height: 30px;
-  padding: 4px 8px;
-  color: var(--color-text);
-  background: var(--color-auth-input);
-  border: 1px solid var(--color-input-border);
-  border-radius: var(--radius);
-  font: 400 14px/20px Roboto, sans-serif;
+.activate__settings-link:hover {
+  opacity: 0.8;
 }
 
 .activate__submit {
