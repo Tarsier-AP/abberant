@@ -15,6 +15,7 @@
   --color-danger: #d32f2f;
   --color-input-border: rgb(0 0 0 / 50%);
   --color-auth-input: #ffffff;
+  --color-auth-link: #3751b7;
   --theme-icon-shadow: #b4b2b2;
   --theme-icon-ring: transparent;
   --radius: 8px;
@@ -44,6 +45,7 @@
   --color-danger: #ff8080;
   --color-input-border: rgb(255 255 255 / 50%);
   --color-auth-input: #454545;
+  --color-auth-link: #8ab4ff;
   --theme-icon-shadow: transparent;
   --theme-icon-ring: #fff39a;
   --shadow: 0 0 4px 1px rgb(0 0 0 / 45%);
@@ -68,6 +70,7 @@
     --color-danger: #ff8080;
     --color-input-border: rgb(255 255 255 / 50%);
     --color-auth-input: #454545;
+    --color-auth-link: #8ab4ff;
     --theme-icon-shadow: transparent;
     --theme-icon-ring: #fff39a;
     --shadow: 0 0 4px 1px rgb(0 0 0 / 45%);

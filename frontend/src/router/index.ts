@@ -6,6 +6,7 @@ import WalkthroughsView from '@/views/WalkthroughsView.vue'
 import ReviewsView from '@/views/ReviewsView.vue'
 import HelpView from '@/views/HelpView.vue'
 import LoginView from '@/views/LoginView.vue'
+import RegisterView from '@/views/RegisterView.vue'
 import PlaceholderView from '@/views/PlaceholderView.vue'
 
 const router = createRouter({
@@ -28,7 +29,8 @@ const router = createRouter({
     },
     {
       path: '/register',
-      component: PlaceholderView,
+      name: 'register',
+      component: RegisterView,
       meta: { title: 'Регистрация' },
     },
     {

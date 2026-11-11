@@ -1,16 +1,12 @@
 <script setup lang="ts">
 import { onBeforeUnmount, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import AuthDemoHint from '@/components/auth/AuthDemoHint.vue'
 import LoginForm from '@/components/auth/LoginForm.vue'
-import { useTwoFactorDemoShortcut } from '@/composables/useTwoFactorDemoShortcut'
 import type { LoginCredentials } from '@/types/auth'
 
 const router = useRouter()
 const loading = ref(false)
 let timer: ReturnType<typeof setTimeout> | undefined
-
-useTwoFactorDemoShortcut()
 
 function handleSubmit(credentials: LoginCredentials) {
   if (loading.value) return
@@ -35,7 +31,6 @@ onBeforeUnmount(() => {
 <template>
   <div class="login">
     <LoginForm :loading="loading" @submit="handleSubmit" />
-    <AuthDemoHint />
   </div>
 </template>
 
