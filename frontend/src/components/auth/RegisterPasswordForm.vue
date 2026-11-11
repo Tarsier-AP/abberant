@@ -272,14 +272,14 @@ function handleSubmit() {
   align-items: center;
   gap: 4px;
   padding: 0 2px 0 5px;
-  font: 700 11px/14px Roboto, sans-serif;
+  font: 700 12px/16px Roboto, sans-serif;
 }
 
 .register-password-form__requirement::before {
   content: '';
   flex: none;
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   background: var(--color-text);
   border-radius: 50%;
 }
