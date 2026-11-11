@@ -160,9 +160,19 @@ const links = [
           <RouterLink
             class="mobile-menu__action"
             :to="{ name: auth.account?.activated ? 'account-settings' : 'login' }"
+            :aria-label="auth.account?.activated ? 'Аккаунт' : 'Войти'"
             @click="menuOpen = false"
           >
-            {{ auth.account?.activated ? 'Аккаунт' : 'Войти' }}
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2" />
+              <path
+                d="M4 20c0-4.418 3.582-8 8-8s8 3.582 8 8"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+            <span>{{ auth.account?.activated ? 'Аккаунт' : 'Войти' }}</span>
           </RouterLink>
         </div>
       </div>
@@ -371,7 +381,8 @@ const links = [
 
   .nav,
   .search,
-  .theme-toggle {
+  .theme-toggle,
+  .account {
     display: none;
   }
 
