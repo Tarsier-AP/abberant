@@ -5,6 +5,7 @@ import type { TwoFactorMethod } from '@/types/auth'
 export interface AuthAccount {
   login: string
   username: string
+  avatar: string
   additionalEmail: string
   activated: boolean
   twoFactorEnabled: boolean
@@ -55,6 +56,7 @@ export const useAuthStore = defineStore('auth', () => {
     storedAccount
       ? {
           ...storedAccount,
+          avatar: storedAccount.avatar ?? '',
           additionalEmail: storedAccount.additionalEmail ?? '',
           twoFactorMethod: storedAccount.twoFactorMethod ?? 'sms',
           smsNotifications: storedAccount.smsNotifications ?? true,
@@ -85,6 +87,7 @@ export const useAuthStore = defineStore('auth', () => {
     account.value = {
       login: pendingRegistration.value.login,
       username: pendingRegistration.value.username,
+      avatar: '',
       additionalEmail: '',
       activated: false,
       twoFactorEnabled: false,
@@ -104,6 +107,7 @@ export const useAuthStore = defineStore('auth', () => {
     account.value = {
       login: data.login,
       username: data.username,
+      avatar: '',
       additionalEmail: '',
       activated: true,
       twoFactorEnabled: false,
@@ -147,6 +151,13 @@ export const useAuthStore = defineStore('auth', () => {
     writeStored(ACCOUNT_KEY, account.value)
   }
 
+  function setAvatar(dataUrl: string) {
+    if (!account.value) return
+
+    account.value.avatar = dataUrl
+    writeStored(ACCOUNT_KEY, account.value)
+  }
+
   function setSmsNotifications(enabled: boolean) {
     if (!account.value) return
 
@@ -179,6 +190,7 @@ export const useAuthStore = defineStore('auth', () => {
     setTwoFactor,
     setTwoFactorMethod,
     setAdditionalEmail,
+    setAvatar,
     setSmsNotifications,
     matchesAccount,
     reset,

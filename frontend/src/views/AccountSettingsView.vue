@@ -8,6 +8,11 @@ const router = useRouter()
 const auth = useAuthStore()
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const AVATAR_MAX_BYTES = 5 * 1024 * 1024
+const AVATAR_SIZE = 160
+
+const avatarInput = ref<HTMLInputElement | null>(null)
+const avatarError = ref('')
 
 const emailInput = ref<HTMLInputElement | null>(null)
 const editingEmail = ref(false)
@@ -59,6 +64,60 @@ function toggleSmsNotifications() {
   auth.setSmsNotifications(!auth.account.smsNotifications)
 }
 
+async function createAvatarDataUrl(file: File): Promise<string> {
+  const bitmap = await createImageBitmap(file)
+  const canvas = document.createElement('canvas')
+  const context = canvas.getContext('2d')
+
+  canvas.width = AVATAR_SIZE
+  canvas.height = AVATAR_SIZE
+
+  if (!context) {
+    bitmap.close()
+    throw new Error('Canvas is not supported')
+  }
+
+  const scale = Math.max(AVATAR_SIZE / bitmap.width, AVATAR_SIZE / bitmap.height)
+  const width = bitmap.width * scale
+  const height = bitmap.height * scale
+
+  context.drawImage(bitmap, (AVATAR_SIZE - width) / 2, (AVATAR_SIZE - height) / 2, width, height)
+  bitmap.close()
+
+  return canvas.toDataURL('image/webp', 0.85)
+}
+
+async function handleAvatarChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+
+  input.value = ''
+  avatarError.value = ''
+
+  if (!file) return
+
+  if (!file.type.startsWith('image/')) {
+    avatarError.value = 'Выберите файл изображения (JPG, PNG или WebP).'
+    return
+  }
+
+  if (file.size > AVATAR_MAX_BYTES) {
+    avatarError.value = 'Файл слишком большой. Максимальный размер — 5 МБ.'
+    return
+  }
+
+  try {
+    auth.setAvatar(await createAvatarDataUrl(file))
+  } catch {
+    avatarError.value = 'Не удалось обработать изображение. Попробуйте другой файл.'
+  }
+}
+
+function removeAvatar() {
+  avatarError.value = ''
+  auth.setAvatar('')
+}
+
 function startEmailEdit() {
   emailDraft.value = additionalEmail.value
   emailError.value = ''
@@ -99,6 +158,71 @@ onMounted(() => {
     <div v-if="auth.account" class="account-settings__card">
       <section class="account-settings__section" aria-labelledby="account-personal">
         <h2 id="account-personal" class="account-settings__section-title">Личная информация</h2>
+
+        <div class="account-settings__profile">
+          <button
+            class="account-settings__avatar"
+            type="button"
+            aria-label="Изменить фото профиля"
+            @click="avatarInput?.click()"
+          >
+            <img
+              v-if="auth.account.avatar"
+              class="account-settings__avatar-image"
+              :src="auth.account.avatar"
+              alt=""
+            />
+            <svg
+              v-else
+              class="account-settings__avatar-placeholder"
+              width="48"
+              height="48"
+              viewBox="0 0 48 48"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <circle cx="24" cy="17" r="8" opacity="0.7" />
+              <path d="M8 46c0-8.837 7.163-16 16-16s16 7.163 16 16" opacity="0.7" />
+            </svg>
+          </button>
+
+          <div class="account-settings__profile-actions">
+            <span class="account-settings__profile-title">Фото профиля</span>
+            <div class="account-settings__profile-buttons">
+              <button
+                class="account-settings__profile-button"
+                type="button"
+                @click="avatarInput?.click()"
+              >
+                Загрузить фото
+              </button>
+              <button
+                v-if="auth.account.avatar"
+                class="account-settings__profile-button account-settings__profile-button--muted"
+                type="button"
+                @click="removeAvatar"
+              >
+                Удалить
+              </button>
+            </div>
+          </div>
+
+          <input
+            ref="avatarInput"
+            hidden
+            type="file"
+            accept="image/*"
+            @change="handleAvatarChange"
+          />
+
+          <p
+            v-if="avatarError"
+            class="account-settings__error account-settings__error--profile"
+            role="alert"
+          >
+            {{ avatarError }}
+          </p>
+        </div>
 
         <div class="account-settings__rows">
           <div class="account-settings__row">
@@ -294,6 +418,89 @@ onMounted(() => {
 
 .account-settings__section-title {
   font: 600 16px/20px Roboto, sans-serif;
+}
+
+.account-settings__profile {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.account-settings__avatar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  padding: 0;
+  color: var(--color-muted);
+  background: var(--color-surface);
+  border: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.account-settings__avatar:hover {
+  color: var(--color-text);
+}
+
+.account-settings__avatar-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.account-settings__avatar-placeholder {
+  width: 48px;
+  height: 48px;
+}
+
+.account-settings__profile-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.account-settings__profile-title {
+  font: 500 14px/18px Roboto, sans-serif;
+}
+
+.account-settings__profile-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.account-settings__profile-button {
+  padding: 0;
+  color: var(--color-auth-link);
+  background: none;
+  border: 0;
+  font: 400 12px/16px Roboto, sans-serif;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.account-settings__profile-button:hover {
+  opacity: 0.8;
+}
+
+.account-settings__profile-button--muted {
+  color: var(--color-muted);
+}
+
+.account-settings__error--profile {
+  flex-basis: 100%;
 }
 
 .account-settings__rows {
