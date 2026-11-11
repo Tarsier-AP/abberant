@@ -33,6 +33,8 @@ import SiteFooter from '@/components/layout/SiteFooter.vue'
 }
 
 .page__main {
+  display: flex;
   flex: 1;
+  flex-direction: column;
 }
 </style>

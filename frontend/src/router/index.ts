@@ -5,6 +5,7 @@ import NewsView from '@/views/NewsView.vue'
 import WalkthroughsView from '@/views/WalkthroughsView.vue'
 import ReviewsView from '@/views/ReviewsView.vue'
 import HelpView from '@/views/HelpView.vue'
+import LoginView from '@/views/LoginView.vue'
 import PlaceholderView from '@/views/PlaceholderView.vue'
 
 const router = createRouter({
@@ -18,7 +19,23 @@ const router = createRouter({
     { path: '/walkthroughs', component: WalkthroughsView },
     { path: '/walkthroughs/:section', component: WalkthroughsView },
     { path: '/help', component: HelpView, meta: { title: 'Помощь по сайту' } },
-    { path: '/login', component: PlaceholderView, meta: { title: 'Вход' } },
+    { path: '/login', name: 'login', component: LoginView, meta: { title: 'Вход' } },
+    {
+      path: '/login/2fa',
+      name: 'two-factor',
+      component: PlaceholderView,
+      meta: { title: 'Двухфакторная аутентификация' },
+    },
+    {
+      path: '/register',
+      component: PlaceholderView,
+      meta: { title: 'Регистрация' },
+    },
+    {
+      path: '/password-reset',
+      component: PlaceholderView,
+      meta: { title: 'Восстановление пароля' },
+    },
     { path: '/about', component: PlaceholderView, meta: { title: 'О нас' } },
     { path: '/career', component: PlaceholderView, meta: { title: 'Карьера в Abberant' } },
     {
