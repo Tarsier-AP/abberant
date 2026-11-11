@@ -11,6 +11,7 @@ export interface AuthAccount {
   twoFactorEnabled: boolean
   twoFactorMethod: TwoFactorMethod
   smsNotifications: boolean
+  emailNotifications: boolean
 }
 
 export interface PendingRegistration {
@@ -60,6 +61,7 @@ export const useAuthStore = defineStore('auth', () => {
           additionalEmail: storedAccount.additionalEmail ?? '',
           twoFactorMethod: storedAccount.twoFactorMethod ?? 'sms',
           smsNotifications: storedAccount.smsNotifications ?? true,
+          emailNotifications: storedAccount.emailNotifications ?? true,
         }
       : null,
   )
@@ -93,6 +95,7 @@ export const useAuthStore = defineStore('auth', () => {
       twoFactorEnabled: false,
       twoFactorMethod: 'sms',
       smsNotifications: true,
+      emailNotifications: true,
     }
 
     cancelRegistration()
@@ -113,6 +116,7 @@ export const useAuthStore = defineStore('auth', () => {
       twoFactorEnabled: false,
       twoFactorMethod: 'sms',
       smsNotifications: true,
+      emailNotifications: true,
     }
 
     writeStored(ACCOUNT_KEY, account.value)
@@ -165,6 +169,13 @@ export const useAuthStore = defineStore('auth', () => {
     writeStored(ACCOUNT_KEY, account.value)
   }
 
+  function setEmailNotifications(enabled: boolean) {
+    if (!account.value) return
+
+    account.value.emailNotifications = enabled
+    writeStored(ACCOUNT_KEY, account.value)
+  }
+
   function matchesAccount(login: string) {
     if (!account.value) return false
 
@@ -192,6 +203,7 @@ export const useAuthStore = defineStore('auth', () => {
     setAdditionalEmail,
     setAvatar,
     setSmsNotifications,
+    setEmailNotifications,
     matchesAccount,
     reset,
   }

@@ -64,6 +64,12 @@ function toggleSmsNotifications() {
   auth.setSmsNotifications(!auth.account.smsNotifications)
 }
 
+function toggleEmailNotifications() {
+  if (!auth.account) return
+
+  auth.setEmailNotifications(!auth.account.emailNotifications)
+}
+
 async function createAvatarDataUrl(file: File): Promise<string> {
   const bitmap = await createImageBitmap(file)
   const canvas = document.createElement('canvas')
@@ -189,6 +195,13 @@ onMounted(() => {
               Изменить
             </span>
           </button>
+
+          <div class="account-settings__profile-text">
+            <span class="account-settings__profile-title">Фото профиля</span>
+            <span class="account-settings__profile-hint">
+              Наведите на аватар или нажмите, чтобы изменить
+            </span>
+          </div>
 
           <button
             v-if="auth.account.avatar"
@@ -342,6 +355,47 @@ onMounted(() => {
             class="account-settings__row account-settings__row--interactive"
             type="button"
             role="switch"
+            :aria-checked="auth.account.emailNotifications"
+            @click="toggleEmailNotifications"
+          >
+            <span class="account-settings__label">
+              <svg
+                class="account-settings__icon"
+                width="18"
+                height="14"
+                viewBox="0 0 18 14"
+                fill="none"
+                aria-hidden="true"
+              >
+                <rect
+                  x="0.75"
+                  y="0.75"
+                  width="16.5"
+                  height="12.5"
+                  rx="2.25"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  opacity="0.6"
+                />
+                <path
+                  d="M1.5 2.5 9 7.5l7.5-5"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linejoin="round"
+                  opacity="0.6"
+                />
+              </svg>
+              Электронная почта:
+            </span>
+            <span class="account-settings__value">
+              {{ auth.account.emailNotifications ? 'Включено' : 'Выключено' }}
+            </span>
+          </button>
+
+          <button
+            class="account-settings__row account-settings__row--interactive"
+            type="button"
+            role="switch"
             :aria-checked="auth.account.smsNotifications"
             @click="toggleSmsNotifications"
           >
@@ -472,7 +526,24 @@ onMounted(() => {
   opacity: 1;
 }
 
+.account-settings__profile-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.account-settings__profile-title {
+  font: 500 14px/18px Roboto, sans-serif;
+}
+
+.account-settings__profile-hint {
+  color: var(--color-muted);
+  font: 400 12px/16px Roboto, sans-serif;
+}
+
 .account-settings__profile-button {
+  margin-left: auto;
   padding: 0;
   color: var(--color-auth-link);
   background: none;
