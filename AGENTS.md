@@ -16,6 +16,10 @@
 - There is no root `package.json`; the root `package-lock.json` is empty. Run all npm commands from `frontend/`.
 - Node `^22.18.0 || >=24.12.0`; use npm (despite the old "change from bun to npm" commit).
 
+## Workflow
+
+- After completing a task, commit the changes with a clear, descriptive message. Do not leave completed work uncommitted.
+
 ## Commands
 
 Run from `frontend/`:
