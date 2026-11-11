@@ -38,7 +38,7 @@ defineProps<{
   flex-direction: column;
   gap: 8px;
   padding: 8px;
-  background: var(--color-auth-panel);
+  background: var(--color-card);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }

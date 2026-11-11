@@ -174,7 +174,7 @@ function handleSubmit() {
   min-height: 30px;
   padding: 4px 8px;
   color: var(--color-text);
-  background: var(--color-card);
+  background: var(--color-auth-input);
   border: 1px solid var(--color-input-border);
   border-radius: var(--radius);
   font: 400 14px/20px Roboto, sans-serif;
