@@ -172,7 +172,6 @@ const links = [
                 stroke-linecap="round"
               />
             </svg>
-            <span>{{ auth.account?.activated ? 'Аккаунт' : 'Войти' }}</span>
           </RouterLink>
         </div>
       </div>
