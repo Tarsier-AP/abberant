@@ -304,7 +304,7 @@ function handleSubmit() {
   border: 0;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  font: 400 11px/14px Roboto, sans-serif;
+  font: 400 12px/16px Roboto, sans-serif;
   cursor: pointer;
 }
 

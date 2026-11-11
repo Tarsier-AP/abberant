@@ -40,6 +40,11 @@ const activationUrl = computed(() => {
         {{ activationUrl }}
       </RouterLink>
 
+      <p class="account-activation__warning" role="note">
+        Внимание: эта ссылка временная и показана только для демонстрации. В рабочей версии
+        она придёт в сообщении на указанный контакт.
+      </p>
+
       <p class="account-activation__note">Ссылка действует 24 часа.</p>
     </div>
   </AuthCard>
@@ -66,6 +71,14 @@ const activationUrl = computed(() => {
 
 .account-activation__url:hover {
   opacity: 0.8;
+}
+
+.account-activation__warning {
+  padding: 8px;
+  color: var(--color-warning);
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  font: 600 12px/16px Roboto, sans-serif;
 }
 
 .account-activation__note {
