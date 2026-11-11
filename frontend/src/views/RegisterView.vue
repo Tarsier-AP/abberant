@@ -54,8 +54,8 @@ onBeforeUnmount(() => {
   position: relative;
   display: flex;
   flex: 1;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  padding: 32px 16px 56px;
+  padding: 32px 16px;
 }
 </style>
