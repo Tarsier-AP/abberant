@@ -402,7 +402,6 @@ onMounted(() => {
   margin-inline: auto;
   padding: 8px;
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
 }
 
 .account-settings__section {
