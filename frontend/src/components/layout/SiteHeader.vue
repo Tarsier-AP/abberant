@@ -371,8 +371,7 @@ const links = [
 
   .nav,
   .search,
-  .theme-toggle,
-  .account {
+  .theme-toggle {
     display: none;
   }
 
