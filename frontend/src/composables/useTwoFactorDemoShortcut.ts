@@ -12,7 +12,7 @@ export function useTwoFactorDemoShortcut() {
     if (event.code !== 'Digit2') return
 
     event.preventDefault()
-    void router.push({ name: 'two-factor' })
+    void router.push({ name: 'two-factor', query: { demo: '1' } })
   }
 
   onMounted(() => window.addEventListener('keydown', handleKeydown))

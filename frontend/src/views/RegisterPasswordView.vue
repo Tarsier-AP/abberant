@@ -4,8 +4,10 @@ import { useRouter } from 'vue-router'
 import AuthDemoHint from '@/components/auth/AuthDemoHint.vue'
 import RegisterPasswordForm from '@/components/auth/RegisterPasswordForm.vue'
 import { useTwoFactorDemoShortcut } from '@/composables/useTwoFactorDemoShortcut'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const auth = useAuthStore()
 const loading = ref(false)
 let timer: ReturnType<typeof setTimeout> | undefined
 
@@ -19,13 +21,20 @@ function handleSubmit() {
   // Simulated request until the Go backend and the real auth flow exist.
   timer = setTimeout(() => {
     loading.value = false
-    void router.push({ name: 'two-factor' })
+
+    if (auth.completeRegistration()) {
+      void router.push({ name: 'register-activation' })
+      return
+    }
+
+    void router.push({ name: 'register' })
   }, 700)
 }
 
 function handleCancel() {
   if (timer) clearTimeout(timer)
 
+  auth.cancelRegistration()
   loading.value = false
   void router.push({ name: 'login' })
 }

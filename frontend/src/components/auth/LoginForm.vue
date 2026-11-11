@@ -5,10 +5,12 @@ import AuthCard from './AuthCard.vue'
 
 defineProps<{
   loading?: boolean
+  error?: string
 }>()
 
 const emit = defineEmits<{
   submit: [credentials: LoginCredentials]
+  'clear-error': []
 }>()
 
 const form = reactive<LoginCredentials>({
@@ -59,6 +61,8 @@ function handleBlur(field: 'login' | 'password') {
 }
 
 function handleInput(field: 'login' | 'password', event: Event) {
+  emit('clear-error')
+
   if (!touched[field]) return
 
   const value = (event.target as HTMLInputElement).value
@@ -136,6 +140,10 @@ function handleSubmit() {
         </p>
       </div>
 
+      <p v-if="error" class="login-form__error login-form__error--form" role="alert">
+        {{ error }}
+      </p>
+
       <div class="login-form__actions">
         <button class="login-form__submit" type="submit" :disabled="loading">
           {{ loading ? 'Проверяем…' : 'Далее' }}
@@ -200,6 +208,10 @@ function handleSubmit() {
 .login-form__error {
   color: var(--color-danger);
   font: 400 12px/16px Roboto, sans-serif;
+}
+
+.login-form__error--form {
+  padding: 0 8px;
 }
 
 .login-form__links {

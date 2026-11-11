@@ -1,20 +1,31 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import TwoFactorForm from '@/components/auth/TwoFactorForm.vue'
+import { useAuthStore } from '@/stores/auth'
 import type { TwoFactorMethod } from '@/types/auth'
 
 const route = useRoute()
 const router = useRouter()
+const auth = useAuthStore()
 const loading = ref(false)
 let timer: ReturnType<typeof setTimeout> | undefined
+
+const isDemo = computed(() => route.query.demo === '1')
+const allowed = computed(() => isDemo.value || auth.canUseTwoFactor)
 
 const method = computed<TwoFactorMethod>(() => {
   const value = route.query.method
 
-  if (value === 'authenticator' || value === 'email') return value
+  if (value === 'authenticator' || value === 'email' || value === 'sms') return value
 
-  return 'sms'
+  return auth.account?.twoFactorMethod ?? 'sms'
+})
+
+onMounted(() => {
+  if (!allowed.value) {
+    void router.replace({ name: 'login' })
+  }
 })
 
 function handleSubmit() {
@@ -42,7 +53,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="two-factor">
+  <div v-if="allowed" class="two-factor">
     <TwoFactorForm
       :method="method"
       :loading="loading"

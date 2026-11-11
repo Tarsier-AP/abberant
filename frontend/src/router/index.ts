@@ -8,6 +8,8 @@ import HelpView from '@/views/HelpView.vue'
 import LoginView from '@/views/LoginView.vue'
 import RegisterView from '@/views/RegisterView.vue'
 import RegisterPasswordView from '@/views/RegisterPasswordView.vue'
+import RegisterActivationView from '@/views/RegisterActivationView.vue'
+import AccountActivateView from '@/views/AccountActivateView.vue'
 import TwoFactorView from '@/views/TwoFactorView.vue'
 import PlaceholderView from '@/views/PlaceholderView.vue'
 
@@ -40,6 +42,18 @@ const router = createRouter({
       name: 'register-password',
       component: RegisterPasswordView,
       meta: { title: 'Создание пароля' },
+    },
+    {
+      path: '/register/activate',
+      name: 'register-activation',
+      component: RegisterActivationView,
+      meta: { title: 'Активация аккаунта' },
+    },
+    {
+      path: '/activate',
+      name: 'activate',
+      component: AccountActivateView,
+      meta: { title: 'Активация аккаунта' },
     },
     {
       path: '/password-reset',
