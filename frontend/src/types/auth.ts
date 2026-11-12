@@ -11,3 +11,5 @@ export interface RegisterCredentials {
 }
 
 export type TwoFactorMethod = 'authenticator' | 'sms' | 'email'
+
+export type UserRole = 'reader' | 'editor' | 'owner'

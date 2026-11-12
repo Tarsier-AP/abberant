@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import type { ArticleSection } from '@/types/article'
 import HomeSection from '@/components/home/HomeSection.vue'
 import PagePagination from '@/components/ui/PagePagination.vue'
-import { reviewGroups } from '@/data/articles'
+import { useArticlesStore } from '@/stores/articles'
 
 /** Maximum number of article cards on one archive page; above it a pager appears. */
 const PAGE_LIMIT = 8
@@ -14,12 +14,13 @@ const PREVIEW_LIMIT = 3
 
 const route = useRoute()
 const router = useRouter()
+const store = useArticlesStore()
 const root = ref<HTMLElement | null>(null)
 
 const sectionId = computed(() => (route.params.section as string | undefined) ?? null)
 
 const currentGroup = computed(
-  () => reviewGroups.find((group) => group.id === sectionId.value) ?? null,
+  () => store.reviewSections.find((group) => group.id === sectionId.value) ?? null,
 )
 
 const totalPages = computed(() => {
@@ -50,7 +51,7 @@ const groups = computed<ArticleSection[]>(() => {
     ]
   }
 
-  return reviewGroups.map((group) => ({
+  return store.reviewSections.map((group) => ({
     ...group,
     articles: group.articles.slice(0, PREVIEW_LIMIT),
   }))

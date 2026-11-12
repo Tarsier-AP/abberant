@@ -1,3 +1,7 @@
+export type ArticleKind = 'news' | 'review'
+
+export type ArticleStatus = 'draft' | 'published'
+
 export interface Article {
   id: string
   title: string
@@ -5,6 +9,15 @@ export interface Article {
   date: string
   comments: number
   url: string
+  kind: ArticleKind
+  /** Markdown source of the body; an empty string means the body is not written yet. */
+  content: string
+  author: string
+  status: ArticleStatus
+  /** Review-only fields. */
+  rating?: number
+  platform?: string
+  verdict?: string
 }
 
 export interface Headline {

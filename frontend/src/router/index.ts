@@ -12,7 +12,10 @@ import RegisterActivationView from '@/views/RegisterActivationView.vue'
 import AccountActivateView from '@/views/AccountActivateView.vue'
 import AccountSettingsView from '@/views/AccountSettingsView.vue'
 import TwoFactorView from '@/views/TwoFactorView.vue'
+import ArticleView from '@/views/ArticleView.vue'
+import EditorView from '@/views/EditorView.vue'
 import PlaceholderView from '@/views/PlaceholderView.vue'
+import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -84,7 +87,19 @@ const router = createRouter({
       component: PlaceholderView,
       meta: { title: 'Политика обработки персональных данных' },
     },
-    { path: '/article/:id', component: PlaceholderView, meta: { title: 'Статья' } },
+    { path: '/article/:id', name: 'article', component: ArticleView, meta: { title: 'Статья' } },
+    {
+      path: '/editor',
+      name: 'editor',
+      component: EditorView,
+      meta: { title: 'Новая статья', requiresEditorRole: true },
+    },
+    {
+      path: '/editor/:id',
+      name: 'editor-edit',
+      component: EditorView,
+      meta: { title: 'Редактирование статьи', requiresEditorRole: true },
+    },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
   scrollBehavior(to, _from, savedPosition) {
@@ -93,6 +108,18 @@ const router = createRouter({
 
     return { top: 0 }
   },
+})
+
+/** Only editors and owners may open the article editor. */
+router.beforeEach((to) => {
+  if (!to.meta.requiresEditorRole) return true
+
+  const auth = useAuthStore()
+
+  if (!auth.account) return { name: 'login' }
+  if (!auth.canEditArticles) return { path: '/' }
+
+  return true
 })
 
 export default router

@@ -1,12 +1,16 @@
-import type { Article, ArticleSection, Headline } from '@/types/article'
+import type { Article, ArticleKind, ArticleSection, Headline } from '@/types/article'
 
 const image = '/img/news-placeholder.svg'
+
+const EDITORIAL_AUTHOR = 'Редакция Abberant'
 
 function article(
   id: string,
   title: string,
   comments: number,
   date = '2026-07-01',
+  kind: ArticleKind = 'news',
+  extra: Partial<Article> = {},
 ): Article {
   return {
     id,
@@ -15,6 +19,11 @@ function article(
     date,
     comments,
     url: `/article/${id}`,
+    kind,
+    author: EDITORIAL_AUTHOR,
+    content: '',
+    status: 'published',
+    ...extra,
   }
 }
 
@@ -119,28 +128,79 @@ export const walkthroughs: ArticleSection[] = [
   ]),
 ]
 
+const sampleReviewBody = (game: string, hook: string) => `## Коротко о главном
+
+![Кадр из игры ${game}](${image} "Кадр из игры: ${game}")
+
+${hook}
+
+### Что понравилось
+
+- Атмосфера, от которой не хочется отрываться
+- Продуманный боевой и прогрессионный системы
+- Отличное музыкальное сопровождение
+
+### Что не понравилось
+
+- Спорные решения в балансе поздних этапов
+- Технические недочёты на старте продаж
+
+> ${game} — тот случай, когда продолжение оправдывает ожидания.
+
+Подробнее о рейтинге игр можно прочитать в разделе [«Помощь по сайту»](/help).
+`
+
 const reviews: Article[] = [
   article(
     'review-1',
     'Обзор Elden Ring: Shadow of the Erdtree — достойное продолжение легенды',
     54,
     '2026-06-25',
+    'review',
+    {
+      rating: 5,
+      platform: 'PC, PlayStation 5, Xbox Series X|S',
+      verdict: 'Обязательное дополнение для всех, кому понравилась базовая игра.',
+      content: sampleReviewBody(
+        'Elden Ring: Shadow of the Erdtree',
+        'Междуземье снова зовёт: дополнение предлагает десятки часов контента, новый регион и одни из самых запоминающихся боссов в серии.',
+      ),
+    },
   ),
   article(
     'review-2',
     'Обзор Dragon’s Dogma 2: свобода, которая иногда пугает',
     37,
     '2026-06-22',
+    'review',
+    {
+      rating: 4,
+      platform: 'PC, PlayStation 5, Xbox Series X|S',
+      verdict: 'Смелая и живая RPG, которую прощают её шероховатости.',
+      content: sampleReviewBody(
+        'Dragon’s Dogma 2',
+        'Капком не стал чинить то, что не ломалось: хаотичные путешествия, непредсказуемые встречи и пешки, которых реально хочется хвалить.',
+      ),
+    },
   ),
   article(
     'review-3',
     'Обзор Senua’s Saga: Hellblade II — кино, в которое можно играть',
     29,
     '2026-06-19',
+    'review',
+    {
+      rating: 4,
+      platform: 'PC, Xbox Series X|S',
+      verdict: 'Визуальное великолепие и сильная история ценой короткой кампании.',
+    },
   ),
 ]
 
 export { reviews }
+
+/** Platform sections for `/news/:platform`; the store layers user articles on top. */
+export { newsPlatforms }
 
 /** Reviews feed groups; every group has its own archive page. */
 export const reviewGroups: ArticleSection[] = [
@@ -228,9 +288,44 @@ export const latestNews: Article[] = newsPlatforms
   .flatMap((section) => section.articles)
   .sort((a, b) => b.date.localeCompare(a.date))
 
+const firstNews = newsPlatforms[0]?.articles[0]
+
+if (firstNews) {
+  firstNews.content = `## Итоги презентации
+
+![Демоверсии Steam Next Fest](${image} "Одна из демоверсий фестиваля в действии")
+
+Фестиваль собрал больше сотни бесплатных демоверсий. Мы отобрали двенадцать проектов, которые стоит попробовать до конца недели.
+
+### На что обратить внимание
+
+- Тактические стратегии с необычной системой приказов
+- Сюжетные адвенчуры от независимых студий
+- Кооперативные выживалки с процедурными картами
+
+Полный список демоверсий опубликован [в новостях Steam](https://store.steampowered.com).
+`
+}
+
 export const newsSections: ArticleSection[] = [
   { id: 'all', title: 'Все', href: '/news/all', articles: latestNews },
   ...newsPlatforms,
+]
+
+const walkthroughHighlights: Article[] = [
+  article('walkthrough-1', 'Как пройти все испытания в Ghost of Tsushima', 15, '2026-06-18'),
+  article(
+    'walkthrough-2',
+    'Полное прохождение Baldur’s Gate 3: советы и секреты',
+    63,
+    '2026-06-15',
+  ),
+  article(
+    'walkthrough-3',
+    'Гайд по ресурсам в Fallout 4: где найти всё самое нужное',
+    21,
+    '2026-06-12',
+  ),
 ]
 
 export const sections: ArticleSection[] = [
@@ -250,10 +345,19 @@ export const sections: ArticleSection[] = [
     id: 'walkthroughs',
     title: 'Прохождения',
     href: '/walkthroughs',
-    articles: [
-      article('walkthrough-1', 'Как пройти все испытания в Ghost of Tsushima', 15, '2026-06-18'),
-      article('walkthrough-2', 'Полное прохождение Baldur’s Gate 3: советы и секреты', 63, '2026-06-15'),
-      article('walkthrough-3', 'Гайд по ресурсам в Fallout 4: где найти всё самое нужное', 21, '2026-06-12'),
-    ],
+    articles: walkthroughHighlights,
   },
 ]
+
+/**
+ * Every unique mock article, used by the articles store as seed content:
+ * user-created articles and edits of these entries are layered on top of it.
+ */
+export const mockArticles: Article[] = [
+  ...latestNews,
+  ...reviews,
+  ...walkthroughs.flatMap((section) => section.articles),
+  ...walkthroughHighlights,
+]
+
+export { walkthroughHighlights }

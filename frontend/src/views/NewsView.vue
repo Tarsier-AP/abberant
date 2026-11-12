@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import type { ArticleSection } from '@/types/article'
 import HomeSection from '@/components/home/HomeSection.vue'
 import PagePagination from '@/components/ui/PagePagination.vue'
-import { newsSections } from '@/data/articles'
+import { useArticlesStore } from '@/stores/articles'
 
 /** Maximum number of article cards on one news page (3x2 on desktop). */
 const PAGE_LIMIT = 6
@@ -14,12 +14,13 @@ const PREVIEW_LIMIT = 6
 
 const route = useRoute()
 const router = useRouter()
+const store = useArticlesStore()
 const root = ref<HTMLElement | null>(null)
 
 const sectionId = computed(() => (route.params.platform as string | undefined) ?? null)
 
 const currentSection = computed(
-  () => newsSections.find((section) => section.id === sectionId.value) ?? null,
+  () => store.newsSections.find((section) => section.id === sectionId.value) ?? null,
 )
 
 const totalPages = computed(() => {
@@ -50,7 +51,7 @@ const groups = computed<ArticleSection[]>(() => {
     ]
   }
 
-  return newsSections.map((section) => ({
+  return store.newsSections.map((section) => ({
     ...section,
     // Every section fills two desktop rows with six cards.
     articles: section.articles.slice(0, PREVIEW_LIMIT),

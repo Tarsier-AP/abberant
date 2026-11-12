@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import type { TwoFactorMethod } from '@/types/auth'
+import type { TwoFactorMethod, UserRole } from '@/types/auth'
 
 export interface AuthAccount {
   login: string
@@ -12,6 +12,7 @@ export interface AuthAccount {
   twoFactorMethod: TwoFactorMethod
   smsNotifications: boolean
   emailNotifications: boolean
+  role: UserRole
 }
 
 export interface PendingRegistration {
@@ -62,6 +63,7 @@ export const useAuthStore = defineStore('auth', () => {
           twoFactorMethod: storedAccount.twoFactorMethod ?? 'sms',
           smsNotifications: storedAccount.smsNotifications ?? true,
           emailNotifications: storedAccount.emailNotifications ?? true,
+          role: storedAccount.role ?? 'reader',
         }
       : null,
   )
@@ -71,6 +73,10 @@ export const useAuthStore = defineStore('auth', () => {
 
   const canUseTwoFactor = computed(
     () => account.value?.activated === true && account.value.twoFactorEnabled === true,
+  )
+
+  const canEditArticles = computed(
+    () => account.value?.role === 'editor' || account.value?.role === 'owner',
   )
 
   function startRegistration(data: PendingRegistration) {
@@ -96,6 +102,7 @@ export const useAuthStore = defineStore('auth', () => {
       twoFactorMethod: 'sms',
       smsNotifications: true,
       emailNotifications: true,
+      role: 'reader',
     }
 
     cancelRegistration()
@@ -117,6 +124,7 @@ export const useAuthStore = defineStore('auth', () => {
       twoFactorMethod: 'sms',
       smsNotifications: true,
       emailNotifications: true,
+      role: 'reader',
     }
 
     writeStored(ACCOUNT_KEY, account.value)
@@ -162,6 +170,13 @@ export const useAuthStore = defineStore('auth', () => {
     writeStored(ACCOUNT_KEY, account.value)
   }
 
+  function setRole(role: UserRole) {
+    if (!account.value) return
+
+    account.value.role = role
+    writeStored(ACCOUNT_KEY, account.value)
+  }
+
   function setSmsNotifications(enabled: boolean) {
     if (!account.value) return
 
@@ -193,6 +208,7 @@ export const useAuthStore = defineStore('auth', () => {
     account,
     pendingRegistration,
     canUseTwoFactor,
+    canEditArticles,
     startRegistration,
     cancelRegistration,
     completeRegistration,
@@ -202,6 +218,7 @@ export const useAuthStore = defineStore('auth', () => {
     setTwoFactorMethod,
     setAdditionalEmail,
     setAvatar,
+    setRole,
     setSmsNotifications,
     setEmailNotifications,
     matchesAccount,

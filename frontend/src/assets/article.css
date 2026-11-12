@@ -1,0 +1,118 @@
+/*
+ * Typography for rendered markdown article bodies. Shared by the article page
+ * and the editor preview; content is injected via v-html, so the rules live in
+ * a global stylesheet instead of scoped component styles.
+ */
+.article-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font: 400 15px/1.55 Roboto, sans-serif;
+  overflow-wrap: anywhere;
+}
+
+.article-body h2,
+.article-body h3,
+.article-body h4 {
+  margin-top: 8px;
+  font-weight: 600;
+}
+
+.article-body h2 {
+  font-size: 20px;
+  line-height: 26px;
+}
+
+.article-body h3 {
+  font-size: 17px;
+  line-height: 22px;
+}
+
+.article-body h4 {
+  font-size: 15px;
+  line-height: 20px;
+}
+
+.article-body p {
+  margin: 0;
+}
+
+.article-body ul,
+.article-body ol {
+  margin: 0;
+  padding-inline-start: 24px;
+  list-style: revert;
+}
+
+.article-body blockquote {
+  margin: 0;
+  padding: 8px 12px;
+  border-inline-start: 3px solid var(--color-accent);
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  font-style: italic;
+}
+
+.article-body a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.article-body figure {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+
+.article-body figure img {
+  width: 100%;
+  border-radius: var(--radius);
+}
+
+.article-body figcaption {
+  color: var(--color-muted);
+  font-size: 12px;
+  line-height: 16px;
+  text-align: center;
+}
+
+.article-body code {
+  padding: 2px 6px;
+  background: var(--color-surface);
+  border-radius: 4px;
+  font-family: 'Roboto Mono', ui-monospace, monospace;
+  font-size: 13px;
+}
+
+.article-body pre {
+  margin: 0;
+  padding: 12px;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  overflow-x: auto;
+}
+
+.article-body pre code {
+  padding: 0;
+  background: none;
+}
+
+.article-body hr {
+  width: 100%;
+  margin: 4px 0;
+  border: 0;
+  border-top: 1px solid var(--color-divider);
+}
+
+.article-body table {
+  border-collapse: collapse;
+}
+
+.article-body th,
+.article-body td {
+  padding: 6px 10px;
+  border: 1px solid var(--color-divider);
+  text-align: left;
+}

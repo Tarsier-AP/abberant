@@ -2,10 +2,14 @@
 import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import type { TwoFactorMethod } from '@/types/auth'
+import type { TwoFactorMethod, UserRole } from '@/types/auth'
 
 const router = useRouter()
 const auth = useAuthStore()
+
+function handleRoleChange(event: Event) {
+  auth.setRole((event.target as HTMLSelectElement).value as UserRole)
+}
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const AVATAR_MAX_BYTES = 5 * 1024 * 1024
@@ -429,6 +433,30 @@ onMounted(() => {
             </span>
           </button>
         </div>
+      </section>
+
+      <div class="account-settings__divider" aria-hidden="true"></div>
+
+      <section class="account-settings__section" aria-labelledby="account-debug">
+        <h2 id="account-debug" class="account-settings__section-title">Отладка</h2>
+
+        <label class="account-settings__row account-settings__row--select">
+          <span class="account-settings__label">Роль в системе (отладка):</span>
+          <select :value="auth.account.role" @change="handleRoleChange">
+            <option value="reader">Читатель</option>
+            <option value="editor">Редактор</option>
+            <option value="owner">Владелец</option>
+          </select>
+        </label>
+
+        <RouterLink
+          v-if="auth.canEditArticles"
+          class="account-settings__row account-settings__row--link"
+          to="/editor"
+        >
+          <span class="account-settings__label">Редактор статей:</span>
+          <span class="account-settings__value">Открыть</span>
+        </RouterLink>
       </section>
     </div>
   </div>
