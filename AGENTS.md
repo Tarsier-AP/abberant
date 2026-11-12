@@ -54,6 +54,16 @@ NAPI_RS_FORCE_WASI=true npm run build
 - Dates are ISO strings displayed as `dd.mm.yyyy` via `src/utils/date.ts`.
 - `src/stores/counter.ts` is unused Vue template scaffolding; do not use it as a state-management pattern to copy.
 
+### Account and auth pages
+
+- Auth is mocked in `src/stores/auth.ts`; there are no backend calls. State persists in `localStorage` under `abberant-auth-account` and `abberant-auth-pending-registration`.
+- Flow: `/register` → `/register/password` → `/register/activate` → `/activate` (activation redirects to `/`). Login goes to `/2fa` only when the account is activated and 2FA is enabled in settings.
+- `/account/settings` (`src/views/AccountSettingsView.vue`) follows the Figma export supplied as JSON; there is no screenshot or image asset in the repo, so treat the CSS below as the layout reference.
+- `.account-settings__card` is a transparent layout wrapper: `max-width: 800px`, `padding: 8px`, `gap: 10px`, `border-radius` only — **no `background` and no `box-shadow`**. Do not restore them; surfaces belong to the inner blocks.
+- Visual surfaces: `.account-settings__section` uses `--color-surface` + `--shadow`; `.account-settings__row`, `.account-settings__profile` and `.account-settings__email-form` use `--color-card` + `--shadow`.
+- Section order: «Личная информация» (avatar, phone, additional email, email), «Безопасность» (2FA switch + method, change password), «Уведомления» (email, SMS).
+- The avatar is a 72px circle with a hover/focus overlay «Изменить»; uploads are cropped to 160×160 WebP and stored as a data URL in the auth store.
+
 ### Grid system
 
 Card grids are rendered by `HomeSection` (`src/components/home/HomeSection.vue`) and its `ArticleSection` data.
