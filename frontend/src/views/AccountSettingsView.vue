@@ -728,5 +728,16 @@ onMounted(() => {
   .account-settings__row {
     align-items: flex-start;
   }
+
+  .account-settings__label {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .account-settings__value {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
 }
 </style>
