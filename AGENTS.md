@@ -4,7 +4,7 @@
 
 - Backend: Go using the Fiber web framework (implemented, `backend/`).
 - Database: PostgreSQL via `jackc/pgx/v5`; dev runs an `embedded-postgres` instance (no Docker needed) when `ABBERANT_DATABASE_DSN` is unset.
-- Server/reverse proxy: nginx (`nginx/abberant.conf` in the repo).
+- Server/reverse proxy: nginx (`nginx/` has Linux and Windows variants plus a README).
 - Target OS: Linux and Windows.
 
 ## Project shape
