@@ -1,5 +1,3 @@
-// Command server runs the Abberant backend: Fiber API, PostgreSQL and the
-// SMTP mailer, all configured through environment variables.
 package main
 
 import (

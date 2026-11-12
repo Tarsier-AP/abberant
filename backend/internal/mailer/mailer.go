@@ -1,5 +1,3 @@
-// Package mailer sends transactional email, falling back to the server log
-// when SMTP is not configured.
 package mailer
 
 import (
@@ -14,12 +12,10 @@ import (
 	"abberant/backend/internal/config"
 )
 
-// Mailer delivers an email message to a single recipient.
 type Mailer interface {
 	Send(to, subject, body string) error
 }
 
-// New picks the SMTP sender when configured and the log sender otherwise.
 func New(cfg config.Config) Mailer {
 	if cfg.SMTPEnabled() {
 		return &smtpMailer{cfg: cfg}
@@ -84,7 +80,6 @@ func (m *smtpMailer) Send(to, subject, body string) error {
 	return client.Quit()
 }
 
-// startTLS upgrades the connection when the server advertises STARTTLS.
 func (m *smtpMailer) startTLS(client *smtp.Client) error {
 	if !m.cfg.SMTPStartTL {
 		return nil

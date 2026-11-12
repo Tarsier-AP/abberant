@@ -17,30 +17,24 @@ import (
 	"github.com/skip2/go-qrcode"
 )
 
-// totpPeriod is the standard TOTP timing: 30-second windows.
 const totpPeriod = 30
 
-// BackupCodeCount is how many one-time backup codes are issued.
 const BackupCodeCount = 8
 
-// TOTP manages authenticator-app enrollment and backup codes.
 type TOTP struct {
 	pool *pgxpool.Pool
 }
 
-// NewTOTP builds the TOTP manager.
 func NewTOTP(pool *pgxpool.Pool) *TOTP {
 	return &TOTP{pool: pool}
 }
 
-// Enrollment describes a freshly generated TOTP secret.
 type Enrollment struct {
 	Secret     string
 	OtpauthURL string
 	QRDataURL  string
 }
 
-// GenerateSecret creates a new secret plus a QR code as a data URL.
 func (t *TOTP) GenerateSecret(email string) (*Enrollment, error) {
 	key, err := totp.Generate(totp.GenerateOpts{
 		Issuer:      "Abberant",
@@ -71,8 +65,6 @@ func (t *TOTP) GenerateSecret(email string) (*Enrollment, error) {
 	}, nil
 }
 
-// Verify checks a live TOTP code, allowing one window of drift in either
-// direction (~90 seconds of validity).
 func (t *TOTP) Verify(secret, code string) bool {
 	if secret == "" || code == "" {
 		return false
@@ -91,7 +83,6 @@ func (t *TOTP) Verify(secret, code string) bool {
 	return valid
 }
 
-// GenerateBackupCode returns one code in the XXXX-XXXX form.
 func GenerateBackupCode() (string, error) {
 	const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 
@@ -114,14 +105,12 @@ func GenerateBackupCode() (string, error) {
 	return string(out), nil
 }
 
-// HashBackupCode hashes a backup code for storage.
 func HashBackupCode(code string) string {
 	digest := sha256.Sum256([]byte(code))
 
 	return hex.EncodeToString(digest[:])
 }
 
-// GenerateBackupCodes returns n fresh backup codes.
 func GenerateBackupCodes(n int) ([]string, error) {
 	codes := make([]string, 0, n)
 
@@ -137,15 +126,13 @@ func GenerateBackupCodes(n int) ([]string, error) {
 	return codes, nil
 }
 
-// StoreBackupCodes replaces unused backup codes with the given ones.
 func (t *TOTP) StoreBackupCodes(ctx context.Context, userID int64, codes []string) error {
 	tx, err := t.pool.Begin(ctx)
 	if err != nil {
 		return err
 	}
 
-	defer tx.Rollback(ctx) //nolint:errcheck // read-only rollback
-
+	defer tx.Rollback(ctx)
 	if _, err := tx.Exec(ctx, `
 		DELETE FROM totp_backup_codes WHERE user_id = $1 AND used_at IS NULL
 	`, userID); err != nil {
@@ -163,8 +150,6 @@ func (t *TOTP) StoreBackupCodes(ctx context.Context, userID int64, codes []strin
 	return tx.Commit(ctx)
 }
 
-// ConsumeBackupCode checks the code against every unused backup code of the
-// user and marks the match as used.
 func (t *TOTP) ConsumeBackupCode(ctx context.Context, userID int64, code string) (bool, error) {
 	normalized := normalizeBackupCode(code)
 	if normalized == "" {
@@ -217,8 +202,6 @@ func (t *TOTP) ConsumeBackupCode(ctx context.Context, userID int64, code string)
 	return tag.RowsAffected() > 0, nil
 }
 
-// normalizeBackupCode strips spaces and a surrounding dash variant so users
-// can paste codes with or without separators.
 func normalizeBackupCode(code string) string {
 	var builder []rune
 

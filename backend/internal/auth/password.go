@@ -19,7 +19,6 @@ const (
 	argonSaltLen = 16
 )
 
-// HashPassword derives an Argon2id hash in the PHC string format.
 func HashPassword(password string) (string, error) {
 	salt := make([]byte, argonSaltLen)
 
@@ -37,7 +36,6 @@ func HashPassword(password string) (string, error) {
 	), nil
 }
 
-// VerifyPassword reports whether the password matches the stored PHC hash.
 func VerifyPassword(password, encoded string) bool {
 	parts := strings.Split(encoded, "$")
 	if len(parts) != 6 || parts[1] != "argon2id" {
@@ -72,7 +70,6 @@ func VerifyPassword(password, encoded string) bool {
 	return subtle.ConstantTimeCompare(derived, key) == 1
 }
 
-// ValidatePassword enforces the password policy shared with the frontend.
 func ValidatePassword(password string) bool {
 	if len(password) < 8 {
 		return false
@@ -87,7 +84,6 @@ func ValidatePassword(password string) bool {
 		case unicode.IsDigit(symbol):
 			hasDigit = true
 		case unicode.IsLetter(symbol):
-			// Lowercase letters are fine and add nothing.
 		default:
 			hasSpecial = true
 		}

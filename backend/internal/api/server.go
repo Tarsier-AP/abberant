@@ -1,4 +1,3 @@
-// Package api exposes the auth service over HTTP with Fiber under /api/v1.
 package api
 
 import (
@@ -13,7 +12,6 @@ import (
 	"abberant/backend/internal/session"
 )
 
-// Server holds shared dependencies for the handlers.
 type Server struct {
 	cfg   config.Config
 	auth  *auth.Service
@@ -21,7 +19,6 @@ type Server struct {
 	app   *fiber.App
 }
 
-// New builds the Fiber application with all routes registered.
 func New(cfg config.Config, service *auth.Service, store *session.Store) *fiber.App {
 	app := fiber.New(fiber.Config{
 		ErrorHandler:          errorHandler,
@@ -54,7 +51,6 @@ func New(cfg config.Config, service *auth.Service, store *session.Store) *fiber.
 	return app
 }
 
-// errorHandler converts errors and panics into JSON responses.
 func errorHandler(ctx *fiber.Ctx, err error) error {
 	if apiErr, ok := err.(*auth.Error); ok {
 		return ctx.Status(apiErr.Status).JSON(fiber.Map{"error": apiErr.Message})

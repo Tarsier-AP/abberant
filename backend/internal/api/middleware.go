@@ -7,7 +7,6 @@ import (
 	"abberant/backend/internal/session"
 )
 
-// Account mirrors the frontend AuthAccount shape.
 type Account struct {
 	Login              string `json:"login"`
 	Username           string `json:"username"`
@@ -38,7 +37,6 @@ func newAccount(user *auth.User) *Account {
 	}
 }
 
-// setSessionCookie writes the opaque session token as an HttpOnly cookie.
 func (s *Server) setSessionCookie(ctx *fiber.Ctx, token string) {
 	ctx.Cookie(&fiber.Cookie{
 		Name:     session.CookieName,
@@ -50,7 +48,6 @@ func (s *Server) setSessionCookie(ctx *fiber.Ctx, token string) {
 	})
 }
 
-// clearSessionCookie invalidates the session cookie.
 func (s *Server) clearSessionCookie(ctx *fiber.Ctx) {
 	ctx.Cookie(&fiber.Cookie{
 		Name:     session.CookieName,
@@ -67,7 +64,6 @@ func (s *Server) sessionToken(ctx *fiber.Ctx) string {
 	return ctx.Cookies(session.CookieName)
 }
 
-// requireSession allows only full sessions.
 func (s *Server) requireSession(ctx *fiber.Ctx) error {
 	session, user, err := s.resolve(ctx)
 	if err != nil {
@@ -84,7 +80,6 @@ func (s *Server) requireSession(ctx *fiber.Ctx) error {
 	return ctx.Next()
 }
 
-// requireAnySession allows both full and pending sessions.
 func (s *Server) requireAnySession(ctx *fiber.Ctx) error {
 	session, user, err := s.resolve(ctx)
 	if err != nil {
@@ -101,7 +96,6 @@ func (s *Server) requireAnySession(ctx *fiber.Ctx) error {
 	return ctx.Next()
 }
 
-// resolve loads the live session behind the cookie together with its user.
 func (s *Server) resolve(ctx *fiber.Ctx) (*session.Session, *auth.User, error) {
 	token := s.sessionToken(ctx)
 	if token == "" {

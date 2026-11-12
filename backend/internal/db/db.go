@@ -113,7 +113,6 @@ func stopEmbedded(stop func()) {
 	}
 }
 
-// migrateUp applies every embedded migration exactly once via golang-migrate.
 func migrateUp(pool *pgxpool.Pool) error {
 	source, err := iofs.New(migrationFS, "migrations")
 	if err != nil {

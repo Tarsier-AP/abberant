@@ -13,27 +13,22 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Code kinds stored in the codes table.
 const (
 	KindActivation = "activation"
 	KindTwoFactor  = "twofactor"
 )
 
-// CodeTTL is how long a single-use code stays valid.
 const CodeTTL = 5 * time.Minute
 
-// Codes issues and verifies single-use email codes.
 type Codes struct {
 	pool *pgxpool.Pool
 	ttl  time.Duration
 }
 
-// NewCodes builds the code store.
 func NewCodes(pool *pgxpool.Pool, ttl time.Duration) *Codes {
 	return &Codes{pool: pool, ttl: ttl}
 }
 
-// NewCode returns a random six-digit code.
 func NewCode() (string, error) {
 	raw := make([]byte, 4)
 
@@ -46,15 +41,12 @@ func NewCode() (string, error) {
 	return fmt.Sprintf("%06d", value), nil
 }
 
-// HashCode hashes a code with SHA-256 for storage.
 func HashCode(code string) string {
 	digest := sha256.Sum256([]byte(code))
 
 	return hex.EncodeToString(digest[:])
 }
 
-// Issue stores a fresh code for the user, invalidating previous unused codes
-// of the same kind.
 func (c *Codes) Issue(ctx context.Context, userID int64, email, kind string) (string, error) {
 	code, err := NewCode()
 	if err != nil {
@@ -81,8 +73,6 @@ func (c *Codes) Issue(ctx context.Context, userID int64, email, kind string) (st
 	return code, nil
 }
 
-// Verify checks the code against the newest unused non-expired code of the
-// given kind and marks it used on success.
 func (c *Codes) Verify(ctx context.Context, userID int64, kind, code string) (bool, error) {
 	var (
 		codeHash  string

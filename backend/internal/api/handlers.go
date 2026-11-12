@@ -69,7 +69,6 @@ func devCodeField(code string) fiber.Map {
 	return fiber.Map{"devCode": code}
 }
 
-// POST /api/v1/register
 func (s *Server) handleRegister(ctx *fiber.Ctx) error {
 	var req registerRequest
 
@@ -77,7 +76,6 @@ func (s *Server) handleRegister(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	// The response is identical whether the email is already registered.
 	token, err := s.auth.StartRegistration(ctx.Context(), req.Email, req.Username)
 	if err != nil {
 		return err
@@ -89,7 +87,6 @@ func (s *Server) handleRegister(ctx *fiber.Ctx) error {
 	})
 }
 
-// POST /api/v1/register/password
 func (s *Server) handleRegisterPassword(ctx *fiber.Ctx) error {
 	var req registerPasswordRequest
 
@@ -110,7 +107,6 @@ func (s *Server) handleRegisterPassword(ctx *fiber.Ctx) error {
 	return ctx.JSON(response)
 }
 
-// POST /api/v1/register/activate
 func (s *Server) handleRegisterActivate(ctx *fiber.Ctx) error {
 	var req codeRequest
 
@@ -125,7 +121,6 @@ func (s *Server) handleRegisterActivate(ctx *fiber.Ctx) error {
 	return ctx.JSON(fiber.Map{"status": "ok"})
 }
 
-// POST /api/v1/activate
 func (s *Server) handleActivate(ctx *fiber.Ctx) error {
 	var req codeRequest
 
@@ -140,7 +135,6 @@ func (s *Server) handleActivate(ctx *fiber.Ctx) error {
 	return ctx.JSON(fiber.Map{"status": "ok"})
 }
 
-// POST /api/v1/login
 func (s *Server) handleLogin(ctx *fiber.Ctx) error {
 	var req loginRequest
 
@@ -176,7 +170,6 @@ func (s *Server) handleLogin(ctx *fiber.Ctx) error {
 	return ctx.JSON(response)
 }
 
-// POST /api/v1/login/2fa
 func (s *Server) handleLogin2FA(ctx *fiber.Ctx) error {
 	pending, err := s.pendingSession(ctx)
 	if err != nil {
@@ -200,7 +193,6 @@ func (s *Server) handleLogin2FA(ctx *fiber.Ctx) error {
 	return ctx.JSON(fiber.Map{"status": "ok", "account": newAccount(user)})
 }
 
-// pendingSession loads the pending session required for the 2FA step.
 func (s *Server) pendingSession(ctx *fiber.Ctx) (*session.Session, error) {
 	token := s.sessionToken(ctx)
 	if token == "" {
@@ -219,7 +211,6 @@ func (s *Server) pendingSession(ctx *fiber.Ctx) (*session.Session, error) {
 	return pending, nil
 }
 
-// POST /api/v1/logout
 func (s *Server) handleLogout(ctx *fiber.Ctx) error {
 	token := s.sessionToken(ctx)
 
@@ -241,7 +232,6 @@ func (s *Server) handleLogout(ctx *fiber.Ctx) error {
 	return ctx.JSON(fiber.Map{"status": "ok"})
 }
 
-// POST /api/v1/logout/all
 func (s *Server) handleLogoutAll(ctx *fiber.Ctx) error {
 	session, user, err := s.resolve(ctx)
 	if err != nil {
@@ -259,14 +249,12 @@ func (s *Server) handleLogoutAll(ctx *fiber.Ctx) error {
 	return ctx.JSON(fiber.Map{"status": "ok", "revokedAll": true})
 }
 
-// GET /api/v1/me
 func (s *Server) handleMe(ctx *fiber.Ctx) error {
 	user := s.currentUser(ctx)
 
 	return ctx.JSON(fiber.Map{"account": newAccount(user)})
 }
 
-// PATCH /api/v1/me
 func (s *Server) handlePatchMe(ctx *fiber.Ctx) error {
 	user := s.currentUser(ctx)
 
@@ -340,7 +328,6 @@ func (s *Server) handlePatchMe(ctx *fiber.Ctx) error {
 	return ctx.JSON(fiber.Map{"account": newAccount(user)})
 }
 
-// changeTwoFactorState validates a toggle of the 2FA switch.
 func (s *Server) changeTwoFactorState(ctx *fiber.Ctx, user *auth.User, enabled bool) error {
 	if !enabled {
 		if err := s.auth.Disable2FA(ctx.Context(), user.ID); err != nil {

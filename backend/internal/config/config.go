@@ -1,4 +1,3 @@
-// Package config loads server configuration from environment variables.
 package config
 
 import (
@@ -7,7 +6,6 @@ import (
 	"time"
 )
 
-// Config drives the Fiber server, database and mailer.
 type Config struct {
 	Addr         string
 	DSN          string

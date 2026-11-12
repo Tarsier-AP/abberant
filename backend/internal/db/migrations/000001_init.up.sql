@@ -17,7 +17,6 @@ CREATE TABLE users (
     created_at              timestamptz NOT NULL DEFAULT now()
 );
 
--- Login identifier is email only; uniqueness is enforced case-insensitively.
 CREATE UNIQUE INDEX users_email_lower_key ON users (lower(email));
 
 CREATE TABLE sessions (

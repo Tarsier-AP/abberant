@@ -13,7 +13,6 @@ type codeOnlyRequest struct {
 	Code string `json:"code"`
 }
 
-// POST /api/v1/2fa/totp/setup
 func (s *Server) handleTotpSetup(ctx *fiber.Ctx) error {
 	user := s.currentUser(ctx)
 
@@ -34,7 +33,6 @@ func (s *Server) handleTotpSetup(ctx *fiber.Ctx) error {
 	})
 }
 
-// POST /api/v1/2fa/totp/confirm
 func (s *Server) handleTotpConfirm(ctx *fiber.Ctx) error {
 	user := s.currentUser(ctx)
 
@@ -52,7 +50,6 @@ func (s *Server) handleTotpConfirm(ctx *fiber.Ctx) error {
 	return ctx.JSON(fiber.Map{"status": "ok", "backupCodes": codes})
 }
 
-// POST /api/v1/2fa/email/send
 func (s *Server) handleEmailSend(ctx *fiber.Ctx) error {
 	user := s.currentUser(ctx)
 	pending, _ := ctx.Locals("session").(*session.Session)
@@ -78,7 +75,6 @@ func (s *Server) handleEmailSend(ctx *fiber.Ctx) error {
 	return ctx.JSON(response)
 }
 
-// POST /api/v1/2fa/backup/codes/regenerate
 func (s *Server) handleBackupRegenerate(ctx *fiber.Ctx) error {
 	user := s.currentUser(ctx)
 

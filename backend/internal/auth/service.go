@@ -1,5 +1,3 @@
-// Package auth implements registration, activation, login with 2FA (TOTP,
-// email codes and backup codes) and anti-enumeration semantics.
 package auth
 
 import (
@@ -15,7 +13,6 @@ import (
 	"abberant/backend/internal/session"
 )
 
-// Error is a user-facing auth failure with an HTTP status.
 type Error struct {
 	Status  int
 	Message string
@@ -23,7 +20,6 @@ type Error struct {
 
 func (e *Error) Error() string { return e.Message }
 
-// Fail builds a user-facing auth error with an HTTP status.
 func Fail(status int, message string) *Error {
 	return &Error{Status: status, Message: message}
 }
@@ -32,7 +28,6 @@ func fail(status int, message string) *Error {
 	return Fail(status, message)
 }
 
-// Sentinel failures with fixed Russian copy.
 var (
 	ErrInvalidCredentials  = fail(401, "Неверный логин или пароль.")
 	ErrNotActivated        = fail(403, "Аккаунт не активирован. Проверьте электронную почту.")
@@ -45,7 +40,6 @@ var (
 	ErrBad2FAMethod        = fail(400, "Неизвестный способ подтверждения.")
 )
 
-// Service coordinates auth flows on top of the stores.
 type Service struct {
 	pool     *pgxpool.Pool
 	users    *Users
@@ -57,7 +51,6 @@ type Service struct {
 	cfg      config.Config
 }
 
-// NewService wires the auth service.
 func NewService(
 	pool *pgxpool.Pool,
 	sessions *session.Store,
@@ -76,19 +69,16 @@ func NewService(
 	}
 }
 
-// SaveProfile persists the mutable profile columns of a user.
 func (s *Service) SaveProfile(ctx context.Context, user *User) error {
 	return s.users.SaveProfile(ctx, user)
 }
 
-// UserByID loads a user by primary key for the API layer.
 func (s *Service) UserByID(ctx context.Context, id int64) (*User, error) {
 	return s.users.ByID(ctx, id)
 }
 
-// LoginResult is the outcome of a login step.
 type LoginResult struct {
-	Status              string // "ok" | "2fa_required"
+	Status              string
 	SessionToken        string
 	TwoFactorMethod     string
 	Email2FADevCode     string
@@ -96,7 +86,6 @@ type LoginResult struct {
 	RegistrationDevCode string
 }
 
-// ClientIP extracts the remote address without the port.
 func ClientIP(remote string) string {
 	host, _, err := net.SplitHostPort(remote)
 	if err != nil {
@@ -116,9 +105,6 @@ func (s *Service) attemptKeys(email, ip string) []string {
 	return keys
 }
 
-// StartRegistration creates (or renews) a pending registration and returns an
-// opaque registration token. The response is identical whether or not the
-// email is already registered.
 func (s *Service) StartRegistration(ctx context.Context, email, username string) (string, error) {
 	email = NormalizeEmail(email)
 	username = NormalizeUsername(username)
@@ -147,7 +133,6 @@ func (s *Service) StartRegistration(ctx context.Context, email, username string)
 			return "", err
 		}
 	case existing.Activated || existing.PasswordHash != "":
-		// Ambiguous success: hand back a token that matches no registration.
 	default:
 		if err := s.users.SetRegistrationToken(ctx, existing.ID, tokenHash); err != nil {
 			return "", err
@@ -157,8 +142,6 @@ func (s *Service) StartRegistration(ctx context.Context, email, username string)
 	return token, nil
 }
 
-// SetPassword stores the password of a pending registration and emails the
-// activation code.
 func (s *Service) SetPassword(ctx context.Context, registrationToken, password, ip string) (*LoginResult, error) {
 	user, err := s.userByRegistrationToken(ctx, registrationToken)
 	if err != nil {
@@ -181,8 +164,6 @@ func (s *Service) SetPassword(ctx context.Context, registrationToken, password, 
 	return s.sendActivationCode(ctx, user)
 }
 
-// userByRegistrationToken validates a registration token for a pending user.
-// The result is deliberately uniform on failure.
 func (s *Service) userByRegistrationToken(ctx context.Context, registrationToken string) (*User, error) {
 	if registrationToken == "" {
 		return nil, ErrInvalidRegistration
@@ -200,7 +181,6 @@ func (s *Service) userByRegistrationToken(ctx context.Context, registrationToken
 	return user, nil
 }
 
-// sendActivationCode issues and delivers a fresh activation code.
 func (s *Service) sendActivationCode(ctx context.Context, user *User) (*LoginResult, error) {
 	code, err := s.codes.Issue(ctx, user.ID, user.Email, KindActivation)
 	if err != nil {
@@ -231,7 +211,6 @@ func (s *Service) devCode(code string) string {
 	return ""
 }
 
-// ActivateByToken completes a registration started on the site.
 func (s *Service) ActivateByToken(ctx context.Context, registrationToken, code, ip string) error {
 	user, err := s.userByRegistrationToken(ctx, registrationToken)
 	if err != nil {
@@ -241,8 +220,6 @@ func (s *Service) ActivateByToken(ctx context.Context, registrationToken, code, 
 	return s.activate(ctx, user, code, ip)
 }
 
-// ActivateByEmail completes activation when the registration token is lost
-// (e.g. the browser was closed between steps).
 func (s *Service) ActivateByEmail(ctx context.Context, email, code, ip string) error {
 	email = NormalizeEmail(email)
 
@@ -252,7 +229,6 @@ func (s *Service) ActivateByEmail(ctx context.Context, email, code, ip string) e
 	}
 
 	if user == nil || user.Activated || user.PasswordHash == "" {
-		// Uniform failure: no hint about the account state.
 		return ErrInvalidCode
 	}
 
@@ -288,7 +264,6 @@ func (s *Service) activate(ctx context.Context, user *User, code, ip string) err
 	return nil
 }
 
-// Login performs the password step of the login flow.
 func (s *Service) Login(ctx context.Context, email, password, ip string) (*LoginResult, *User, error) {
 	email = NormalizeEmail(email)
 
@@ -301,8 +276,6 @@ func (s *Service) Login(ctx context.Context, email, password, ip string) (*Login
 		return nil, nil, err
 	}
 
-	// Uniform failure for unknown accounts, password-less pending
-	// registrations and wrong passwords alike.
 	if user == nil || user.PasswordHash == "" || !VerifyPassword(password, user.PasswordHash) {
 		if err := s.recordAttempts(ctx, s.attemptKeys(email, ip)); err != nil {
 			return nil, nil, err
@@ -352,8 +325,6 @@ func (s *Service) Login(ctx context.Context, email, password, ip string) (*Login
 	return &LoginResult{Status: "ok", SessionToken: token}, user, nil
 }
 
-// CompleteTwoFactor verifies the code of a pending login and upgrades the
-// session to a full session.
 func (s *Service) CompleteTwoFactor(ctx context.Context, pending *session.Session, code, ip string) (*session.Session, *User, error) {
 	if err := s.checkAttempts(ctx, s.attemptKeys("", ip)); err != nil {
 		return nil, nil, err
@@ -390,7 +361,6 @@ func (s *Service) CompleteTwoFactor(ctx context.Context, pending *session.Sessio
 	}
 
 	if !verified {
-		// Every method accepts a backup code as a fallback.
 		var backupErr error
 
 		verified, backupErr = s.totp.ConsumeBackupCode(ctx, user.ID, code)
@@ -422,7 +392,6 @@ func (s *Service) CompleteTwoFactor(ctx context.Context, pending *session.Sessio
 	return upgraded, user, nil
 }
 
-// SendEmail2FACode issues and delivers a fresh email 2FA code.
 func (s *Service) SendEmail2FACode(ctx context.Context, user *User, ip string) (string, error) {
 	keys := s.attemptKeys(user.Email, ip)
 	keys = append(keys, fmt.Sprintf("2fa-send:%d", user.ID))
@@ -463,7 +432,6 @@ func (s *Service) issueEmailCode(ctx context.Context, user *User) (string, error
 	return code, nil
 }
 
-// SetupTOTP generates (or regenerates) a pending TOTP secret.
 func (s *Service) SetupTOTP(ctx context.Context, user *User) (*Enrollment, error) {
 	enrollment, err := s.totp.GenerateSecret(user.Email)
 	if err != nil {
@@ -477,7 +445,6 @@ func (s *Service) SetupTOTP(ctx context.Context, user *User) (*Enrollment, error
 	return enrollment, nil
 }
 
-// ConfirmTOTP verifies a live code, activates 2FA and returns backup codes.
 func (s *Service) ConfirmTOTP(ctx context.Context, user *User, code string) ([]string, error) {
 	secret, err := s.users.ByID(ctx, user.ID)
 	if err != nil {
@@ -508,7 +475,6 @@ func (s *Service) ConfirmTOTP(ctx context.Context, user *User, code string) ([]s
 	return codes, nil
 }
 
-// Disable2FA turns two-factor authentication off.
 func (s *Service) Disable2FA(ctx context.Context, userID int64) error {
 	if err := s.users.SetTwoFactor(ctx, userID, false, "", ""); err != nil {
 		return err
@@ -519,7 +485,6 @@ func (s *Service) Disable2FA(ctx context.Context, userID int64) error {
 	return err
 }
 
-// ChangeMethod switches the 2FA method for an enabled account.
 func (s *Service) ChangeMethod(ctx context.Context, user *User, method string) error {
 	if method == "sms" {
 		return ErrSMSUnavailable
@@ -536,7 +501,6 @@ func (s *Service) ChangeMethod(ctx context.Context, user *User, method string) e
 	return s.users.SetTwoFactor(ctx, user.ID, user.TwoFactorEnabled, method, user.TotpSecret)
 }
 
-// Enable2FA turns 2FA on for an account that already has a usable method.
 func (s *Service) Enable2FA(ctx context.Context, user *User, method string) error {
 	switch method {
 	case MethodEmail:
@@ -550,7 +514,6 @@ func (s *Service) Enable2FA(ctx context.Context, user *User, method string) erro
 	}
 }
 
-// RegenerateBackupCodes replaces unused backup codes and returns them.
 func (s *Service) RegenerateBackupCodes(ctx context.Context, user *User) ([]string, error) {
 	if !user.TwoFactorEnabled {
 		return nil, fail(400, "Сначала включите двухфакторную аутентификацию.")
