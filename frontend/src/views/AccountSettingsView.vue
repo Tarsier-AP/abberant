@@ -1093,19 +1093,63 @@ onMounted(() => {
     padding-block: 16px;
   }
 
+  .account-settings__card {
+    gap: 12px;
+    padding: 0;
+  }
+
+  .account-settings__section {
+    padding: 12px;
+  }
+
+  .account-settings__profile {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 8px;
+  }
+
+  .account-settings__avatar {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  .account-settings__profile-text {
+    grid-row: 1;
+    grid-column: 2;
+  }
+
+  .account-settings__profile-button {
+    grid-column: 1 / -1;
+    justify-self: end;
+    margin-left: 0;
+  }
+
+  .account-settings__error--profile {
+    grid-column: 1 / -1;
+  }
+
   .account-settings__row {
-    align-items: flex-start;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
   }
 
   .account-settings__label {
-    flex: 1 1 auto;
+    flex: none;
     min-width: 0;
   }
 
   .account-settings__value {
-    flex: 0 1 auto;
+    flex: none;
     min-width: 0;
+    text-align: left;
     overflow-wrap: anywhere;
+  }
+
+  .account-settings__row--select select {
+    width: 100%;
   }
 }
 </style>
