@@ -1,53 +1,145 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, reactive, ref } from 'vue'
+import type { ComponentPublicInstance } from 'vue'
 import AuthCard from './AuthCard.vue'
 
 const props = defineProps<{
   login: string
   username: string
+  loading?: boolean
+  error?: string
+  devCode?: string
 }>()
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const emit = defineEmits<{
+  submit: [code: string]
+}>()
 
-const isEmail = computed(() => EMAIL_PATTERN.test(props.login))
+const digits = ref<string[]>(['', '', '', '', '', ''])
+const errors = reactive({ code: '' })
+const inputRefs = ref<Array<HTMLInputElement | null>>([])
 
-const destination = computed(() =>
-  isEmail.value
-    ? `на вашу электронную почту ${props.login}`
-    : `в SMS на номер ${props.login}`,
+const description = computed(
+  () => `Мы отправили код активации на вашу электронную почту ${props.login}.`,
 )
 
-const activationUrl = computed(() => {
-  const origin = typeof window === 'undefined' ? '' : window.location.origin
+const title = computed(() => `Активация аккаунта${props.username ? ` — ${props.username}` : ''}`)
 
-  return `${origin}/activate?token=${encodeURIComponent(props.login)}&username=${encodeURIComponent(props.username)}`
-})
+function setInputRef(el: Element | ComponentPublicInstance | null, index: number) {
+  inputRefs.value[index] = el instanceof HTMLInputElement ? el : null
+}
+
+function focusInput(index: number) {
+  inputRefs.value[index]?.focus()
+  inputRefs.value[index]?.select()
+}
+
+function handleInput(index: number, event: Event) {
+  const input = event.target as HTMLInputElement
+  const value = input.value.replace(/\D/g, '').slice(-1)
+
+  digits.value[index] = value
+  input.value = value
+  errors.code = ''
+
+  if (value && index < digits.value.length - 1) {
+    focusInput(index + 1)
+  }
+}
+
+function handleKeydown(index: number, event: KeyboardEvent) {
+  if (event.key === 'Backspace' && !digits.value[index] && index > 0) {
+    event.preventDefault()
+    digits.value[index - 1] = ''
+    focusInput(index - 1)
+    return
+  }
+
+  if (event.key === 'ArrowLeft' && index > 0) {
+    event.preventDefault()
+    focusInput(index - 1)
+  }
+
+  if (event.key === 'ArrowRight' && index < digits.value.length - 1) {
+    event.preventDefault()
+    focusInput(index + 1)
+  }
+}
+
+function handlePaste(event: ClipboardEvent) {
+  const pasted = event.clipboardData?.getData('text').replace(/\D/g, '').slice(0, 6) ?? ''
+
+  if (!pasted) return
+
+  event.preventDefault()
+
+  digits.value = Array.from({ length: 6 }, (_, index) => pasted[index] ?? '')
+  errors.code = ''
+  focusInput(Math.min(pasted.length, digits.value.length - 1))
+}
+
+function handleSubmit() {
+  const code = digits.value.join('')
+
+  if (!/^\d{6}$/.test(code)) {
+    errors.code = 'Введите 6-значный код из сообщения.'
+    const firstEmpty = digits.value.findIndex((digit) => !digit)
+
+    focusInput(firstEmpty === -1 ? 0 : firstEmpty)
+    return
+  }
+
+  emit('submit', code)
+}
 </script>
 
 <template>
-  <AuthCard title="Активация аккаунта" title-shadow>
-    <div class="account-activation">
-      <p class="account-activation__text">
-        Мы отправили ссылку для активации аккаунта {{ destination }}.
-      </p>
-      <p class="account-activation__text">
-        Перейдите по ссылке из сообщения, чтобы активировать аккаунт.
+  <AuthCard :title="title" title-shadow>
+    <form class="account-activation" novalidate @submit.prevent="handleSubmit">
+      <p id="activation-description" class="account-activation__text">
+        {{ description }}
       </p>
 
-      <RouterLink
-        class="account-activation__url"
-        :to="{ name: 'activate', query: { token: login, username } }"
+      <div
+        class="account-activation__code"
+        role="group"
+        aria-labelledby="activation-description"
+        @paste="handlePaste"
       >
-        {{ activationUrl }}
-      </RouterLink>
+        <input
+          v-for="(digit, index) in digits"
+          :key="index"
+          :ref="(el) => setInputRef(el, index)"
+          :value="digit"
+          class="account-activation__digit"
+          type="text"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          maxlength="1"
+          :autocomplete="index === 0 ? 'one-time-code' : 'off'"
+          :aria-label="`Цифра ${index + 1}`"
+          :aria-invalid="errors.code || error ? 'true' : undefined"
+          :aria-describedby="errors.code || error ? 'activation-error' : undefined"
+          :disabled="loading"
+          @input="handleInput(index, $event)"
+          @keydown="handleKeydown(index, $event)"
+        />
+      </div>
 
-      <p class="account-activation__warning" role="note">
-        Внимание: эта ссылка временная и показана только для демонстрации. В рабочей версии
-        она придёт в сообщении на указанный контакт.
+      <p v-if="error || errors.code" id="activation-error" class="account-activation__warning" role="alert">
+        {{ error || errors.code }}
       </p>
 
-      <p class="account-activation__note">Ссылка действует 24 часа.</p>
-    </div>
+      <p v-if="devCode" class="account-activation__dev" role="note">
+        Сервер работает без настроенной почты, код активации: <strong>{{ devCode }}</strong>
+      </p>
+
+      <p class="account-activation__note">Код действует 5 минут и может быть использован один раз.</p>
+
+      <button class="account-activation__submit" type="submit" :disabled="loading">
+        {{ loading ? 'Проверяем…' : 'Активировать' }}
+      </button>
+    </form>
   </AuthCard>
 </template>
 
@@ -63,15 +155,39 @@ const activationUrl = computed(() => {
   font: 400 14px/20px Roboto, sans-serif;
 }
 
-.account-activation__url {
-  color: var(--color-auth-link);
-  font: 400 13px/18px Roboto, sans-serif;
-  overflow-wrap: anywhere;
-  text-decoration: underline;
+.account-activation__code {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
+  padding: 0 8px;
+  background: var(--color-card);
+  border-radius: var(--radius);
 }
 
-.account-activation__url:hover {
-  opacity: 0.8;
+.account-activation__digit {
+  width: 100%;
+  height: 56px;
+  padding: 0;
+  color: var(--color-text);
+  background: var(--color-auth-input);
+  border: 1px solid var(--color-input-border);
+  border-radius: var(--radius);
+  font: 600 22px/1 Roboto, sans-serif;
+  text-align: center;
+}
+
+.account-activation__digit:focus-visible {
+  border-color: var(--color-accent);
+  outline: 2px solid var(--color-accent);
+  outline-offset: 0;
+}
+
+.account-activation__digit[aria-invalid='true'] {
+  border-color: var(--color-danger);
+}
+
+.account-activation__digit:disabled {
+  opacity: 0.7;
 }
 
 .account-activation__warning {
@@ -82,9 +198,41 @@ const activationUrl = computed(() => {
   font: 600 12px/16px Roboto, sans-serif;
 }
 
+.account-activation__dev {
+  padding: 8px;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  font: 600 12px/16px Roboto, sans-serif;
+}
+
 .account-activation__note {
   color: var(--color-muted);
   font: 400 12px/16px Roboto, sans-serif;
   opacity: 0.7;
+}
+
+.account-activation__submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 8px;
+  color: var(--color-text);
+  background: var(--color-card);
+  border: 0;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  font: 400 14px/18px Roboto, sans-serif;
+  cursor: pointer;
+}
+
+.account-activation__submit:hover:not(:disabled) {
+  background: var(--color-card-hover);
+}
+
+.account-activation__submit:disabled {
+  cursor: default;
+  opacity: 0.6;
 }
 </style>

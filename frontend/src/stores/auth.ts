@@ -1,15 +1,18 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { TwoFactorMethod, UserRole } from '@/types/auth'
+import type { ProfilePatch } from '@/api/auth'
+import * as api from '@/api/auth'
 
 export interface AuthAccount {
   login: string
   username: string
   avatar: string
   additionalEmail: string
+  phone: string
   activated: boolean
   twoFactorEnabled: boolean
-  twoFactorMethod: TwoFactorMethod
+  twoFactorMethod: TwoFactorMethod | ''
   smsNotifications: boolean
   emailNotifications: boolean
   role: UserRole
@@ -18,58 +21,41 @@ export interface AuthAccount {
 export interface PendingRegistration {
   login: string
   username: string
+  registrationId: string
+  /** Single-use code echoed back by the server in dev mode. */
+  devCode?: string
 }
 
-const ACCOUNT_KEY = 'abberant-auth-account'
 const PENDING_KEY = 'abberant-auth-pending-registration'
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-function readStored<T>(key: string): T | null {
+function readStoredPending(): PendingRegistration | null {
   try {
-    const raw = localStorage.getItem(key)
-    return raw ? (JSON.parse(raw) as T) : null
+    const raw = localStorage.getItem(PENDING_KEY)
+
+    return raw ? (JSON.parse(raw) as PendingRegistration) : null
   } catch {
     return null
   }
 }
 
-function writeStored(key: string, value: unknown) {
+function writeStoredPending(value: PendingRegistration | null) {
   try {
     if (value === null) {
-      localStorage.removeItem(key)
+      localStorage.removeItem(PENDING_KEY)
     } else {
-      localStorage.setItem(key, JSON.stringify(value))
+      localStorage.setItem(PENDING_KEY, JSON.stringify(value))
     }
   } catch {
     // Ignore storage errors (e.g. private browsing).
   }
 }
 
-function normalizeLogin(value: string): string {
-  const login = value.trim()
-
-  return EMAIL_PATTERN.test(login) ? login.toLowerCase() : login.replace(/\D/g, '')
-}
-
 export const useAuthStore = defineStore('auth', () => {
-  const storedAccount = readStored<AuthAccount>(ACCOUNT_KEY)
-
-  const account = ref<AuthAccount | null>(
-    storedAccount
-      ? {
-          ...storedAccount,
-          avatar: storedAccount.avatar ?? '',
-          additionalEmail: storedAccount.additionalEmail ?? '',
-          twoFactorMethod: storedAccount.twoFactorMethod ?? 'sms',
-          smsNotifications: storedAccount.smsNotifications ?? true,
-          emailNotifications: storedAccount.emailNotifications ?? true,
-          role: storedAccount.role ?? 'reader',
-        }
-      : null,
-  )
-  const pendingRegistration = ref<PendingRegistration | null>(
-    readStored<PendingRegistration>(PENDING_KEY),
-  )
+  const account = ref<AuthAccount | null>(null)
+  const pendingRegistration = ref<PendingRegistration | null>(readStoredPending())
+  /** Set between the password step of the login and the 2FA code step. */
+  const pendingLogin = ref<{ method: TwoFactorMethod | '' } | null>(null)
+  const initialized = ref(false)
 
   const canUseTwoFactor = computed(
     () => account.value?.activated === true && account.value.twoFactorEnabled === true,
@@ -79,149 +65,96 @@ export const useAuthStore = defineStore('auth', () => {
     () => account.value?.role === 'editor' || account.value?.role === 'owner',
   )
 
-  function startRegistration(data: PendingRegistration) {
-    pendingRegistration.value = data
-    writeStored(PENDING_KEY, data)
+  function setAccount(next: AuthAccount | null) {
+    account.value = next
+  }
+
+  /** Loads the current session account (or clears it) once on app start. */
+  async function init() {
+    if (initialized.value) return
+
+    try {
+      const { account: loaded } = await api.fetchMe()
+
+      account.value = loaded
+    } catch {
+      account.value = null
+    } finally {
+      initialized.value = true
+    }
+  }
+
+  function startRegistration(data: Omit<PendingRegistration, 'registrationId'>) {
+    pendingRegistration.value = { ...data, registrationId: '' }
+  }
+
+  function completeStartRegistration(registrationId: string) {
+    if (!pendingRegistration.value) return
+
+    pendingRegistration.value.registrationId = registrationId
+    writeStoredPending(pendingRegistration.value)
   }
 
   function cancelRegistration() {
     pendingRegistration.value = null
-    writeStored(PENDING_KEY, null)
+    writeStoredPending(null)
   }
 
-  function completeRegistration() {
-    if (!pendingRegistration.value) return false
+  function setPendingLogin(method: TwoFactorMethod | '') {
+    pendingLogin.value = { method }
+  }
 
-    account.value = {
-      login: pendingRegistration.value.login,
-      username: pendingRegistration.value.username,
-      avatar: '',
-      additionalEmail: '',
-      activated: false,
-      twoFactorEnabled: false,
-      twoFactorMethod: 'sms',
-      smsNotifications: true,
-      emailNotifications: true,
-      role: 'reader',
+  function clearPendingLogin() {
+    pendingLogin.value = null
+  }
+
+  async function applyPatch(patch: ProfilePatch) {
+    const { account: updated } = await api.patchMe(patch)
+
+    account.value = updated
+  }
+
+  async function endSession() {
+    try {
+      await api.logout()
+    } finally {
+      account.value = null
+      pendingLogin.value = null
     }
-
-    cancelRegistration()
-    writeStored(ACCOUNT_KEY, account.value)
-
-    return true
   }
 
-  function createAccountFromActivation(data: PendingRegistration) {
-    if (account.value) return false
-
-    account.value = {
-      login: data.login,
-      username: data.username,
-      avatar: '',
-      additionalEmail: '',
-      activated: true,
-      twoFactorEnabled: false,
-      twoFactorMethod: 'sms',
-      smsNotifications: true,
-      emailNotifications: true,
-      role: 'reader',
+  async function endAllSessions() {
+    try {
+      await api.logoutAll()
+    } finally {
+      account.value = null
+      pendingLogin.value = null
     }
-
-    writeStored(ACCOUNT_KEY, account.value)
-
-    return true
-  }
-
-  function activateAccount(login?: string) {
-    if (!account.value) return false
-    if (login !== undefined && !matchesAccount(login)) return false
-
-    account.value.activated = true
-    writeStored(ACCOUNT_KEY, account.value)
-
-    return true
-  }
-
-  function setTwoFactor(enabled: boolean) {
-    if (!account.value) return
-
-    account.value.twoFactorEnabled = enabled
-    writeStored(ACCOUNT_KEY, account.value)
-  }
-
-  function setTwoFactorMethod(method: TwoFactorMethod) {
-    if (!account.value) return
-
-    account.value.twoFactorMethod = method
-    writeStored(ACCOUNT_KEY, account.value)
-  }
-
-  function setAdditionalEmail(email: string) {
-    if (!account.value) return
-
-    account.value.additionalEmail = email
-    writeStored(ACCOUNT_KEY, account.value)
-  }
-
-  function setAvatar(dataUrl: string) {
-    if (!account.value) return
-
-    account.value.avatar = dataUrl
-    writeStored(ACCOUNT_KEY, account.value)
-  }
-
-  function setRole(role: UserRole) {
-    if (!account.value) return
-
-    account.value.role = role
-    writeStored(ACCOUNT_KEY, account.value)
-  }
-
-  function setSmsNotifications(enabled: boolean) {
-    if (!account.value) return
-
-    account.value.smsNotifications = enabled
-    writeStored(ACCOUNT_KEY, account.value)
-  }
-
-  function setEmailNotifications(enabled: boolean) {
-    if (!account.value) return
-
-    account.value.emailNotifications = enabled
-    writeStored(ACCOUNT_KEY, account.value)
-  }
-
-  function matchesAccount(login: string) {
-    if (!account.value) return false
-
-    return normalizeLogin(account.value.login) === normalizeLogin(login)
   }
 
   function reset() {
     account.value = null
     pendingRegistration.value = null
-    writeStored(ACCOUNT_KEY, null)
-    writeStored(PENDING_KEY, null)
+    pendingLogin.value = null
+    writeStoredPending(null)
   }
 
   return {
     account,
     pendingRegistration,
+    pendingLogin,
     canUseTwoFactor,
     canEditArticles,
+    init,
+    setAccount,
     startRegistration,
+    completeStartRegistration,
     cancelRegistration,
-    completeRegistration,
-    createAccountFromActivation,
-    activateAccount,
-    setTwoFactor,
-    setTwoFactorMethod,
-    setAdditionalEmail,
-    setAvatar,
-    setRole,
-    setSmsNotifications,
-    setEmailNotifications,
-    matchesAccount,
+    setPendingLogin,
+    clearPendingLogin,
+    applyPatch,
+    endSession,
+    endAllSessions,
     reset,
   }
 })

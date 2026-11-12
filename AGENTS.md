@@ -2,17 +2,16 @@
 
 ## Stack
 
-- Backend: Go using the Fiber web framework.
-- Database: PostgreSQL.
-- Server/reverse proxy: nginx.
+- Backend: Go using the Fiber web framework (implemented, `backend/`).
+- Database: PostgreSQL via `jackc/pgx/v5`; dev runs an `embedded-postgres` instance (no Docker needed) when `ABBERANT_DATABASE_DSN` is unset.
+- Server/reverse proxy: nginx (`nginx/abberant.conf` in the repo).
 - Target OS: Linux and Windows.
-- Fiber, PostgreSQL, and nginx are the intended stack; `backend/` currently has no code or Go module.
 
 ## Project shape
 
 - Gaming news site with a Russian-language UI. Keep new user-facing copy in Russian.
-- `frontend/` is the only implemented part. `backend/` is still empty; the planned backend is Go/Fiber with PostgreSQL behind nginx.
-- The root `.gitignore` is a generic Go template; it does not mean a Go backend exists.
+- Auth is real: Go/Fiber backend under `/api/v1` with server-side sessions (opaque HttpOnly cookie), Argon2id passwords, single-use emailed codes and 2FA (TOTP + email codes + backup codes; SMS is rejected as «скоро»).
+- The root `.gitignore` covers Go artifacts and the embedded-postgres data dir (`backend/.data/`).
 - There is no root `package.json`; the root `package-lock.json` is empty. Run all npm commands from `frontend/`.
 - Node `^22.18.0 || >=24.12.0`; use npm (despite the old "change from bun to npm" commit).
 
@@ -22,7 +21,7 @@
 
 ## Commands
 
-Run from `frontend/`:
+Frontend (run from `frontend/`):
 
 ```sh
 npm ci
@@ -35,6 +34,17 @@ npm run build
 NAPI_RS_FORCE_WASI=true npm run dev
 NAPI_RS_FORCE_WASI=true npm run build
 ```
+
+Backend (run from `backend/`):
+
+```sh
+go build ./...
+go run ./cmd/server          # starts embedded PostgreSQL on :55432 + API on :8080
+ABBERANT_ADDR=":18080" go run ./cmd/server   # when :8080 is taken on this machine
+```
+
+- Dev proxy: `vite.config.ts` forwards `/api` → `http://localhost:8080`.
+- Without SMTP configured the backend logs every code and returns it to the client as `devCode` (dev mode).
 
 - Both `dev` and `build` currently need `NAPI_RS_FORCE_WASI=true` on this machine because the native Rolldown binding crashes; the README only documents this for `dev`.
 - `build` runs `type-check` and `vite build` in parallel via `npm-run-all2`.
@@ -56,13 +66,15 @@ NAPI_RS_FORCE_WASI=true npm run build
 
 ### Account and auth pages
 
-- Auth is mocked in `src/stores/auth.ts`; there are no backend calls. State persists in `localStorage` under `abberant-auth-account` and `abberant-auth-pending-registration`.
-- Flow: `/register` → `/register/password` → `/register/activate` → `/activate` (activation redirects to `/`). Login goes to `/2fa` only when the account is activated and 2FA is enabled in settings.
-- `/account/settings` (`src/views/AccountSettingsView.vue`) follows the Figma export supplied as JSON; there is no screenshot or image asset in the repo, so treat the CSS below as the layout reference.
+- Auth is backed by the Go API (`src/api/client.ts`, `src/api/auth.ts`); the session lives in an HttpOnly cookie, `src/stores/auth.ts` holds only the loaded account and pending registration state. `useAuthStore().init()` runs before app mount (`src/main.ts`).
+- Flow: `/register` (email + username) → `/register/password` → `/register/activate` (6-digit emailed code) → `/login`. `/activate` is the recovery form (email + code). Login goes to `/2fa` only when the backend answers `2fa_required`.
+- Registration is email-only; phone is an editable profile field in settings.
+- 2FA: email codes immediately; authenticator apps go through enrollment (`POST /2fa/totp/setup` → QR + secret, `/2fa/totp/confirm` with a live code → 8 one-time backup codes shown once). SMS is listed but disabled («скоро») and rejected server-side.
+- Settings also offer «Выйти» and «Выйти со всех устройств» (`POST /logout/all`).
 - `.account-settings__card` is a transparent layout wrapper: `max-width: 800px`, `padding: 8px`, `gap: 10px`, `border-radius` only — **no `background` and no `box-shadow`**. Do not restore them; surfaces belong to the inner blocks.
 - Visual surfaces: `.account-settings__section` uses `--color-surface` + `--shadow`; `.account-settings__row`, `.account-settings__profile` and `.account-settings__email-form` use `--color-card` + `--shadow`.
-- Section order: «Личная информация» (avatar, phone, additional email, email), «Безопасность» (2FA switch + method, change password), «Уведомления» (email, SMS).
-- The avatar is a 72px circle with a hover/focus overlay «Изменить»; uploads are cropped to 160×160 WebP and stored as a data URL in the auth store.
+- Section order: «Личная информация» (avatar, phone, additional email, email), «Безопасность» (2FA switch + method, enrollment, sessions), «Уведомления» (email, SMS). The old debug role switch is gone — roles come from the server.
+- The avatar is a 72px circle with a hover/focus overlay «Изменить»; uploads are cropped to 160×160 WebP and stored as a data URL through `PATCH /me`.
 
 ### Grid system
 

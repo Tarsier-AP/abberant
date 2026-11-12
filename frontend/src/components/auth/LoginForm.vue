@@ -32,20 +32,15 @@ const loginInput = ref<HTMLInputElement | null>(null)
 const passwordInput = ref<HTMLInputElement | null>(null)
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const PHONE_PATTERN = /^\+?[\d\s()-]+$/
 
 function validateLogin(value: string): string {
   const login = value.trim()
 
-  if (!login) return 'Введите электронную почту или номер телефона.'
+  if (!login) return 'Введите электронную почту.'
 
   if (EMAIL_PATTERN.test(login)) return ''
 
-  const digits = login.replace(/\D/g, '')
-
-  if (PHONE_PATTERN.test(login) && digits.length >= 10 && digits.length <= 15) return ''
-
-  return 'Введите электронную почту или номер телефона в корректном формате.'
+  return 'Введите электронную почту в корректном формате.'
 }
 
 function validatePassword(value: string): string {
@@ -97,14 +92,14 @@ function handleSubmit() {
     <form class="login-form" novalidate @submit.prevent="handleSubmit">
       <div class="login-form__field">
         <label class="login-form__label" for="login">
-          Логин (электронная почта или номер телефона):
+          Электронная почта:
         </label>
         <input
           id="login"
           ref="loginInput"
           v-model="form.login"
           class="login-form__input"
-          type="text"
+          type="email"
           name="login"
           autocomplete="username"
           inputmode="email"

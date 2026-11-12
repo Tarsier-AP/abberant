@@ -7,10 +7,13 @@ import AuthCard from './AuthCard.vue'
 const props = defineProps<{
   method?: TwoFactorMethod
   loading?: boolean
+  error?: string
+  resendable?: boolean
 }>()
 
 const emit = defineEmits<{
   submit: [code: string]
+  resend: []
   cancel: []
 }>()
 
@@ -135,8 +138,20 @@ function handleSubmit() {
         />
       </div>
 
-      <p v-if="errors.code" id="two-factor-code-error" class="two-factor-form__error" role="alert">
-        {{ errors.code }}
+      <p v-if="error || errors.code" id="two-factor-code-error" class="two-factor-form__error" role="alert">
+        {{ error || errors.code }}
+      </p>
+
+      <p v-if="resendable" class="two-factor-form__resend">
+        <span>Код не пришёл?</span>
+        <button
+          class="two-factor-form__resend-link"
+          type="button"
+          :disabled="loading"
+          @click="emit('resend')"
+        >
+          Отправить снова
+        </button>
       </p>
 
       <div class="two-factor-form__help">
@@ -210,6 +225,36 @@ function handleSubmit() {
 .two-factor-form__error {
   color: var(--color-danger);
   font: 400 12px/16px Roboto, sans-serif;
+}
+
+.two-factor-form__resend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 8px;
+  font: 400 13px/16px Roboto, sans-serif;
+  text-align: center;
+}
+
+.two-factor-form__resend-link {
+  padding: 0;
+  color: var(--color-auth-link);
+  background: none;
+  border: 0;
+  font: 500 13px/16px Roboto, sans-serif;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.two-factor-form__resend-link:hover:not(:disabled) {
+  opacity: 0.8;
+}
+
+.two-factor-form__resend-link:disabled {
+  cursor: default;
+  opacity: 0.6;
 }
 
 .two-factor-form__help {

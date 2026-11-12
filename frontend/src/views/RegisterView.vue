@@ -1,52 +1,50 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import AuthDemoHint from '@/components/auth/AuthDemoHint.vue'
 import RegisterForm from '@/components/auth/RegisterForm.vue'
-import { useTwoFactorDemoShortcut } from '@/composables/useTwoFactorDemoShortcut'
 import { useAuthStore } from '@/stores/auth'
+import * as api from '@/api/auth'
 import type { RegisterCredentials } from '@/types/auth'
 
 const router = useRouter()
 const auth = useAuthStore()
 const loading = ref(false)
-let timer: ReturnType<typeof setTimeout> | undefined
+const error = ref('')
 
-useTwoFactorDemoShortcut()
-
-function handleSubmit(credentials: RegisterCredentials) {
+async function handleSubmit(credentials: RegisterCredentials) {
   if (loading.value) return
 
-  auth.startRegistration({
-    login: credentials.login,
-    username: credentials.username,
-  })
   loading.value = true
+  error.value = ''
 
-  // Simulated request until the Go backend and the real auth flow exist.
-  timer = setTimeout(() => {
-    loading.value = false
+  try {
+    const { registrationId } = await api.startRegistration(credentials.login, credentials.username)
+
+    auth.startRegistration({
+      login: credentials.login,
+      username: credentials.username,
+    })
+    auth.completeStartRegistration(registrationId)
+
     void router.push({ name: 'register-password' })
-  }, 700)
+  } catch (requestError) {
+    error.value =
+      requestError instanceof Error ? requestError.message : 'Не удалось начать регистрацию.'
+  } finally {
+    loading.value = false
+  }
 }
 
 function handleCancel() {
-  if (timer) clearTimeout(timer)
-
   auth.cancelRegistration()
   loading.value = false
   void router.push({ name: 'login' })
 }
-
-onBeforeUnmount(() => {
-  if (timer) clearTimeout(timer)
-})
 </script>
 
 <template>
   <div class="register">
-    <RegisterForm :loading="loading" @submit="handleSubmit" @cancel="handleCancel" />
-    <AuthDemoHint />
+    <RegisterForm :loading="loading" :error="error" @submit="handleSubmit" @cancel="handleCancel" />
   </div>
 </template>
 

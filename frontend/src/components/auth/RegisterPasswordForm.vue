@@ -4,6 +4,7 @@ import AuthCard from './AuthCard.vue'
 
 defineProps<{
   loading?: boolean
+  error?: string
 }>()
 
 const emit = defineEmits<{
@@ -183,6 +184,10 @@ function handleSubmit() {
         </p>
       </div>
 
+      <p v-if="error" class="register-password-form__error register-password-form__error--form" role="alert">
+        {{ error }}
+      </p>
+
       <div class="register-password-form__actions">
         <button
           class="register-password-form__button"
@@ -287,6 +292,10 @@ function handleSubmit() {
 .register-password-form__error {
   color: var(--color-danger);
   font: 400 12px/16px Roboto, sans-serif;
+}
+
+.register-password-form__error--form {
+  padding: 0 8px;
 }
 
 .register-password-form__actions {

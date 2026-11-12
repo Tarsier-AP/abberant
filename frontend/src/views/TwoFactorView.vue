@@ -1,63 +1,77 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import TwoFactorForm from '@/components/auth/TwoFactorForm.vue'
 import { useAuthStore } from '@/stores/auth'
+import * as api from '@/api/auth'
 import type { TwoFactorMethod } from '@/types/auth'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const loading = ref(false)
-let timer: ReturnType<typeof setTimeout> | undefined
+const error = ref('')
 
-const isDemo = computed(() => route.query.demo === '1')
-const allowed = computed(() => isDemo.value || auth.canUseTwoFactor)
+const allowed = computed(() => auth.pendingLogin !== null)
 
-const method = computed<TwoFactorMethod>(() => {
+const method = computed<TwoFactorMethod | ''>(() => {
   const value = route.query.method
 
-  if (value === 'authenticator' || value === 'email' || value === 'sms') return value
+  if (value === 'authenticator' || value === 'email') return value
 
-  return auth.account?.twoFactorMethod ?? 'sms'
+  return auth.pendingLogin?.method ?? auth.account?.twoFactorMethod ?? ''
 })
 
-onMounted(() => {
-  if (!allowed.value) {
-    void router.replace({ name: 'login' })
-  }
-})
-
-function handleSubmit() {
+function handleSubmit(code: string) {
   if (loading.value) return
 
   loading.value = true
+  error.value = ''
 
-  // Simulated verification until the Go backend and the real auth flow exist.
-  timer = setTimeout(() => {
-    loading.value = false
+  void confirmCode(code)
+}
+
+async function confirmCode(code: string) {
+  try {
+    const { account } = await api.completeTwoFactorLogin(code)
+
+    auth.setAccount(account)
+    auth.clearPendingLogin()
     void router.push({ name: 'home' })
-  }, 700)
+  } catch (requestError) {
+    error.value = requestError instanceof Error ? requestError.message : 'Ошибка подтверждения.'
+    loading.value = false
+  }
+}
+
+async function handleResend() {
+  if (loading.value) return
+
+  error.value = ''
+
+  try {
+    await api.sendEmailTwoFactorCode()
+  } catch (requestError) {
+    error.value = requestError instanceof Error ? requestError.message : 'Не удалось отправить код.'
+  }
 }
 
 function handleCancel() {
-  if (timer) clearTimeout(timer)
-
   loading.value = false
+  auth.clearPendingLogin()
   void router.push({ name: 'login' })
 }
-
-onBeforeUnmount(() => {
-  if (timer) clearTimeout(timer)
-})
 </script>
 
 <template>
   <div v-if="allowed" class="two-factor">
     <TwoFactorForm
-      :method="method"
+      :method="method || undefined"
       :loading="loading"
+      :error="error"
+      :resendable="method === 'email'"
       @submit="handleSubmit"
+      @resend="handleResend"
       @cancel="handleCancel"
     />
   </div>

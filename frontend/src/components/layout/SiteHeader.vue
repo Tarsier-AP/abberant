@@ -90,9 +90,9 @@ const links = [
 
         <RouterLink
           class="icon-btn account"
-          :to="{ name: auth.account?.activated ? 'account-settings' : 'login' }"
-          :aria-label="auth.account?.activated ? 'Аккаунт' : 'Войти'"
-          :title="auth.account?.activated ? 'Аккаунт' : 'Войти'"
+          :to="{ name: auth.account ? 'account-settings' : 'login' }"
+          :aria-label="auth.account ? 'Аккаунт' : 'Войти'"
+          :title="auth.account ? 'Аккаунт' : 'Войти'"
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2" />

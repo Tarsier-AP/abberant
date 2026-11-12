@@ -5,6 +5,7 @@ import AuthCard from './AuthCard.vue'
 
 defineProps<{
   loading?: boolean
+  error?: string
 }>()
 
 const emit = defineEmits<{
@@ -37,21 +38,16 @@ const termsInput = ref<HTMLInputElement | null>(null)
 const policyInput = ref<HTMLInputElement | null>(null)
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const PHONE_PATTERN = /^\+?[\d\s()-]+$/
 const USERNAME_PATTERN = /^[\wА-Яа-яЁё-]+$/
 
 function validateLogin(value: string): string {
   const login = value.trim()
 
-  if (!login) return 'Введите электронную почту или номер телефона.'
+  if (!login) return 'Введите электронную почту.'
 
   if (EMAIL_PATTERN.test(login)) return ''
 
-  const digits = login.replace(/\D/g, '')
-
-  if (PHONE_PATTERN.test(login) && digits.length >= 10 && digits.length <= 15) return ''
-
-  return 'Введите электронную почту или номер телефона в корректном формате.'
+  return 'Введите электронную почту в корректном формате.'
 }
 
 function validateUsername(value: string): string {
@@ -132,16 +128,17 @@ function handleSubmit() {
     <form class="register-form" novalidate @submit.prevent="handleSubmit">
       <div class="register-form__field">
         <label class="register-form__label" for="register-login">
-          Логин (электронная почта или номер телефона):
+          Электронная почта:
         </label>
         <input
           id="register-login"
           ref="loginInput"
           v-model="form.login"
           class="register-form__input"
-          type="text"
+          type="email"
           name="login"
-          autocomplete="username"
+          autocomplete="email"
+          inputmode="email"
           :aria-invalid="errors.login ? 'true' : undefined"
           :aria-describedby="errors.login ? 'register-login-error' : undefined"
           :disabled="loading"
@@ -243,6 +240,10 @@ function handleSubmit() {
           {{ errors.policy }}
         </p>
       </div>
+
+      <p v-if="error" class="register-form__error register-form__error--form" role="alert">
+        {{ error }}
+      </p>
 
       <div class="register-form__actions">
         <button
@@ -383,6 +384,10 @@ function handleSubmit() {
 .register-form__error {
   color: var(--color-danger);
   font: 400 12px/16px Roboto, sans-serif;
+}
+
+.register-form__error--form {
+  padding: 0 8px;
 }
 
 .register-form__actions {

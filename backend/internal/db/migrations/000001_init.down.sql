@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS login_attempts;
+DROP TABLE IF EXISTS totp_backup_codes;
+DROP TABLE IF EXISTS codes;
+DROP TABLE IF EXISTS sessions;
+DROP TABLE IF EXISTS users;

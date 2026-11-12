@@ -1,55 +1,47 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import LoginForm from '@/components/auth/LoginForm.vue'
 import { useAuthStore } from '@/stores/auth'
+import * as api from '@/api/auth'
 import type { LoginCredentials } from '@/types/auth'
 
 const router = useRouter()
 const auth = useAuthStore()
 const loading = ref(false)
 const error = ref('')
-let timer: ReturnType<typeof setTimeout> | undefined
 
-function handleSubmit(credentials: LoginCredentials) {
+async function handleSubmit(credentials: LoginCredentials) {
   if (loading.value) return
 
   loading.value = true
   error.value = ''
 
-  // Simulated request until the Go backend and the real auth flow exist.
-  timer = setTimeout(() => {
-    loading.value = false
+  try {
+    const result = await api.login(credentials.login, credentials.password)
 
-    if (!auth.matchesAccount(credentials.login)) {
-      error.value = 'Неверный логин или пароль.'
-      return
-    }
-
-    if (!auth.account?.activated) {
-      error.value = 'Аккаунт не активирован. Перейдите по ссылке из сообщения.'
-      return
-    }
-
-    if (auth.canUseTwoFactor) {
+    if (result.status === '2fa_required') {
+      auth.setPendingLogin(result.twoFactorMethod)
       void router.push({
         name: 'two-factor',
-        query: { method: auth.account?.twoFactorMethod ?? 'sms' },
+        query: { method: result.twoFactorMethod || undefined },
       })
       return
     }
 
+    auth.clearPendingLogin()
+    auth.setAccount(result.account)
     void router.push({ name: 'home' })
-  }, 700)
+  } catch (requestError) {
+    error.value = requestError instanceof Error ? requestError.message : 'Ошибка входа.'
+  } finally {
+    loading.value = false
+  }
 }
 
 function handleClearError() {
   error.value = ''
 }
-
-onBeforeUnmount(() => {
-  if (timer) clearTimeout(timer)
-})
 </script>
 
 <template>

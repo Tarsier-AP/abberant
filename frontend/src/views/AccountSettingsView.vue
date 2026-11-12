@@ -2,18 +2,18 @@
 import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import type { TwoFactorMethod, UserRole } from '@/types/auth'
+import * as api from '@/api/auth'
+import type { TwoFactorMethod } from '@/types/auth'
 
 const router = useRouter()
 const auth = useAuthStore()
 
-function handleRoleChange(event: Event) {
-  auth.setRole((event.target as HTMLSelectElement).value as UserRole)
-}
-
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const AVATAR_MAX_BYTES = 5 * 1024 * 1024
 const AVATAR_SIZE = 160
+
+const busy = ref(false)
+const settingsError = ref('')
 
 const avatarInput = ref<HTMLInputElement | null>(null)
 const avatarError = ref('')
@@ -23,55 +23,40 @@ const editingEmail = ref(false)
 const emailDraft = ref('')
 const emailError = ref('')
 
+const phoneInput = ref<HTMLInputElement | null>(null)
+const editingPhone = ref(false)
+const phoneDraft = ref('')
+const phoneError = ref('')
+
+const totpCodeInput = ref<HTMLInputElement | null>(null)
+const enrollingTotp = ref(false)
+const totpSetup = ref<{ secret: string; qrDataURL: string } | null>(null)
+const totpCode = ref('')
+const totpError = ref('')
+const backupCodes = ref<string[] | null>(null)
+const backupCopied = ref(false)
+
 const isActivated = computed(() => auth.account?.activated === true)
-const isEmailLogin = computed(() => EMAIL_PATTERN.test(auth.account?.login ?? ''))
 
-const phone = computed(() => {
-  if (!auth.account) return ''
+const account = computed(() => auth.account)
 
-  return isEmailLogin.value ? 'Не указан' : formatPhone(auth.account.login)
-})
+const phone = computed(() => account.value?.phone ?? '')
+const additionalEmail = computed(() => account.value?.additionalEmail ?? '')
 
-const primaryEmail = computed(() => {
-  if (!auth.account) return ''
+async function withBusy(action: () => Promise<void>) {
+  if (busy.value) return
 
-  return isEmailLogin.value ? auth.account.login : 'Не указана'
-})
+  busy.value = true
+  settingsError.value = ''
 
-const additionalEmail = computed(() => auth.account?.additionalEmail ?? '')
-
-function formatPhone(value: string) {
-  const digits = value.replace(/\D/g, '')
-
-  if (digits.length === 11 && (digits.startsWith('7') || digits.startsWith('8'))) {
-    const normalized = digits.startsWith('8') ? `7${digits.slice(1)}` : digits
-
-    return `+7 (${normalized.slice(1, 4)}) ${normalized.slice(4, 7)}-${normalized.slice(7, 9)}-${normalized.slice(9, 11)}`
+  try {
+    await action()
+  } catch (requestError) {
+    settingsError.value =
+      requestError instanceof Error ? requestError.message : 'Не удалось сохранить изменения.'
+  } finally {
+    busy.value = false
   }
-
-  return value
-}
-
-function toggleTwoFactor() {
-  if (!auth.account || !isActivated.value) return
-
-  auth.setTwoFactor(!auth.account.twoFactorEnabled)
-}
-
-function handleMethodChange(event: Event) {
-  auth.setTwoFactorMethod((event.target as HTMLSelectElement).value as TwoFactorMethod)
-}
-
-function toggleSmsNotifications() {
-  if (!auth.account) return
-
-  auth.setSmsNotifications(!auth.account.smsNotifications)
-}
-
-function toggleEmailNotifications() {
-  if (!auth.account) return
-
-  auth.setEmailNotifications(!auth.account.emailNotifications)
 }
 
 async function createAvatarDataUrl(file: File): Promise<string> {
@@ -117,15 +102,16 @@ async function handleAvatarChange(event: Event) {
   }
 
   try {
-    auth.setAvatar(await createAvatarDataUrl(file))
+    const dataUrl = await createAvatarDataUrl(file)
+
+    await withBusy(() => auth.applyPatch({ avatar: dataUrl }))
   } catch {
     avatarError.value = 'Не удалось обработать изображение. Попробуйте другой файл.'
   }
 }
 
 function removeAvatar() {
-  avatarError.value = ''
-  auth.setAvatar('')
+  void withBusy(() => auth.applyPatch({ avatar: '' }))
 }
 
 function startEmailEdit() {
@@ -149,9 +135,169 @@ function saveEmail() {
     return
   }
 
-  auth.setAdditionalEmail(email)
-  editingEmail.value = false
-  emailError.value = ''
+  void withBusy(async () => {
+    await auth.applyPatch({ additionalEmail: email })
+    editingEmail.value = false
+  })
+}
+
+function startPhoneEdit() {
+  phoneDraft.value = phone.value
+  phoneError.value = ''
+  editingPhone.value = true
+
+  void nextTick(() => phoneInput.value?.focus())
+}
+
+function cancelPhoneEdit() {
+  editingPhone.value = false
+  phoneError.value = ''
+}
+
+function savePhone() {
+  const value = phoneDraft.value.trim()
+
+  if (value.replace(/\D/g, '').length > 15) {
+    phoneError.value = 'Введите корректный номер телефона.'
+    return
+  }
+
+  void withBusy(async () => {
+    await auth.applyPatch({ phone: value })
+    editingPhone.value = false
+  })
+}
+
+function toggleTwoFactor() {
+  if (!account.value || !isActivated.value) return
+
+  void withBusy(async () => {
+    if (account.value?.twoFactorEnabled) {
+      backupCodes.value = null
+      enrollingTotp.value = false
+      totpSetup.value = null
+
+      await auth.applyPatch({ twoFactorEnabled: false })
+      return
+    }
+
+    if (account.value?.twoFactorMethod === 'authenticator') {
+      await startTotpEnrollment()
+      return
+    }
+
+    await auth.applyPatch({
+      twoFactorEnabled: true,
+      twoFactorMethod: account.value?.twoFactorMethod || 'email',
+    })
+  })
+}
+
+function handleMethodChange(event: Event) {
+  const method = (event.target as HTMLSelectElement).value as TwoFactorMethod
+
+  if (method === 'authenticator') {
+    void withBusy(startTotpEnrollment)
+    return
+  }
+
+  void withBusy(() => auth.applyPatch({ twoFactorMethod: method }))
+}
+
+async function startTotpEnrollment() {
+  const setup = await api.setupTotp()
+
+  totpSetup.value = { secret: setup.secret, qrDataURL: setup.qrDataURL }
+  enrollingTotp.value = true
+  totpCode.value = ''
+  totpError.value = ''
+
+  void nextTick(() => totpCodeInput.value?.focus())
+}
+
+function cancelTotpEnrollment() {
+  enrollingTotp.value = false
+  totpSetup.value = null
+  totpError.value = ''
+}
+
+function confirmTotpEnrollment() {
+  const code = totpCode.value.replace(/\D/g, '')
+
+  if (!/^\d{6}$/.test(code)) {
+    totpError.value = 'Введите 6-значный код из приложения-аутентификатора.'
+    return
+  }
+
+  if (busy.value) return
+
+  busy.value = true
+  settingsError.value = ''
+  totpError.value = ''
+
+  void (async () => {
+    try {
+      const result = await api.confirmTotp(code)
+
+      backupCodes.value = result.backupCodes
+      backupCopied.value = false
+      cancelTotpEnrollment()
+
+      const { account: updated } = await api.fetchMe()
+      auth.setAccount(updated)
+    } catch (requestError) {
+      totpError.value =
+        requestError instanceof Error ? requestError.message : 'Не удалось подтвердить код.'
+    } finally {
+      busy.value = false
+    }
+  })()
+}
+
+async function copyBackupCodes() {
+  if (!backupCodes.value) return
+
+  try {
+    await navigator.clipboard.writeText(backupCodes.value.join('\n'))
+    backupCopied.value = true
+  } catch {
+    backupCopied.value = false
+  }
+}
+
+function regenerateBackupCodes() {
+  void withBusy(async () => {
+    const result = await api.regenerateBackupCodes()
+
+    backupCodes.value = result.backupCodes
+    backupCopied.value = false
+  })
+}
+
+function toggleSmsNotifications() {
+  if (!account.value) return
+
+  void withBusy(() => auth.applyPatch({ smsNotifications: !account.value?.smsNotifications }))
+}
+
+function toggleEmailNotifications() {
+  if (!account.value) return
+
+  void withBusy(() => auth.applyPatch({ emailNotifications: !account.value?.emailNotifications }))
+}
+
+function handleLogout() {
+  void withBusy(async () => {
+    await auth.endSession()
+    await router.push({ name: 'home' })
+  })
+}
+
+function handleLogoutAll() {
+  void withBusy(async () => {
+    await auth.endAllSessions()
+    await router.push({ name: 'home' })
+  })
 }
 
 onMounted(() => {
@@ -234,10 +380,14 @@ onMounted(() => {
         </div>
 
         <div class="account-settings__rows">
-          <div class="account-settings__row">
+          <button
+            class="account-settings__row account-settings__row--interactive"
+            type="button"
+            @click="startPhoneEdit"
+          >
             <span class="account-settings__label">Телефон:</span>
-            <span class="account-settings__value">{{ phone }}</span>
-          </div>
+            <span class="account-settings__value">{{ phone || 'Добавить' }}</span>
+          </button>
 
           <button
             class="account-settings__row account-settings__row--interactive"
@@ -252,7 +402,7 @@ onMounted(() => {
 
           <div class="account-settings__row">
             <span class="account-settings__label">Электронная почта:</span>
-            <span class="account-settings__value">{{ primaryEmail }}</span>
+            <span class="account-settings__value">{{ auth.account.login }}</span>
           </div>
         </div>
 
@@ -295,6 +445,44 @@ onMounted(() => {
             <button class="account-settings__email-button" type="submit">Сохранить</button>
           </div>
         </form>
+
+        <form
+          v-if="editingPhone"
+          class="account-settings__email-form"
+          novalidate
+          @submit.prevent="savePhone"
+        >
+          <label class="visually-hidden" for="account-phone">Телефон</label>
+          <input
+            id="account-phone"
+            ref="phoneInput"
+            v-model="phoneDraft"
+            class="account-settings__email-input"
+            type="tel"
+            autocomplete="tel"
+            placeholder="+7 900 000-00-00"
+            :aria-invalid="phoneError ? 'true' : undefined"
+            :aria-describedby="phoneError ? 'account-phone-error' : undefined"
+          />
+          <p
+            v-if="phoneError"
+            id="account-phone-error"
+            class="account-settings__error"
+            role="alert"
+          >
+            {{ phoneError }}
+          </p>
+          <div class="account-settings__email-actions">
+            <button
+              class="account-settings__email-button"
+              type="button"
+              @click="cancelPhoneEdit"
+            >
+              Отмена
+            </button>
+            <button class="account-settings__email-button" type="submit">Сохранить</button>
+          </div>
+        </form>
       </section>
 
       <div class="account-settings__divider" aria-hidden="true"></div>
@@ -308,7 +496,7 @@ onMounted(() => {
             type="button"
             role="switch"
             :aria-checked="auth.account.twoFactorEnabled"
-            :disabled="!isActivated"
+            :disabled="!isActivated || busy"
             @click="toggleTwoFactor"
           >
             <span class="account-settings__label">
@@ -330,10 +518,14 @@ onMounted(() => {
             class="account-settings__row account-settings__row--select"
           >
             <span class="account-settings__label">Способ подтверждения:</span>
-            <select :value="auth.account.twoFactorMethod" @change="handleMethodChange">
-              <option value="sms">SMS</option>
+            <select
+              :value="auth.account.twoFactorMethod"
+              :disabled="busy"
+              @change="handleMethodChange"
+            >
               <option value="email">Электронная почта</option>
               <option value="authenticator">Приложение-аутентификатор</option>
+              <option value="sms" disabled>SMS (скоро)</option>
             </select>
           </label>
 
@@ -344,10 +536,116 @@ onMounted(() => {
             <span class="account-settings__label">Сменить пароль:</span>
             <span class="account-settings__value">Сменить</span>
           </RouterLink>
+
+          <button
+            class="account-settings__row account-settings__row--interactive"
+            type="button"
+            :disabled="busy"
+            @click="handleLogout"
+          >
+            <span class="account-settings__label">Завершить сеанс:</span>
+            <span class="account-settings__value">Выйти</span>
+          </button>
+
+          <button
+            class="account-settings__row account-settings__row--interactive"
+            type="button"
+            :disabled="busy"
+            @click="handleLogoutAll"
+          >
+            <span class="account-settings__label">Выйти со всех устройств:</span>
+            <span class="account-settings__value">Завершить все сеансы</span>
+          </button>
         </div>
 
         <p v-if="!isActivated" class="account-settings__notice">
           Активируйте аккаунт, чтобы включить двухфакторную аутентификацию.
+        </p>
+
+        <div v-if="enrollingTotp && totpSetup" class="account-settings__totp">
+          <p class="account-settings__totp-hint">
+            Отсканируйте QR-код в приложении-аутентификаторе и введите текущий код.
+          </p>
+
+          <img
+            class="account-settings__totp-qr"
+            :src="totpSetup.qrDataURL"
+            alt="QR-код с секретным ключом приложения-аутентификатора"
+          />
+
+          <p class="account-settings__totp-secret">
+            Если QR-код не сканируется, введите ключ вручную:
+            <strong>{{ totpSetup.secret }}</strong>
+          </p>
+
+          <input
+            ref="totpCodeInput"
+            v-model="totpCode"
+            class="account-settings__email-input account-settings__totp-input"
+            type="text"
+            inputmode="numeric"
+            maxlength="6"
+            autocomplete="one-time-code"
+            placeholder="000000"
+            :aria-invalid="totpError ? 'true' : undefined"
+            :disabled="busy"
+          />
+
+          <p v-if="totpError" class="account-settings__error" role="alert">{{ totpError }}</p>
+
+          <div class="account-settings__email-actions">
+            <button
+              class="account-settings__email-button"
+              type="button"
+              :disabled="busy"
+              @click="cancelTotpEnrollment"
+            >
+              Отмена
+            </button>
+            <button
+              class="account-settings__email-button"
+              type="button"
+              :disabled="busy"
+              @click="confirmTotpEnrollment"
+            >
+              Подтвердить
+            </button>
+          </div>
+        </div>
+
+        <div v-if="backupCodes" class="account-settings__backup">
+          <p class="account-settings__backup-hint">
+            Одноразовые резервные коды. Сохраните их в надёжном месте: каждый код можно
+            использовать один раз вместо кода подтверждения.
+          </p>
+
+          <ul class="account-settings__backup-list">
+            <li v-for="code in backupCodes" :key="code" class="account-settings__backup-code">
+              {{ code }}
+            </li>
+          </ul>
+
+          <div class="account-settings__email-actions">
+            <button
+              class="account-settings__email-button"
+              type="button"
+              @click="copyBackupCodes"
+            >
+              {{ backupCopied ? 'Скопировано' : 'Скопировать' }}
+            </button>
+            <button
+              class="account-settings__email-button"
+              type="button"
+              :disabled="busy"
+              @click="regenerateBackupCodes"
+            >
+              Сгенерировать новые
+            </button>
+          </div>
+        </div>
+
+        <p v-if="settingsError" class="account-settings__error" role="alert">
+          {{ settingsError }}
         </p>
       </section>
 
@@ -360,6 +658,7 @@ onMounted(() => {
             type="button"
             role="switch"
             :aria-checked="auth.account.emailNotifications"
+            :disabled="busy"
             @click="toggleEmailNotifications"
           >
             <span class="account-settings__label">
@@ -401,6 +700,7 @@ onMounted(() => {
             type="button"
             role="switch"
             :aria-checked="auth.account.smsNotifications"
+            :disabled="busy"
             @click="toggleSmsNotifications"
           >
             <span class="account-settings__label">
@@ -433,30 +733,6 @@ onMounted(() => {
             </span>
           </button>
         </div>
-      </section>
-
-      <div class="account-settings__divider" aria-hidden="true"></div>
-
-      <section class="account-settings__section" aria-labelledby="account-debug">
-        <h2 id="account-debug" class="account-settings__section-title">Отладка</h2>
-
-        <label class="account-settings__row account-settings__row--select">
-          <span class="account-settings__label">Роль в системе (отладка):</span>
-          <select :value="auth.account.role" @change="handleRoleChange">
-            <option value="reader">Читатель</option>
-            <option value="editor">Редактор</option>
-            <option value="owner">Владелец</option>
-          </select>
-        </label>
-
-        <RouterLink
-          v-if="auth.canEditArticles"
-          class="account-settings__row account-settings__row--link"
-          to="/editor"
-        >
-          <span class="account-settings__label">Редактор статей:</span>
-          <span class="account-settings__value">Открыть</span>
-        </RouterLink>
       </section>
     </div>
   </div>
@@ -744,8 +1020,72 @@ onMounted(() => {
   cursor: pointer;
 }
 
-.account-settings__email-button:hover {
+.account-settings__email-button:hover:not(:disabled) {
   background: var(--color-card-hover);
+}
+
+.account-settings__email-button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.account-settings__totp {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.account-settings__totp-hint {
+  font: 400 13px/18px Roboto, sans-serif;
+}
+
+.account-settings__totp-qr {
+  align-self: center;
+  width: 160px;
+  height: 160px;
+  background: #ffffff;
+  border-radius: var(--radius);
+}
+
+.account-settings__totp-secret {
+  color: var(--color-muted);
+  font: 400 12px/16px Roboto, sans-serif;
+  overflow-wrap: anywhere;
+}
+
+.account-settings__totp-input {
+  letter-spacing: 4px;
+  font: 600 18px/24px Roboto, sans-serif;
+  text-align: center;
+}
+
+.account-settings__backup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.account-settings__backup-hint {
+  font: 400 13px/18px Roboto, sans-serif;
+}
+
+.account-settings__backup-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 4px;
+  padding: 8px;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  font: 600 13px/18px Roboto, sans-serif;
+  list-style: none;
 }
 
 @media (max-width: 767px) {
