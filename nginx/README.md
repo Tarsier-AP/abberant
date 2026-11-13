@@ -13,3 +13,18 @@ Both variants serve the frontend statics with `try_files ... /index.html`
 (SPA history mode) and reverse-proxy `/api/` to the Fiber backend on port
 8090. Cookies are same-origin (`SameSite=Lax`), so no extra CORS setup is
 needed.
+
+## Caching
+
+- `/assets/` — vite output with content-hashed file names:
+  `Cache-Control: public, max-age=31536000, immutable`. New deploys get new
+  hashes, so the year-long cache never serves stale bundles.
+- `/img/`, `favicon.ico`, `robots.txt`, `llms.txt` — unhashed statics:
+  `max-age=86400, stale-while-revalidate=604800` (one day, plus up to a week
+  of stale serving while revalidating).
+- `index.html` (and the SPA fallback for client routes) — `no-cache`: the
+  browser always revalidates, so a deploy is picked up on the next visit.
+- `/api/` — `no-store`: responses are session-scoped (drafts, profile).
+
+The regex statics location is checked after the `/api/` prefix, so `^~` on
+`/api/` keeps API routing unaffected regardless of file extensions.
