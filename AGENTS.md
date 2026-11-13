@@ -71,7 +71,7 @@ ABBERANT_ADDR=":18080" go run ./cmd/server   # when :8090 is taken on this machi
 - Registration is email-only; phone is an editable profile field in settings.
 - 2FA: email codes immediately; authenticator apps go through enrollment (`POST /2fa/totp/setup` → QR + secret, `/2fa/totp/confirm` with a live code → 8 one-time backup codes shown once). SMS is listed but disabled («скоро») and rejected server-side.
 - Settings also offer «Выйти» and «Выйти со всех устройств» (`POST /logout/all`).
-- `.account-settings__card` is a transparent layout wrapper: `max-width: 800px`, `padding: 8px`, `gap: 10px`, `border-radius` only — **no `background` and no `box-shadow`**. Do not restore them; surfaces belong to the inner blocks.
+- `.account-settings__card` is a transparent full-width layout wrapper: `display: flex`, `flex-direction: column`, `gap: 10px` (`12px` on mobile) — **no `max-width`, `margin-inline`, `padding`, `background` or `box-shadow`**. Do not restore them; surfaces belong to the inner blocks.
 - Visual surfaces: `.account-settings__section` uses `--color-surface` + `--shadow`; `.account-settings__row`, `.account-settings__profile` and `.account-settings__email-form` use `--color-card` + `--shadow`.
 - Section order: «Личная информация» (avatar, phone, additional email, email), «Безопасность» (2FA switch + method, enrollment, sessions), «Уведомления» (email, SMS). The old debug role switch is gone — roles come from the server.
 - The avatar is a 72px circle with a hover/focus overlay «Изменить»; uploads are cropped to 160×160 WebP and stored as a data URL through `PATCH /me`.

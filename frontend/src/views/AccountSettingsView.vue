@@ -302,19 +302,7 @@ function handleLogoutAll() {
 
 onMounted(() => {
   if (!auth.account) {
-    auth.setAccount({
-      login: 'example@google.com',
-      username: 'Игрок',
-      avatar: '',
-      additionalEmail: '',
-      phone: '+7 (999) 999-99-99',
-      activated: true,
-      twoFactorEnabled: true,
-      twoFactorMethod: 'email',
-      smsNotifications: true,
-      emailNotifications: true,
-      role: 'reader',
-    })
+    void router.replace({ name: 'login' })
   }
 })
 </script>
@@ -760,10 +748,6 @@ onMounted(() => {
   flex-direction: column;
   gap: 10px;
   width: 100%;
-  max-width: 800px;
-  margin-inline: auto;
-  padding: 8px;
-  border-radius: var(--radius);
 }
 
 .account-settings__section {
@@ -1107,7 +1091,6 @@ onMounted(() => {
 
   .account-settings__card {
     gap: 12px;
-    padding: 0;
   }
 
   .account-settings__section {
