@@ -63,11 +63,15 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  align-items: center;
   margin: 0;
 }
 
 .article-body figure img {
-  width: 100%;
+  width: auto;
+  max-width: 60%;
+  max-height: 320px;
+  object-fit: cover;
   border-radius: var(--radius);
 }
 
