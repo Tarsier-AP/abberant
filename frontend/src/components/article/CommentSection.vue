@@ -306,8 +306,6 @@ async function remove(comment: CommentPayload) {
       <p v-else class="comments-section__guest">
         Комментировать могут только зарегистрированные пользователи.
         <RouterLink class="comments-section__guest-link" to="/login">Войти</RouterLink>
-        или
-        <RouterLink class="comments-section__guest-link" to="/register">Зарегистрироваться</RouterLink>.
       </p>
     </template>
   </section>
@@ -477,11 +475,12 @@ async function remove(comment: CommentPayload) {
 
 .comments-section__guest {
   color: var(--color-muted);
-  font: 400 14px/20px Roboto, sans-serif;
+  font: 400 15px/22px Roboto, sans-serif;
 }
 
 .comments-section__guest-link {
   color: var(--color-accent-text);
+  font: 500 15px/22px Roboto, sans-serif;
 }
 
 .comments-section__guest-link:hover {
