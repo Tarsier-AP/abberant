@@ -18,6 +18,8 @@ export interface Article {
   rating?: number
   platform?: string
   verdict?: string
+  /** Platform feed, game hub or review group id; empty for unassigned articles. */
+  section?: string
 }
 
 export interface Headline {

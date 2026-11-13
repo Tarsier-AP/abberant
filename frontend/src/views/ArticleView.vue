@@ -3,6 +3,7 @@ import { computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ReviewStars from '@/components/article/ReviewStars.vue'
 import ShareButton from '@/components/ui/ShareButton.vue'
+import LoadState from '@/components/ui/LoadState.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useArticlesStore } from '@/stores/articles'
 import { formatDate } from '@/utils/date'
@@ -14,8 +15,12 @@ const auth = useAuthStore()
 const store = useArticlesStore()
 
 const article = computed(() =>
-  store.getArticle(typeof route.params.id === 'string' ? route.params.id : ''),
+  store.loadState === 'ready' && typeof route.params.id === 'string'
+    ? store.getArticle(route.params.id)
+    : undefined,
 )
+
+const ready = computed(() => store.loadState === 'ready')
 
 const canView = computed(() => {
   if (!article.value) return false
@@ -36,9 +41,9 @@ const shareUrl = computed(() =>
 )
 
 watch(
-  article,
-  (value) => {
-    if (!value) void router.replace({ name: 'home' })
+  ready,
+  (isReady) => {
+    if (isReady && !article.value) void router.replace({ name: 'home' })
   },
   { immediate: true },
 )
@@ -81,6 +86,12 @@ watch(
       </footer>
     </article>
   </div>
+  <LoadState
+    v-else-if="!ready"
+    class="article container"
+    :error="store.errorMessage"
+    @retry="store.reload()"
+  />
 </template>
 
 <style scoped>

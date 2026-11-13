@@ -4,14 +4,16 @@ import { useRoute, useRouter } from 'vue-router'
 import type { ArticleSection } from '@/types/article'
 import HomeSection from '@/components/home/HomeSection.vue'
 import PagePagination from '@/components/ui/PagePagination.vue'
+import LoadState from '@/components/ui/LoadState.vue'
 import { useMediaQuery } from '@/composables/useMediaQuery'
-import { walkthroughs } from '@/data/articles'
+import { useArticlesStore } from '@/stores/articles'
 
 /** Maximum number of article cards on one page; above it a pager appears. */
 const PAGE_LIMIT = 8
 
 const route = useRoute()
 const router = useRouter()
+const store = useArticlesStore()
 const root = ref<HTMLElement | null>(null)
 
 const isLaptop = useMediaQuery('(min-width: 1024px)')
@@ -20,16 +22,20 @@ const previewCount = computed(() => (isLaptop.value ? 3 : 2))
 const sectionId = computed(() => (route.params.section as string | undefined) ?? null)
 
 const currentSection = computed(
-  () => walkthroughs.find((section) => section.id === sectionId.value) ?? null,
+  () =>
+    (store.loadState === 'ready'
+      ? store.walkthroughSections.find((section) => section.id === sectionId.value)
+      : undefined) ?? null,
 )
 
 /** Archive pages: whole sections only, filled until the card limit is hit. */
 const archivePages = computed<ArticleSection[][]>(() => {
+  const sections = store.walkthroughSections
   const pages: ArticleSection[][] = []
   let page: ArticleSection[] = []
   let cards = 0
 
-  for (const section of walkthroughs) {
+  for (const section of sections) {
     const preview = Math.min(section.articles.length, previewCount.value)
 
     if (page.length > 0 && cards + preview > PAGE_LIMIT) {
@@ -108,7 +114,7 @@ watch(
 watch(
   currentSection,
   (section) => {
-    if (sectionId.value && !section) {
+    if (store.loadState === 'ready' && sectionId.value && !section) {
       void router.replace({ path: '/walkthroughs' })
     }
   },
@@ -120,19 +126,26 @@ watch(
   <div ref="root" class="walkthroughs container">
     <h1 class="visually-hidden">{{ heading }}</h1>
 
-    <HomeSection
-      v-for="section in pageSections"
-      :key="section.id"
-      v-bind="section"
-      :show-all="Boolean(currentSection)"
+    <LoadState
+      v-if="store.loadState !== 'ready'"
+      :error="store.errorMessage"
+      @retry="store.reload()"
     />
+    <template v-else>
+      <HomeSection
+        v-for="section in pageSections"
+        :key="section.id"
+        v-bind="section"
+        :show-all="Boolean(currentSection)"
+      />
 
-    <PagePagination
-      v-if="totalPages > 1"
-      :page="page"
-      :total-pages="totalPages"
-      @update:page="goToPage"
-    />
+      <PagePagination
+        v-if="totalPages > 1"
+        :page="page"
+        :total-pages="totalPages"
+        @update:page="goToPage"
+      />
+    </template>
   </div>
 </template>
 

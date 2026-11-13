@@ -1,69 +1,80 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import type { Article, ArticleKind, ArticleSection } from '@/types/article'
+import type { Article, ArticleKind, ArticleSection, Headline } from '@/types/article'
+import type { ArticlePatchPayload } from '@/api/articles'
+import * as api from '@/api/articles'
 import {
-  mockArticles,
-  newsPlatforms,
-  walkthroughHighlights,
-} from '@/data/articles'
+  newsPlatformSections,
+  reviewGroupSections,
+  walkthroughHighlightIds,
+  walkthroughSections,
+} from '@/data/sections'
 
-const USER_ARTICLES_KEY = 'abberant-articles'
-const OVERRIDES_KEY = 'abberant-articles-overrides'
-const DELETED_KEY = 'abberant-articles-deleted'
+export type ArticlesLoadState = 'idle' | 'loading' | 'ready' | 'error'
 
-type ArticleOverrides = Record<string, Partial<Article>>
-
-function readStored<T>(key: string): T | null {
-  try {
-    const raw = localStorage.getItem(key)
-    return raw ? (JSON.parse(raw) as T) : null
-  } catch {
-    return null
-  }
-}
-
-function writeStored(key: string, value: unknown) {
-  try {
-    if (value === null) {
-      localStorage.removeItem(key)
-    } else {
-      localStorage.setItem(key, JSON.stringify(value))
-    }
-  } catch {
-    // Ignore storage errors (e.g. private browsing, quota exceeded).
-  }
-}
+/** Number of headlines shown in the PopularNow block. */
+const HEADLINE_LIMIT = 4
 
 function byDateDesc(a: Article, b: Article): number {
   return b.date.localeCompare(a.date)
 }
 
-export const useArticlesStore = defineStore('articles', () => {
-  /** Articles created in the editor, persisted in localStorage. */
-  const userArticles = ref<Article[]>(readStored<Article[]>(USER_ARTICLES_KEY) ?? [])
-  /** Edits of mock articles, keyed by id, persisted in localStorage. */
-  const overrides = ref<ArticleOverrides>(readStored<ArticleOverrides>(OVERRIDES_KEY) ?? {})
-  /** Ids of mock articles removed by the owner. */
-  const deletedIds = ref<string[]>(readStored<string[]>(DELETED_KEY) ?? [])
+/** Adds the derived url to a backend article payload. */
+function withUrl(payload: api.ArticlePayload): Article {
+  return { ...payload, url: `/article/${payload.id}` }
+}
 
-  function persist() {
-    writeStored(USER_ARTICLES_KEY, userArticles.value)
-    writeStored(OVERRIDES_KEY, overrides.value)
-    writeStored(DELETED_KEY, deletedIds.value)
+export const useArticlesStore = defineStore('articles', () => {
+  const articles = ref<Article[]>([])
+  const loadState = ref<ArticlesLoadState>('idle')
+  const errorMessage = ref('')
+
+  /** Loads every article visible to the current session once per app start. */
+  async function init() {
+    if (loadState.value === 'loading' || loadState.value === 'ready') return
+
+    loadState.value = 'loading'
+    errorMessage.value = ''
+
+    try {
+      const { articles: loaded } = await api.fetchArticles()
+
+      articles.value = loaded.map(withUrl)
+      loadState.value = 'ready'
+    } catch (error) {
+      loadState.value = 'error'
+      errorMessage.value =
+        error instanceof Error ? error.message : 'Не удалось загрузить материалы.'
+    }
   }
 
-  const mockWithOverrides = computed(() =>
-    mockArticles
-      .filter((article) => !deletedIds.value.includes(article.id))
-      .map((article) => {
-        const override = overrides.value[article.id]
+  /** Retries loading after a failure. */
+  function reload() {
+    if (loadState.value !== 'error') return
 
-        return override ? { ...article, ...override } : article
-      }),
-  )
+    loadState.value = 'idle'
+    void init()
+  }
 
-  /** Every article visible to the editor: mock seed plus user-created ones. */
-  const all = computed(() => [...mockWithOverrides.value, ...userArticles.value])
+  /** Re-fetches everything; used after the legacy data migration. */
+  async function refresh() {
+    loadState.value = 'idle'
+    await init()
+  }
+
+  /** Inserts or replaces an article in the local cache. */
+  function putArticle(article: Article) {
+    const index = articles.value.findIndex((item) => item.id === article.id)
+
+    if (index >= 0) {
+      articles.value[index] = article
+    } else {
+      articles.value.push(article)
+    }
+  }
+
+  /** Every article visible to the current session. */
+  const all = computed(() => articles.value)
 
   const publishedNews = computed(() =>
     all.value.filter((article) => article.kind === 'news' && article.status === 'published'),
@@ -73,14 +84,11 @@ export const useArticlesStore = defineStore('articles', () => {
     all.value.filter((article) => article.kind === 'review' && article.status === 'published'),
   )
 
-  /** Applies overrides and hides drafts/deleted entries for a static mock list. */
-  function feed(articles: Article[]): Article[] {
-    const overridden = new Map(mockWithOverrides.value.map((article) => [article.id, article]))
-
-    return articles
-      .filter((article) => !deletedIds.value.includes(article.id))
-      .map((article) => overridden.get(article.id) ?? article)
-      .filter((article) => article.status === 'published')
+  /** Published articles assigned to a named section (platform feed or game hub). */
+  function sectionFeed(sectionId: string): Article[] {
+    return all.value
+      .filter((article) => article.section === sectionId && article.status === 'published')
+      .sort(byDateDesc)
   }
 
   const newsSections = computed<ArticleSection[]>(() => [
@@ -90,111 +98,104 @@ export const useArticlesStore = defineStore('articles', () => {
       href: '/news/all',
       articles: [...publishedNews.value].sort(byDateDesc),
     },
-    ...newsPlatforms.map((section) => ({
+    ...newsPlatformSections.map((section) => ({
       ...section,
-      articles: feed(section.articles),
+      articles: sectionFeed(section.id),
     })),
   ])
 
+  const walkthroughFeeds = computed<ArticleSection[]>(() =>
+    walkthroughSections.map((section) => ({
+      ...section,
+      articles: sectionFeed(section.id),
+    })),
+  )
+
   const reviewSections = computed<ArticleSection[]>(() => {
-    const sorted = [...publishedReviews.value]
+    const recentConfig = reviewGroupSections.find((config) => config.id === 'recent')
+    const popularConfig = reviewGroupSections.find((config) => config.id === 'popular')
+
+    if (!recentConfig || !popularConfig) return []
+
+    const sorted = [...publishedReviews.value].sort(byDateDesc)
 
     return [
-      { id: 'recent', title: 'Недавние', href: '/reviews/recent', articles: sorted.sort(byDateDesc) },
+      { ...recentConfig, articles: sorted },
       {
-        id: 'popular',
-        title: 'Популярные',
-        href: '/reviews/popular',
+        ...popularConfig,
         articles: [...publishedReviews.value].sort((a, b) => b.comments - a.comments),
       },
     ]
   })
 
-  const homeSections = computed<ArticleSection[]>(() => [
-    {
-      id: 'news',
-      title: 'Новости',
-      href: '/news',
-      articles: [...publishedNews.value].sort(byDateDesc),
-    },
-    {
-      id: 'reviews',
-      title: 'Обзоры',
-      href: '/reviews',
-      articles: [...publishedReviews.value].sort(byDateDesc),
-    },
-    {
-      id: 'walkthroughs',
-      title: 'Прохождения',
-      href: '/walkthroughs',
-      articles: feed(walkthroughHighlights),
-    },
-  ])
+  const homeSections = computed<ArticleSection[]>(() => {
+    const byId = new Map(all.value.map((article) => [article.id, article]))
+
+    const highlights = walkthroughHighlightIds
+      .map((id) => byId.get(id))
+      .filter((article): article is Article => article?.status === 'published')
+
+    return [
+      {
+        id: 'news',
+        title: 'Новости',
+        href: '/news',
+        articles: [...publishedNews.value].sort(byDateDesc),
+      },
+      {
+        id: 'reviews',
+        title: 'Обзоры',
+        href: '/reviews',
+        articles: [...publishedReviews.value].sort(byDateDesc),
+      },
+      {
+        id: 'walkthroughs',
+        title: 'Прохождения',
+        href: '/walkthroughs',
+        articles: highlights,
+      },
+    ]
+  })
+
+  /** PopularNow headlines, derived from the newest published articles. */
+  const popularNow = computed<Headline[]>(() =>
+    [...publishedNews.value]
+      .sort(byDateDesc)
+      .slice(0, HEADLINE_LIMIT)
+      .map((article) => ({
+        id: article.id,
+        title: article.title,
+        comments: article.comments,
+        url: article.url,
+      })),
+  )
 
   function getArticle(id: string): Article | undefined {
     return all.value.find((article) => article.id === id)
   }
 
-  /** Insertion point for freshly created articles, matching mock id patterns. */
-  function nextUserArticleId(): string {
-    const used = new Set(all.value.map((article) => article.id))
-    let index = 1
+  async function createArticle(payload: api.ArticleCreatePayload): Promise<Article> {
+    const { article } = await api.createArticle(payload)
+    const mapped = withUrl(article)
 
-    while (used.has(`user-${index}`)) index += 1
+    putArticle(mapped)
 
-    return `user-${index}`
+    return mapped
   }
 
-  function saveUserArticle(article: Article) {
-    const index = userArticles.value.findIndex((item) => item.id === article.id)
+  async function updateArticle(id: string, patch: ArticlePatchPayload): Promise<Article> {
+    const { article } = await api.updateArticle(id, patch)
+    const mapped = withUrl(article)
 
-    if (index >= 0) {
-      userArticles.value[index] = article
-    } else {
-      userArticles.value.push(article)
-    }
+    putArticle(mapped)
 
-    persist()
+    return mapped
   }
 
-  function saveMockOverride(article: Article) {
-    overrides.value = {
-      ...overrides.value,
-      [article.id]: {
-        title: article.title,
-        image: article.image,
-        kind: article.kind,
-        content: article.content,
-        author: article.author,
-        status: article.status,
-        rating: article.rating,
-        platform: article.platform,
-        verdict: article.verdict,
-      },
-    }
+  async function deleteArticle(id: string): Promise<void> {
+    await api.deleteArticle(id)
 
-    persist()
-  }
-
-  /** Creates or updates an article; mock seed entries are edited via overrides. */
-  function saveArticle(article: Article) {
-    if (mockArticles.some((item) => item.id === article.id)) {
-      saveMockOverride(article)
-    } else {
-      saveUserArticle(article)
-    }
-  }
-
-  function deleteArticle(id: string) {
-    const index = userArticles.value.findIndex((article) => article.id === id)
-
-    if (index >= 0) {
-      userArticles.value.splice(index, 1)
-    } else {
-      deletedIds.value = [...deletedIds.value, id]
-    }
-
-    persist()
+    articles.value = articles.value.filter((article) => article.id !== id)
   }
 
   function articleKindLabel(kind: ArticleKind): string {
@@ -202,13 +203,23 @@ export const useArticlesStore = defineStore('articles', () => {
   }
 
   return {
+    articles,
+    loadState,
+    errorMessage,
+    init,
+    reload,
+    refresh,
     all,
+    publishedNews,
+    publishedReviews,
     newsSections,
+    walkthroughSections: walkthroughFeeds,
     reviewSections,
     homeSections,
+    popularNow,
     getArticle,
-    nextUserArticleId,
-    saveArticle,
+    createArticle,
+    updateArticle,
     deleteArticle,
     articleKindLabel,
   }

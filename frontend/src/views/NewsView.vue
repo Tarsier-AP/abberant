@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import type { ArticleSection } from '@/types/article'
 import HomeSection from '@/components/home/HomeSection.vue'
 import PagePagination from '@/components/ui/PagePagination.vue'
+import LoadState from '@/components/ui/LoadState.vue'
 import { useArticlesStore } from '@/stores/articles'
 
 /** Maximum number of article cards on one news page (3x2 on desktop). */
@@ -81,7 +82,7 @@ watch(
 watch(
   currentSection,
   (section) => {
-    if (sectionId.value && !section) {
+    if (store.loadState === 'ready' && sectionId.value && !section) {
       void router.replace({ path: '/news' })
     }
   },
@@ -93,14 +94,21 @@ watch(
   <div ref="root" class="news container">
     <h1 class="visually-hidden">{{ heading }}</h1>
 
-    <HomeSection v-for="group in groups" :key="group.id" v-bind="group" show-all />
-
-    <PagePagination
-      v-if="totalPages > 1"
-      :page="page"
-      :total-pages="totalPages"
-      @update:page="goToPage"
+    <LoadState
+      v-if="store.loadState !== 'ready'"
+      :error="store.errorMessage"
+      @retry="store.reload()"
     />
+    <template v-else>
+      <HomeSection v-for="group in groups" :key="group.id" v-bind="group" show-all />
+
+      <PagePagination
+        v-if="totalPages > 1"
+        :page="page"
+        :total-pages="totalPages"
+        @update:page="goToPage"
+      />
+    </template>
   </div>
 </template>
 

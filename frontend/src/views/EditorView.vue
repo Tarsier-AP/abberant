@@ -4,7 +4,8 @@ import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import EditorToolbar from '@/components/editor/EditorToolbar.vue'
 import EditorImageDialog from '@/components/editor/EditorImageDialog.vue'
 import type { EditorCommand, EditorImagePayload } from '@/types/editor'
-import type { Article, ArticleKind, ArticleStatus } from '@/types/article'
+import type { ArticleKind, ArticleStatus } from '@/types/article'
+import type { ArticleCreatePayload, ArticlePatchPayload } from '@/api/articles'
 import { useAuthStore } from '@/stores/auth'
 import { useArticlesStore } from '@/stores/articles'
 import { createImageDataUrl } from '@/utils/image'
@@ -56,6 +57,7 @@ const coverError = ref('')
 const errorMessage = ref('')
 const savedNotice = ref('')
 const imageDialogOpen = ref(false)
+const saving = ref(false)
 
 const isNew = computed(() => editingId.value === null)
 const isOwner = computed(() => auth.account?.role === 'owner')
@@ -87,6 +89,8 @@ function takeSnapshot() {
 }
 
 function initForm() {
+  if (store.loadState !== 'ready') return
+
   errorMessage.value = ''
   savedNotice.value = ''
   coverError.value = ''
@@ -135,17 +139,30 @@ function initForm() {
   takeSnapshot()
 }
 
-function buildArticle(id: string): Article {
-  return {
-    id,
+function buildCreatePayload(): ArticleCreatePayload {
+  const payload: ArticleCreatePayload = {
     title: form.title.trim(),
     image: form.image.trim() || FALLBACK_IMAGE,
-    date: createdDate.value || new Date().toISOString().slice(0, 10),
-    comments: comments.value,
-    url: `/article/${id}`,
     kind: form.kind,
     content: form.content,
-    author: author.value || auth.account?.username || 'Автор',
+    status: form.status,
+  }
+
+  if (form.kind === 'review') {
+    payload.rating = form.rating
+    payload.platform = form.platform.trim()
+    payload.verdict = form.verdict.trim()
+  }
+
+  return payload
+}
+
+function buildPatchPayload(): ArticlePatchPayload {
+  return {
+    title: form.title.trim(),
+    image: form.image.trim() || FALLBACK_IMAGE,
+    kind: form.kind,
+    content: form.content,
     status: form.status,
     ...(form.kind === 'review'
       ? {
@@ -167,7 +184,9 @@ function validate(): string {
   return ''
 }
 
-function save(nextStatus?: ArticleStatus) {
+async function save(nextStatus?: ArticleStatus) {
+  if (saving.value) return
+
   errorMessage.value = ''
   savedNotice.value = ''
 
@@ -180,29 +199,48 @@ function save(nextStatus?: ArticleStatus) {
     return
   }
 
-  const id = editingId.value ?? store.nextUserArticleId()
-  const article = buildArticle(id)
+  saving.value = true
 
-  store.saveArticle(article)
+  try {
+    const article =
+      editingId.value === null
+        ? await store.createArticle(buildCreatePayload())
+        : await store.updateArticle(editingId.value, buildPatchPayload())
 
-  if (nextStatus === 'published') {
-    void router.push({ name: 'article', params: { id } })
+    editingId.value = article.id
+    author.value = article.author
+    createdDate.value = article.date
+    comments.value = article.comments
+
+    if (nextStatus === 'published') {
+      void router.push({ name: 'article', params: { id: article.id } })
+      return
+    }
+
+    if (route.name === 'editor') {
+      void router.replace({ name: 'editor-edit', params: { id: article.id } })
+    }
+
+    takeSnapshot()
+    savedNotice.value = form.status === 'published' ? 'Статья сохранена.' : 'Черновик сохранён.'
+  } catch (err) {
+    errorMessage.value = err instanceof Error ? err.message : 'Не удалось сохранить статью.'
+  } finally {
+    saving.value = false
+  }
+}
+
+async function remove() {
+  if (!editingId.value || !window.confirm('Удалить статью? Это действие необратимо.')) return
+
+  try {
+    await store.deleteArticle(editingId.value)
+  } catch (err) {
+    errorMessage.value = err instanceof Error ? err.message : 'Не удалось удалить статью.'
+
     return
   }
 
-  if (editingId.value === null) {
-    editingId.value = id
-    void router.replace({ name: 'editor-edit', params: { id } })
-  }
-
-  takeSnapshot()
-  savedNotice.value = form.status === 'published' ? 'Статья сохранена.' : 'Черновик сохранён.'
-}
-
-function remove() {
-  if (!editingId.value || !window.confirm('Удалить статью? Это действие необратимо.')) return
-
-  store.deleteArticle(editingId.value)
   void router.replace({ name: 'home' })
 }
 
@@ -370,6 +408,13 @@ function handleBeforeUnload(event: BeforeUnloadEvent) {
 watch(
   () => route.params.id,
   () => initForm(),
+)
+
+watch(
+  () => store.loadState,
+  (state) => {
+    if (state === 'ready') initForm()
+  },
 )
 
 onMounted(() => {
@@ -547,16 +592,23 @@ onBeforeRouteLeave(() => {
       <h2 id="editor-actions-title" class="visually-hidden">Действия</h2>
 
       <div class="editor__actions">
-        <button v-if="canModify" class="editor__button" type="button" @click="save()">
-          Сохранить
+        <button
+          v-if="canModify"
+          :disabled="saving"
+          class="editor__button"
+          type="button"
+          @click="save()"
+        >
+          {{ saving ? 'Сохранение…' : 'Сохранить' }}
         </button>
         <button
           v-if="canModify && form.status === 'draft'"
+          :disabled="saving"
           class="editor__button editor__button--primary"
           type="button"
           @click="save('published')"
         >
-          Опубликовать
+          {{ saving ? 'Публикация…' : 'Опубликовать' }}
         </button>
         <span v-else-if="canModify" class="editor__status">Опубликовано</span>
         <button

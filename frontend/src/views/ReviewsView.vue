@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import type { ArticleSection } from '@/types/article'
 import HomeSection from '@/components/home/HomeSection.vue'
 import PagePagination from '@/components/ui/PagePagination.vue'
+import LoadState from '@/components/ui/LoadState.vue'
 import { useArticlesStore } from '@/stores/articles'
 
 /** Maximum number of article cards on one archive page; above it a pager appears. */
@@ -80,7 +81,7 @@ watch(
 watch(
   currentGroup,
   (group) => {
-    if (sectionId.value && !group) {
+    if (store.loadState === 'ready' && sectionId.value && !group) {
       void router.replace({ path: '/reviews' })
     }
   },
@@ -92,19 +93,26 @@ watch(
   <div ref="root" class="reviews container">
     <h1 class="visually-hidden">{{ heading }}</h1>
 
-    <HomeSection
-      v-for="group in groups"
-      :key="group.id"
-      v-bind="group"
-      :show-all="Boolean(currentGroup)"
+    <LoadState
+      v-if="store.loadState !== 'ready'"
+      :error="store.errorMessage"
+      @retry="store.reload()"
     />
+    <template v-else>
+      <HomeSection
+        v-for="group in groups"
+        :key="group.id"
+        v-bind="group"
+        :show-all="Boolean(currentGroup)"
+      />
 
-    <PagePagination
-      v-if="totalPages > 1"
-      :page="page"
-      :total-pages="totalPages"
-      @update:page="goToPage"
-    />
+      <PagePagination
+        v-if="totalPages > 1"
+        :page="page"
+        :total-pages="totalPages"
+        @update:page="goToPage"
+      />
+    </template>
   </div>
 </template>
 
