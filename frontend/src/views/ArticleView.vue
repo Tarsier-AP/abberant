@@ -211,8 +211,9 @@ watch(
 
 .article__body :deep(img) {
   display: block;
-  width: 100%;
+  width: min(100%, 560px);
   height: auto;
+  margin-inline: auto;
   border-radius: var(--radius);
   cursor: zoom-in;
 }

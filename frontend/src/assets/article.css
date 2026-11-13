@@ -68,8 +68,7 @@
 
 .article-body figure img {
   display: block;
-  width: 100%;
-  max-width: 100%;
+  width: min(100%, 560px);
   height: auto;
   border-radius: var(--radius);
 }
