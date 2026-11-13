@@ -129,7 +129,7 @@ watch(
 .article__card {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: clamp(12px, 2vw, 16px);
   width: 100%;
   max-width: 1060px;
   margin-inline: auto;
@@ -139,7 +139,7 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 8px;
+  padding: clamp(8px, 2vw, 16px);
   background: var(--color-header);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -166,7 +166,7 @@ watch(
 }
 
 .article__title {
-  font: 600 24px/30px Roboto, sans-serif;
+  font: 600 clamp(20px, 3vw, 24px)/clamp(26px, 3.5vw, 30px) Roboto, sans-serif;
 }
 
 .article__meta {
@@ -195,13 +195,13 @@ watch(
 
 .article__cover {
   width: 100%;
-  max-height: 420px;
+  height: clamp(160px, 38vw, 420px);
   object-fit: cover;
   border-radius: var(--radius);
 }
 
 .article__body {
-  padding: 8px;
+  padding: clamp(8px, 2vw, 16px);
   background: var(--color-header);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -234,7 +234,7 @@ watch(
 }
 
 .article__placeholder {
-  padding: 8px;
+  padding: clamp(8px, 2vw, 16px);
   color: var(--color-muted);
   background: var(--color-header);
   border-radius: var(--radius);
@@ -246,7 +246,7 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 8px;
+  padding: clamp(8px, 2vw, 16px);
   background: var(--color-card);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
