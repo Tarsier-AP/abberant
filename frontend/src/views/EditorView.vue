@@ -8,10 +8,18 @@ import type { ArticleKind, ArticleStatus } from '@/types/article'
 import type { ArticleCreatePayload, ArticlePatchPayload } from '@/api/articles'
 import { useAuthStore } from '@/stores/auth'
 import { useArticlesStore } from '@/stores/articles'
+import { newsPlatformSections, reviewGroupSections, walkthroughSections } from '@/data/sections'
 import { createImageDataUrl } from '@/utils/image'
 import { renderMarkdown } from '@/utils/markdown'
 
 const FALLBACK_IMAGE = '/img/news-placeholder.svg'
+
+/** Section picker groups; ids go into the article's `section` column. */
+const sectionGroups = [
+  { label: 'Новости', sections: newsPlatformSections },
+  { label: 'Прохождения', sections: walkthroughSections },
+  { label: 'Обзоры', sections: reviewGroupSections },
+]
 
 interface EditorForm {
   title: string
@@ -22,6 +30,17 @@ interface EditorForm {
   platform: string
   verdict: string
   status: ArticleStatus
+  section: string
+  date: string
+}
+
+/** Local calendar date as YYYY-MM-DD for the publication date input. */
+function todayIsoDate(): string {
+  const now = new Date()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+
+  return `${now.getFullYear()}-${month}-${day}`
 }
 
 function emptyForm(): EditorForm {
@@ -34,6 +53,8 @@ function emptyForm(): EditorForm {
     platform: '',
     verdict: '',
     status: 'draft',
+    section: '',
+    date: todayIsoDate(),
   }
 }
 
@@ -60,10 +81,14 @@ const imageDialogOpen = ref(false)
 const saving = ref(false)
 
 const isNew = computed(() => editingId.value === null)
-const isOwner = computed(() => auth.account?.role === 'owner')
-const canModify = computed(
-  () => isOwner.value || (author.value !== '' && author.value === auth.account?.username),
+/** Owner and moderators manage any article; others may only touch their own. */
+const isManager = computed(
+  () => auth.account?.role === 'owner' || auth.account?.role === 'moderator',
 )
+const canModify = computed(
+  () => isManager.value || (author.value !== '' && author.value === auth.account?.username),
+)
+const canDelete = canModify
 
 const previewHtml = computed(() => renderMarkdown(form.content))
 
@@ -79,6 +104,8 @@ function formSnapshot(): string {
     platform: form.platform,
     verdict: form.verdict,
     status: form.status,
+    section: form.section,
+    date: form.date,
   })
 }
 
@@ -116,7 +143,7 @@ function initForm() {
     return
   }
 
-  if (auth.account?.role !== 'owner' && article.author !== auth.account?.username) {
+  if (!isManager.value && article.author !== auth.account?.username) {
     void router.replace({ name: 'article', params: { id } })
     return
   }
@@ -135,6 +162,8 @@ function initForm() {
     platform: article.platform ?? '',
     verdict: article.verdict ?? '',
     status: article.status,
+    section: article.section ?? '',
+    date: article.date,
   })
   takeSnapshot()
 }
@@ -146,6 +175,8 @@ function buildCreatePayload(): ArticleCreatePayload {
     kind: form.kind,
     content: form.content,
     status: form.status,
+    date: form.date,
+    section: form.section,
   }
 
   if (form.kind === 'review') {
@@ -164,6 +195,8 @@ function buildPatchPayload(): ArticlePatchPayload {
     kind: form.kind,
     content: form.content,
     status: form.status,
+    date: form.date,
+    section: form.section,
     ...(form.kind === 'review'
       ? {
           rating: form.rating,
@@ -241,7 +274,7 @@ async function remove() {
     return
   }
 
-  void router.replace({ name: 'home' })
+  void router.replace({ name: 'editor-articles' })
 }
 
 function goBack() {
@@ -481,6 +514,32 @@ onBeforeRouteLeave(() => {
       </div>
 
       <div class="editor__field">
+        <label class="editor__label" for="editor-date">Дата публикации</label>
+        <input
+          id="editor-date"
+          v-model="form.date"
+          class="editor__input"
+          type="date"
+        />
+      </div>
+
+      <div class="editor__field">
+        <label class="editor__label" for="editor-section">Раздел</label>
+        <select id="editor-section" v-model="form.section" class="editor__input editor__select">
+          <option value="">Без раздела</option>
+          <optgroup
+            v-for="group in sectionGroups"
+            :key="group.label"
+            :label="group.label"
+          >
+            <option v-for="section in group.sections" :key="section.id" :value="section.id">
+              {{ section.title }}
+            </option>
+          </optgroup>
+        </select>
+      </div>
+
+      <div class="editor__field">
         <label class="editor__label" for="editor-cover-url">Обложка</label>
         <div class="editor__cover">
           <img
@@ -612,7 +671,7 @@ onBeforeRouteLeave(() => {
         </button>
         <span v-else-if="canModify" class="editor__status">Опубликовано</span>
         <button
-          v-if="isOwner && !isNew"
+          v-if="canDelete && !isNew"
           class="editor__button editor__button--danger"
           type="button"
           @click="remove"
@@ -691,6 +750,10 @@ onBeforeRouteLeave(() => {
 .editor__input:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 0;
+}
+
+.editor__select {
+  appearance: auto;
 }
 
 .editor__kinds {

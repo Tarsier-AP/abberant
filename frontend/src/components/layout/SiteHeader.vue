@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import ThemeIcon from '@/components/ui/ThemeIcon.vue'
 import { useAuthStore } from '@/stores/auth'
 
@@ -44,12 +44,16 @@ onMounted(() => {
   document.documentElement.dataset.theme = theme.value
 })
 
-const links = [
-  { label: 'Новости', to: '/news' },
-  { label: 'Обзоры', to: '/reviews' },
-  { label: 'Прохождения', to: '/walkthroughs' },
-  { label: 'Помощь', to: '/help' },
-]
+const links = computed(() => {
+  const base = [
+    { label: 'Новости', to: '/news' },
+    { label: 'Обзоры', to: '/reviews' },
+    { label: 'Прохождения', to: '/walkthroughs' },
+    { label: 'Помощь', to: '/help' },
+  ]
+
+  return auth.canModerate ? [...base, { label: 'Редактор', to: '/editor/articles' }] : base
+})
 </script>
 
 <template>

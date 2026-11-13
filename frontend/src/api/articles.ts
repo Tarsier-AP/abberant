@@ -37,7 +37,19 @@ export type ArticleCreatePayload = Omit<ArticlePayload, 'id' | 'date' | 'url' | 
 }
 
 export type ArticlePatchPayload = Partial<
-  Pick<ArticlePayload, 'title' | 'image' | 'kind' | 'content' | 'status' | 'rating' | 'platform' | 'verdict'>
+  Pick<
+    ArticlePayload,
+    | 'title'
+    | 'image'
+    | 'kind'
+    | 'content'
+    | 'status'
+    | 'rating'
+    | 'platform'
+    | 'verdict'
+    | 'section'
+    | 'date'
+  >
 >
 
 export function fetchArticles() {

@@ -57,7 +57,7 @@ func New(cfg config.Config, service *auth.Service, store *session.Store, article
 	v1.Delete("/comments/:id", server.requireSession, server.handleDeleteComment)
 	v1.Post("/articles", server.requireSession, server.requireEditor, server.handleCreateArticle)
 	v1.Patch("/articles/:id", server.requireSession, server.requireEditor, server.handleUpdateArticle)
-	v1.Delete("/articles/:id", server.requireSession, server.requireEditor, server.handleDeleteArticle)
+	v1.Delete("/articles/:id", server.requireSession, server.handleDeleteArticle)
 
 	return app
 }

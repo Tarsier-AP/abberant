@@ -35,6 +35,17 @@ const canView = computed(() => {
   )
 })
 
+/** Matches the editor page rules: managers and the author may edit. */
+const canEdit = computed(() => {
+  if (!article.value) return false
+
+  return (
+    auth.account?.role === 'owner' ||
+    auth.account?.role === 'moderator' ||
+    (article.value.author !== '' && article.value.author === auth.account?.username)
+  )
+})
+
 const bodyHtml = computed(() => {
   if (!article.value?.content) return ''
   // Drop a leading markdown heading so it doesn't duplicate the page title.
@@ -85,6 +96,13 @@ watch(
         <div class="article__meta">
           <time class="article__date" :datetime="article.date">{{ formatDate(article.date) }}</time>
           <span class="article__author">{{ article.author }}</span>
+          <RouterLink
+            v-if="canEdit"
+            class="article__edit"
+            :to="{ name: 'editor-edit', params: { id: article.id } }"
+          >
+            Редактировать
+          </RouterLink>
           <ShareButton :url="shareUrl" label="Поделиться статьёй" />
         </div>
       </header>
@@ -179,6 +197,22 @@ watch(
 .article__author {
   color: var(--color-muted);
   font: 400 13px/16px Roboto, sans-serif;
+}
+
+.article__edit {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 4px 12px;
+  color: var(--color-text);
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  font: 500 12px/16px Roboto, sans-serif;
+}
+
+.article__edit:hover {
+  background: var(--color-card-hover);
 }
 
 .article__review-meta {

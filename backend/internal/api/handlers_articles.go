@@ -259,6 +259,8 @@ type updateArticleRequest struct {
 	Rating   *int    `json:"rating"`
 	Platform *string `json:"platform"`
 	Verdict  *string `json:"verdict"`
+	Section  *string `json:"section"`
+	Date     *string `json:"date"`
 }
 
 func (s *Server) handleUpdateArticle(ctx *fiber.Ctx) error {
@@ -349,6 +351,24 @@ func (s *Server) handleUpdateArticle(ctx *fiber.Ctx) error {
 		existing.Verdict = ""
 	}
 
+	if req.Date != nil {
+		parsed, ok := articles.ParseDate(*req.Date)
+		if !ok {
+			return auth.Fail(400, "Некорректная дата статьи.")
+		}
+
+		existing.Date = parsed
+	}
+
+	if req.Section != nil {
+		section := strings.TrimSpace(*req.Section)
+		if len(section) > 64 {
+			return auth.Fail(400, "Слишком длинный идентификатор раздела.")
+		}
+
+		existing.Section = section
+	}
+
 	if existing.Status == articles.StatusPublished && strings.TrimSpace(existing.Content) == "" {
 		return auth.Fail(400, "Добавьте текст статьи перед публикацией.")
 	}
@@ -361,8 +381,40 @@ func (s *Server) handleUpdateArticle(ctx *fiber.Ctx) error {
 	return ctx.JSON(fiber.Map{"article": newArticleResponse(updated)})
 }
 
+func canDeleteArticle(user *auth.User, article *articles.Article) bool {
+	if user == nil {
+		return false
+	}
+
+	if user.Role == auth.RoleOwner || user.Role == auth.RoleModerator {
+		return true
+	}
+
+	return article.Author == user.Username
+}
+
 func (s *Server) handleDeleteArticle(ctx *fiber.Ctx) error {
-	removed, err := s.articles.Delete(ctx.Context(), ctx.Params("id"))
+	id := ctx.Params("id")
+
+	existing, err := s.articles.ByID(ctx.Context(), id)
+	if err != nil {
+		return err
+	}
+
+	if existing == nil {
+		return auth.Fail(404, "Статья не найдена.")
+	}
+
+	_, user, err := s.resolve(ctx)
+	if err != nil {
+		return err
+	}
+
+	if !canDeleteArticle(user, existing) {
+		return auth.Fail(403, "Недостаточно прав для удаления этой статьи.")
+	}
+
+	removed, err := s.articles.Delete(ctx.Context(), id)
 	if err != nil {
 		return err
 	}
