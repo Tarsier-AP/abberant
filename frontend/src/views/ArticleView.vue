@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ReviewStars from '@/components/article/ReviewStars.vue'
 import ShareButton from '@/components/ui/ShareButton.vue'
@@ -40,6 +40,19 @@ const shareUrl = computed(() =>
   article.value ? new URL(article.value.url, window.location.origin).href : '',
 )
 
+const zoomed = ref<string | null>(null)
+
+function openZoom(event: MouseEvent) {
+  const target = event.target as HTMLElement
+  if (target.tagName === 'IMG' && target.getAttribute('src')) {
+    zoomed.value = target.getAttribute('src')
+  }
+}
+
+function closeZoom() {
+  zoomed.value = null
+}
+
 watch(
   ready,
   (isReady) => {
@@ -68,22 +81,33 @@ watch(
           <ReviewStars v-if="article.rating" :rating="article.rating" />
           <span v-if="article.platform" class="article__platform">{{ article.platform }}</span>
         </div>
+
+        <img
+          v-if="article.image"
+          class="article__cover"
+          :src="article.image"
+          :alt="article.title"
+        />
       </header>
 
-      <img
-        v-if="article.image"
-        class="article__cover"
-        :src="article.image"
-        :alt="article.title"
-      />
-
-      <div v-if="bodyHtml" class="article-body article__body" v-html="bodyHtml"></div>
+      <div
+        v-if="bodyHtml"
+        class="article-body article__body"
+        v-html="bodyHtml"
+        @click="openZoom"
+      ></div>
       <p v-else class="article__placeholder">Текст статьи скоро появится.</p>
 
       <footer v-if="article.kind === 'review' && article.verdict" class="article__verdict">
         <h2 class="article__verdict-title">Вердикт</h2>
         <p class="article__verdict-text">{{ article.verdict }}</p>
       </footer>
+
+      <Teleport to="body">
+        <div v-if="zoomed" class="article__zoom" @click="closeZoom">
+          <img :src="zoomed" alt="Увеличенное изображение" />
+        </div>
+      </Teleport>
     </article>
   </div>
   <LoadState
@@ -178,15 +202,41 @@ watch(
 
 .article__body {
   padding: 8px;
-  background: var(--color-card);
+  background: var(--color-header);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
+}
+
+.article__body :deep(img) {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+  cursor: zoom-in;
+}
+
+.article__zoom {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgb(0 0 0 / 80%);
+  cursor: zoom-out;
+}
+
+.article__zoom img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 
 .article__placeholder {
   padding: 8px;
   color: var(--color-muted);
-  background: var(--color-card);
+  background: var(--color-header);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   font: 400 14px/18px Roboto, sans-serif;
