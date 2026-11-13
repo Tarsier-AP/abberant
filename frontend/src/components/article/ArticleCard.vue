@@ -4,6 +4,7 @@ import type { Article } from '@/types/article'
 import { formatDate } from '@/utils/date'
 import CommentCount from '@/components/ui/CommentCount.vue'
 import ShareButton from '@/components/ui/ShareButton.vue'
+import ReviewStars from '@/components/article/ReviewStars.vue'
 
 const props = defineProps<{ article: Article }>()
 
@@ -29,6 +30,11 @@ const shareUrl = computed(() => new URL(props.article.url, window.location.origi
     <div class="card__meta">
       <span class="card__author">{{ article.author }}</span>
       <time class="card__date" :datetime="article.date">{{ date }}</time>
+      <ReviewStars
+        v-if="article.kind === 'review' && article.rating"
+        :rating="article.rating"
+        class="card__rating"
+      />
       <CommentCount :count="article.comments" :url="article.url" />
       <ShareButton :url="shareUrl" label="Поделиться статьёй" />
     </div>
@@ -67,6 +73,10 @@ const shareUrl = computed(() => new URL(props.article.url, window.location.origi
   gap: 10px;
   padding: 10px;
   margin-top: auto;
+}
+
+.card__rating {
+  font-size: 14px;
 }
 
 .card__author {
