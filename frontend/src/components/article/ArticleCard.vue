@@ -27,6 +27,7 @@ const shareUrl = computed(() => new URL(props.article.url, window.location.origi
     </h3>
 
     <div class="card__meta">
+      <span class="card__author">{{ article.author }}</span>
       <time class="card__date" :datetime="article.date">{{ date }}</time>
       <CommentCount :count="article.comments" :url="article.url" />
       <ShareButton :url="shareUrl" label="Поделиться статьёй" />
@@ -42,15 +43,6 @@ const shareUrl = computed(() => new URL(props.article.url, window.location.origi
   padding: 8px;
   background: var(--color-surface);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  transition:
-    box-shadow 0.15s ease,
-    transform 0.15s ease;
-}
-
-.card:hover {
-  box-shadow: var(--shadow-hover);
-  transform: translateY(-2px);
 }
 
 .card__media img {
@@ -75,6 +67,11 @@ const shareUrl = computed(() => new URL(props.article.url, window.location.origi
   gap: 10px;
   padding: 10px;
   margin-top: auto;
+}
+
+.card__author {
+  color: var(--color-muted);
+  font: 400 13px/16px Roboto, sans-serif;
 }
 
 .card__date {
