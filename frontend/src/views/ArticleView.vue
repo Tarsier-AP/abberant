@@ -94,11 +94,6 @@ watch(
       ></div>
       <p v-else class="article__placeholder">Текст статьи скоро появится.</p>
 
-      <footer v-if="article.kind === 'review' && article.verdict" class="article__verdict">
-        <h2 class="article__verdict-title">Вердикт</h2>
-        <p class="article__verdict-text">{{ article.verdict }}</p>
-      </footer>
-
       <Teleport to="body">
         <div v-if="zoomed" class="article__zoom" @click="closeZoom">
           <img :src="zoomed" alt="Увеличенное изображение" />
@@ -230,24 +225,5 @@ watch(
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   font: 400 14px/18px Roboto, sans-serif;
-}
-
-.article__verdict {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: clamp(8px, 1.5vw, 12px);
-  background: var(--color-card);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
-
-.article__verdict-title {
-  font: 600 16px/20px Roboto, sans-serif;
-}
-
-.article__verdict-text {
-  color: var(--color-muted);
-  font: 400 14px/20px Roboto, sans-serif;
 }
 </style>
