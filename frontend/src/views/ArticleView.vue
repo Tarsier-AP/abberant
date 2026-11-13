@@ -175,6 +175,8 @@ watch(
 
 .article__cover {
   width: 100%;
+  max-height: 420px;
+  object-fit: cover;
   border-radius: var(--radius);
 }
 
