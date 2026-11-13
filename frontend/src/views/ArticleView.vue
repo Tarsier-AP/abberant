@@ -107,7 +107,7 @@ watch(
   flex-direction: column;
   gap: 16px;
   width: 100%;
-  max-width: 800px;
+  max-width: 1060px;
   margin-inline: auto;
   padding: 12px;
   background: var(--color-surface);
