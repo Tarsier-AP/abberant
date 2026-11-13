@@ -9,6 +9,7 @@ import (
 
 	"abberant/backend/internal/articles"
 	"abberant/backend/internal/auth"
+	"abberant/backend/internal/comments"
 	"abberant/backend/internal/config"
 	"abberant/backend/internal/session"
 )
@@ -18,10 +19,11 @@ type Server struct {
 	auth     *auth.Service
 	store    *session.Store
 	articles *articles.Repo
+	comments *comments.Repo
 	app      *fiber.App
 }
 
-func New(cfg config.Config, service *auth.Service, store *session.Store, articlesRepo *articles.Repo) *fiber.App {
+func New(cfg config.Config, service *auth.Service, store *session.Store, articlesRepo *articles.Repo, commentsRepo *comments.Repo) *fiber.App {
 	app := fiber.New(fiber.Config{
 		ErrorHandler:          errorHandler,
 		DisableStartupMessage: false,
@@ -31,7 +33,7 @@ func New(cfg config.Config, service *auth.Service, store *session.Store, article
 		Format: "${status} ${method} ${path}\n",
 	}))
 
-	server := &Server{cfg: cfg, auth: service, store: store, articles: articlesRepo}
+	server := &Server{cfg: cfg, auth: service, store: store, articles: articlesRepo, comments: commentsRepo}
 
 	v1 := app.Group("/api/v1")
 
@@ -51,6 +53,9 @@ func New(cfg config.Config, service *auth.Service, store *session.Store, article
 	v1.Post("/2fa/backup/codes/regenerate", server.requireSession, server.handleBackupRegenerate)
 
 	v1.Get("/articles", server.handleListArticles)
+	v1.Get("/articles/:id/comments", server.handleListComments)
+	v1.Post("/articles/:id/comments", server.requireSession, server.handleCreateComment)
+	v1.Delete("/comments/:id", server.requireSession, server.handleDeleteComment)
 	v1.Post("/articles", server.requireSession, server.requireEditor, server.handleCreateArticle)
 	v1.Patch("/articles/:id", server.requireSession, server.requireEditor, server.handleUpdateArticle)
 	v1.Delete("/articles/:id", server.requireSession, server.requireEditor, server.handleDeleteArticle)

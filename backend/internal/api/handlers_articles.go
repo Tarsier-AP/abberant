@@ -59,6 +59,12 @@ func (s *Server) handleListArticles(ctx *fiber.Ctx) error {
 		return err
 	}
 
+	// The stored counter is legacy data; the real number of comments wins.
+	counts, err := s.comments.CountsByArticle(ctx.Context())
+	if err != nil {
+		return err
+	}
+
 	if !canModerateArticles(user) {
 		visible := make([]*articles.Article, 0, len(list))
 
@@ -77,7 +83,13 @@ func (s *Server) handleListArticles(ctx *fiber.Ctx) error {
 	response := make([]articleResponse, 0, len(list))
 
 	for _, article := range list {
-		response = append(response, newArticleResponse(article))
+		item := newArticleResponse(article)
+
+		if count, ok := counts[article.ID]; ok {
+			item.Comments = count
+		}
+
+		response = append(response, item)
 	}
 
 	return ctx.JSON(fiber.Map{"articles": response})

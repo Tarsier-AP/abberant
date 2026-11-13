@@ -73,6 +73,16 @@ export const useArticlesStore = defineStore('articles', () => {
     }
   }
 
+  /** Replaces the cached comment count after the comment section changes. */
+  function setCommentCount(id: string, count: number) {
+    const index = articles.value.findIndex((item) => item.id === id)
+    const article = articles.value[index]
+
+    if (article && article.comments !== count) {
+      articles.value[index] = { ...article, comments: count }
+    }
+  }
+
   /** Every article visible to the current session. */
   const all = computed(() => articles.value)
 
@@ -221,6 +231,7 @@ export const useArticlesStore = defineStore('articles', () => {
     createArticle,
     updateArticle,
     deleteArticle,
+    setCommentCount,
     articleKindLabel,
   }
 })

@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ReviewStars from '@/components/article/ReviewStars.vue'
+import CommentSection from '@/components/article/CommentSection.vue'
 import ShareButton from '@/components/ui/ShareButton.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -93,6 +94,12 @@ watch(
         @click="openZoom"
       ></div>
       <p v-else class="article__placeholder">Текст статьи скоро появится.</p>
+
+      <CommentSection
+        v-if="article.status === 'published'"
+        class="article__comments"
+        :article="article"
+      />
 
       <Teleport to="body">
         <div v-if="zoomed" class="article__zoom" @click="closeZoom">
