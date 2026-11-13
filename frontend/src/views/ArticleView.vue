@@ -195,7 +195,7 @@ watch(
 
 .article__cover {
   width: 100%;
-  height: clamp(140px, 26vw, 320px);
+  height: clamp(120px, 20vw, 260px);
   object-fit: cover;
   border-radius: var(--radius);
 }
