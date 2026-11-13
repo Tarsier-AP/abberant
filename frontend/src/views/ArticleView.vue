@@ -131,7 +131,7 @@ watch(
   flex-direction: column;
   gap: clamp(10px, 1.5vw, 12px);
   width: 100%;
-  max-width: 960px;
+  max-width: 1060px;
   margin-inline: auto;
 }
 
