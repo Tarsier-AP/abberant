@@ -204,9 +204,6 @@ watch(
 
 .article__body {
   padding: clamp(8px, 1.5vw, 12px);
-  background: var(--color-header);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
 }
 
 .article__body :deep(img) {
