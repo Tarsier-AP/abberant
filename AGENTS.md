@@ -57,7 +57,9 @@ ABBERANT_ADDR=":18080" go run ./cmd/server   # when :8090 is taken on this machi
 
 - Entrypoint: `src/main.ts` mounts `App.vue` with Pinia and vue-router. `App.vue` owns the global header/footer shell.
 - Routes live in `src/router/index.ts`. Most routes, including `/article/:id`, render `PlaceholderView`; replace the placeholder when implementing a section.
-- Article types are in `src/types/article.ts`; all content is hard-coded mock data in `src/data/articles.ts`. There is no fetch/API layer yet, so do not assume one.
+- Article content lives in PostgreSQL: the `articles` table is seeded by `backend/internal/db/migrations/000002_articles.up.sql`, and the frontend loads everything once at startup from `GET /api/v1/articles` (`src/api/articles.ts`, `src/stores/articles.ts`), deriving `url` as `/article/{id}`. There is no `src/data/articles.ts` anymore — do not assume mock data.
+- Section groupings are static frontend config in `src/data/sections.ts` (news platform feeds, walkthrough hubs, review groups, walkthrough highlight ids); each article carries a `section` column value matching one of those ids (empty for reviews and unassigned articles).
+- Editor writes go through `POST/PATCH/DELETE /api/v1/articles`, guarded server-side by `requireEditor` (role `editor` or `owner`). New articles get server-assigned `user-N` ids; POST accepts an optional `id` (used by the one-time localStorage migration in `src/utils/migrateLocalArticles.ts`). Drafts are only listed for their author or editors/owners.
 - `@/` maps to `src/` in both `vite.config.ts` and `tsconfig.app.json`.
 - Components use `<script setup lang="ts">`, scoped styles, and BEM class names (`card__title`, `card__meta`).
 - Styling relies on CSS custom properties from `src/assets/main.css`. Theme is selected by `data-theme="light|dark"` on `<html>`, persisted under localStorage key `abberant-theme`; the initial value is set inline in `index.html` and toggled in `SiteHeader.vue`. Add new colors to both theme blocks rather than hard-coding them.
