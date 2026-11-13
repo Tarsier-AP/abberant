@@ -109,10 +109,6 @@ watch(
   width: 100%;
   max-width: 1060px;
   margin-inline: auto;
-  padding: 12px;
-  background: var(--color-surface);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
 }
 
 .article__header {
