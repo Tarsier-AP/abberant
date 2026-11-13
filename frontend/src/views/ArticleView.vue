@@ -81,14 +81,14 @@ watch(
           <span class="article__author">{{ article.author }}</span>
           <ShareButton :url="shareUrl" label="Поделиться статьёй" />
         </div>
-
-        <img
-          v-if="article.image"
-          class="article__cover"
-          :src="article.image"
-          :alt="article.title"
-        />
       </header>
+
+      <img
+        v-if="article.image"
+        class="article__cover"
+        :src="article.image"
+        :alt="article.title"
+      />
 
       <div
         v-if="bodyHtml"
@@ -204,6 +204,9 @@ watch(
 
 .article__body {
   padding: clamp(8px, 1.5vw, 12px);
+  background: var(--color-header);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
 }
 
 .article__body :deep(img) {
