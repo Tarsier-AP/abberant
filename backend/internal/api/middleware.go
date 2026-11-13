@@ -80,6 +80,20 @@ func (s *Server) requireSession(ctx *fiber.Ctx) error {
 	return ctx.Next()
 }
 
+func (s *Server) requireEditor(ctx *fiber.Ctx) error {
+	user := s.currentUser(ctx)
+
+	if user == nil {
+		return fail401()
+	}
+
+	if user.Role != "editor" && user.Role != "owner" {
+		return auth.Fail(403, "Недостаточно прав для управления статьями.")
+	}
+
+	return ctx.Next()
+}
+
 func (s *Server) requireAnySession(ctx *fiber.Ctx) error {
 	session, user, err := s.resolve(ctx)
 	if err != nil {

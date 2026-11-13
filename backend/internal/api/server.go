@@ -7,19 +7,21 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 
+	"abberant/backend/internal/articles"
 	"abberant/backend/internal/auth"
 	"abberant/backend/internal/config"
 	"abberant/backend/internal/session"
 )
 
 type Server struct {
-	cfg   config.Config
-	auth  *auth.Service
-	store *session.Store
-	app   *fiber.App
+	cfg      config.Config
+	auth     *auth.Service
+	store    *session.Store
+	articles *articles.Repo
+	app      *fiber.App
 }
 
-func New(cfg config.Config, service *auth.Service, store *session.Store) *fiber.App {
+func New(cfg config.Config, service *auth.Service, store *session.Store, articlesRepo *articles.Repo) *fiber.App {
 	app := fiber.New(fiber.Config{
 		ErrorHandler:          errorHandler,
 		DisableStartupMessage: false,
@@ -29,7 +31,7 @@ func New(cfg config.Config, service *auth.Service, store *session.Store) *fiber.
 		Format: "${status} ${method} ${path}\n",
 	}))
 
-	server := &Server{cfg: cfg, auth: service, store: store}
+	server := &Server{cfg: cfg, auth: service, store: store, articles: articlesRepo}
 
 	v1 := app.Group("/api/v1")
 
@@ -47,6 +49,11 @@ func New(cfg config.Config, service *auth.Service, store *session.Store) *fiber.
 	v1.Post("/2fa/totp/confirm", server.requireSession, server.handleTotpConfirm)
 	v1.Post("/2fa/email/send", server.requireAnySession, server.handleEmailSend)
 	v1.Post("/2fa/backup/codes/regenerate", server.requireSession, server.handleBackupRegenerate)
+
+	v1.Get("/articles", server.handleListArticles)
+	v1.Post("/articles", server.requireSession, server.requireEditor, server.handleCreateArticle)
+	v1.Patch("/articles/:id", server.requireSession, server.requireEditor, server.handleUpdateArticle)
+	v1.Delete("/articles/:id", server.requireSession, server.requireEditor, server.handleDeleteArticle)
 
 	return app
 }

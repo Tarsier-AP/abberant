@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"abberant/backend/internal/api"
+	"abberant/backend/internal/articles"
 	"abberant/backend/internal/auth"
 	"abberant/backend/internal/config"
 	"abberant/backend/internal/db"
@@ -27,7 +28,7 @@ func main() {
 	sessions := session.NewStore(pool, cfg.SessionTTL, cfg.PendingTTL)
 	service := auth.NewService(pool, sessions, mailer.New(cfg), cfg)
 
-	app := api.New(cfg, service, sessions)
+	app := api.New(cfg, service, sessions, articles.NewRepo(pool))
 
 	go func() {
 		log.Printf("listening on %s", cfg.Addr)
