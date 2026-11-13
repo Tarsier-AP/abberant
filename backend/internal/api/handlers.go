@@ -232,23 +232,6 @@ func (s *Server) handleLogout(ctx *fiber.Ctx) error {
 	return ctx.JSON(fiber.Map{"status": "ok"})
 }
 
-func (s *Server) handleLogoutAll(ctx *fiber.Ctx) error {
-	session, user, err := s.resolve(ctx)
-	if err != nil {
-		return err
-	}
-
-	if session == nil || session.Pending {
-		return fail401()
-	}
-
-	if err := s.store.RevokeAllForUser(ctx.Context(), user.ID, session.ID); err != nil {
-		return err
-	}
-
-	return ctx.JSON(fiber.Map{"status": "ok", "revokedAll": true})
-}
-
 func (s *Server) handleMe(ctx *fiber.Ctx) error {
 	user := s.currentUser(ctx)
 

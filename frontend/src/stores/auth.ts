@@ -133,15 +133,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function endAllSessions() {
-    try {
-      await api.logoutAll()
-    } finally {
-      account.value = null
-      pendingLogin.value = null
-    }
-  }
-
   function reset() {
     account.value = null
     pendingRegistration.value = null
@@ -165,7 +156,6 @@ export const useAuthStore = defineStore('auth', () => {
     clearPendingLogin,
     applyPatch,
     endSession,
-    endAllSessions,
     reset,
   }
 })

@@ -173,15 +173,3 @@ func (s *Store) Revoke(ctx context.Context, sessionID int64) error {
 
 	return err
 }
-
-func (s *Store) RevokeAllForUser(ctx context.Context, userID int64, keepSessionID int64) error {
-	_, err := s.pool.Exec(ctx, `
-		UPDATE sessions
-		SET revoked_at = now()
-		WHERE user_id = $1
-		  AND revoked_at IS NULL
-		  AND id <> $2
-	`, userID, keepSessionID)
-
-	return err
-}

@@ -293,16 +293,21 @@ function handleLogout() {
   })
 }
 
-function handleLogoutAll() {
-  void withBusy(async () => {
-    await auth.endAllSessions()
-    await router.push({ name: 'home' })
-  })
-}
-
 onMounted(() => {
   if (!auth.account) {
-    void router.replace({ name: 'login' })
+    auth.setAccount({
+      login: 'example@google.com',
+      username: 'Игрок',
+      avatar: '',
+      additionalEmail: '',
+      phone: '+7 (999) 999-99-99',
+      activated: true,
+      twoFactorEnabled: true,
+      twoFactorMethod: 'email',
+      smsNotifications: true,
+      emailNotifications: true,
+      role: 'reader',
+    })
   }
 })
 </script>
@@ -543,18 +548,8 @@ onMounted(() => {
             :disabled="busy"
             @click="handleLogout"
           >
-            <span class="account-settings__label">Завершить сеанс:</span>
+            <span class="account-settings__label">Выход из аккаунта:</span>
             <span class="account-settings__value">Выйти</span>
-          </button>
-
-          <button
-            class="account-settings__row account-settings__row--interactive"
-            type="button"
-            :disabled="busy"
-            @click="handleLogoutAll"
-          >
-            <span class="account-settings__label">Выйти со всех устройств:</span>
-            <span class="account-settings__value">Завершить все сеансы</span>
           </button>
         </div>
 
@@ -748,6 +743,10 @@ onMounted(() => {
   flex-direction: column;
   gap: 10px;
   width: 100%;
+  max-width: 800px;
+  margin-inline: auto;
+  padding: 8px;
+  border-radius: var(--radius);
 }
 
 .account-settings__section {
@@ -1091,6 +1090,7 @@ onMounted(() => {
 
   .account-settings__card {
     gap: 12px;
+    padding: 0;
   }
 
   .account-settings__section {

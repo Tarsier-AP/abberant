@@ -98,10 +98,6 @@ export function logout() {
   return api<{ status: string }>('/logout', { method: 'POST' })
 }
 
-export function logoutAll() {
-  return api<{ status: string }>('/logout/all', { method: 'POST' })
-}
-
 export function fetchMe() {
   return api<AccountResponse>('/me')
 }
