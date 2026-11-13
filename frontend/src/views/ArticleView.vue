@@ -32,9 +32,12 @@ const canView = computed(() => {
   )
 })
 
-const bodyHtml = computed(() =>
-  article.value?.content ? renderMarkdown(article.value.content) : '',
-)
+const bodyHtml = computed(() => {
+  if (!article.value?.content) return ''
+  // Drop a leading markdown heading so it doesn't duplicate the page title.
+  const stripped = article.value.content.replace(/^#{1,6}[^\n]*\n+/, '')
+  return renderMarkdown(stripped)
+})
 
 const shareUrl = computed(() =>
   article.value ? new URL(article.value.url, window.location.origin).href : '',
@@ -82,13 +85,6 @@ watch(
           <ShareButton :url="shareUrl" label="Поделиться статьёй" />
         </div>
       </header>
-
-      <img
-        v-if="article.image"
-        class="article__cover"
-        :src="article.image"
-        :alt="article.title"
-      />
 
       <div
         v-if="bodyHtml"
@@ -191,15 +187,6 @@ watch(
 .article__platform {
   color: var(--color-muted);
   font: 400 13px/16px Roboto, sans-serif;
-}
-
-.article__cover {
-  width: clamp(300px, 50vw, 600px);
-  max-width: 100%;
-  height: clamp(120px, 20vw, 260px);
-  margin-inline: auto;
-  object-fit: cover;
-  border-radius: var(--radius);
 }
 
 .article__body {
