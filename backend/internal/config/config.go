@@ -59,7 +59,7 @@ func envInt(key string, fallback int) int {
 
 func Load() Config {
 	return Config{
-		Addr:         env("ABBERANT_ADDR", ":8080"),
+		Addr:         env("ABBERANT_ADDR", ":8090"),
 		DSN:          env("ABBERANT_DATABASE_DSN", ""),
 		DataDir:      env("ABBERANT_DB_DATA_DIR", ".data/postgres"),
 		EmbeddedPort: envInt("ABBERANT_DB_PORT", 55432),

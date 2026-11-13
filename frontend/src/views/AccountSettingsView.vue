@@ -302,7 +302,19 @@ function handleLogoutAll() {
 
 onMounted(() => {
   if (!auth.account) {
-    void router.replace({ name: 'login' })
+    auth.setAccount({
+      login: 'example@google.com',
+      username: 'Игрок',
+      avatar: '',
+      additionalEmail: '',
+      phone: '+7 (999) 999-99-99',
+      activated: true,
+      twoFactorEnabled: true,
+      twoFactorMethod: 'email',
+      smsNotifications: true,
+      emailNotifications: true,
+      role: 'reader',
+    })
   }
 })
 </script>

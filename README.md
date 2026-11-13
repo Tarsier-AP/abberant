@@ -25,7 +25,7 @@ nginx/      — конфиги nginx для Linux и Windows
 
 ```sh
 npm ci
-npm run dev       # дев-сервер с прокси /api → http://localhost:8080
+npm run dev       # дев-сервер с прокси /api → http://localhost:8090
 npm run build     # production-сборка в dist/ (включая type-check)
 npm run lint
 ```
@@ -43,7 +43,7 @@ NAPI_RS_FORCE_WASI=true npm run build
 Команды выполняются из каталога `backend/`:
 
 ```sh
-go run ./cmd/server   # запуск: API на :8080 + встроенный PostgreSQL
+go run ./cmd/server   # запуск: API на :8090 + встроенный PostgreSQL
 go build ./...
 go vet ./...
 ```
@@ -58,7 +58,7 @@ go vet ./...
 
 | Переменная | По умолчанию | Назначение |
 | --- | --- | --- |
-| `ABBERANT_ADDR` | `:8080` | адрес HTTP-сервера |
+| `ABBERANT_ADDR` | `:8090` | адрес HTTP-сервера |
 | `ABBERANT_DATABASE_DSN` | — (встроенный PG) | строка подключения к внешнему PostgreSQL |
 | `ABBERANT_DB_DATA_DIR` | `.data/postgres` | каталог данных встроенного PostgreSQL |
 | `ABBERANT_DB_PORT` | `55432` | порт встроенного PostgreSQL |
@@ -87,7 +87,7 @@ go vet ./...
    создать symlink в `sites-enabled`, в конфиге поправить `root` на путь к
    `frontend/dist`, затем `nginx -t && systemctl reload nginx`.
 
-Итог: статика и API на одном origin (`/api/` проксируется на `:8080`),
+Итог: статика и API на одном origin (`/api/` проксируется на `:8090`),
 cookie сессии работает без CORS.
 
 ## Сборка и запуск на Windows
@@ -117,7 +117,7 @@ cookie сессии работает без CORS.
    запись — там появится `.data\postgres`):
 
    ```bat
-   set ABBERANT_ADDR=:8080
+   set ABBERANT_ADDR=:8090
    server.exe
    ```
 

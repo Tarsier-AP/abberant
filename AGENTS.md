@@ -39,11 +39,11 @@ Backend (run from `backend/`):
 
 ```sh
 go build ./...
-go run ./cmd/server          # starts embedded PostgreSQL on :55432 + API on :8080
-ABBERANT_ADDR=":18080" go run ./cmd/server   # when :8080 is taken on this machine
+go run ./cmd/server          # starts embedded PostgreSQL on :55432 + API on :8090
+ABBERANT_ADDR=":18080" go run ./cmd/server   # when :8090 is taken on this machine
 ```
 
-- Dev proxy: `vite.config.ts` forwards `/api` → `http://localhost:8080`.
+- Dev proxy: `vite.config.ts` forwards `/api` → `http://localhost:8090`.
 - Without SMTP configured the backend logs every code and returns it to the client as `devCode` (dev mode).
 
 - Both `dev` and `build` currently need `NAPI_RS_FORCE_WASI=true` on this machine because the native Rolldown binding crashes; the README only documents this for `dev`.
