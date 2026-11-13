@@ -235,6 +235,12 @@ func (s *Server) handleLogout(ctx *fiber.Ctx) error {
 func (s *Server) handleMe(ctx *fiber.Ctx) error {
 	user := s.currentUser(ctx)
 
+	// Anonymous visitors get an empty account instead of 401 so that the
+	// session probe on app start does not log a console error.
+	if user == nil {
+		return ctx.JSON(fiber.Map{"account": nil})
+	}
+
 	return ctx.JSON(fiber.Map{"account": newAccount(user)})
 }
 

@@ -1,69 +1,62 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import HomeView from '@/views/HomeView.vue'
-import NewsView from '@/views/NewsView.vue'
-import WalkthroughsView from '@/views/WalkthroughsView.vue'
-import ReviewsView from '@/views/ReviewsView.vue'
-import HelpView from '@/views/HelpView.vue'
-import LoginView from '@/views/LoginView.vue'
-import RegisterView from '@/views/RegisterView.vue'
-import RegisterPasswordView from '@/views/RegisterPasswordView.vue'
-import RegisterActivationView from '@/views/RegisterActivationView.vue'
-import AccountActivateView from '@/views/AccountActivateView.vue'
-import AccountSettingsView from '@/views/AccountSettingsView.vue'
-import TwoFactorView from '@/views/TwoFactorView.vue'
-import ArticleView from '@/views/ArticleView.vue'
-import EditorView from '@/views/EditorView.vue'
-import EditorArticlesView from '@/views/EditorArticlesView.vue'
 import PlaceholderView from '@/views/PlaceholderView.vue'
 import { useAuthStore } from '@/stores/auth'
 
+/**
+ * Views live in their own chunks and are fetched on the first navigation to
+ * their route, keeping the initial bundle small.
+ */
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/', name: 'home', component: HomeView },
-    { path: '/news', component: NewsView, meta: { title: 'Новости' } },
-    { path: '/news/:platform', component: NewsView },
-    { path: '/reviews', component: ReviewsView, meta: { title: 'Обзоры' } },
-    { path: '/reviews/:section', component: ReviewsView },
-    { path: '/walkthroughs', component: WalkthroughsView },
-    { path: '/walkthroughs/:section', component: WalkthroughsView },
-    { path: '/help', component: HelpView, meta: { title: 'Помощь по сайту' } },
-    { path: '/login', name: 'login', component: LoginView, meta: { title: 'Вход' } },
+    { path: '/', name: 'home', component: () => import('@/views/HomeView.vue') },
+    { path: '/news', component: () => import('@/views/NewsView.vue'), meta: { title: 'Новости' } },
+    { path: '/news/:platform', component: () => import('@/views/NewsView.vue') },
+    { path: '/reviews', component: () => import('@/views/ReviewsView.vue'), meta: { title: 'Обзоры' } },
+    { path: '/reviews/:section', component: () => import('@/views/ReviewsView.vue') },
+    { path: '/walkthroughs', component: () => import('@/views/WalkthroughsView.vue') },
+    { path: '/walkthroughs/:section', component: () => import('@/views/WalkthroughsView.vue') },
+    {
+      path: '/help',
+      component: () => import('@/views/HelpView.vue'),
+      meta: { title: 'Помощь по сайту' },
+    },
+    { path: '/login', name: 'login', component: () => import('@/views/LoginView.vue'), meta: { title: 'Вход' } },
     {
       path: '/2fa',
       name: 'two-factor',
-      component: TwoFactorView,
+      component: () => import('@/views/TwoFactorView.vue'),
       meta: { title: 'Двухфакторная аутентификация' },
     },
     {
       path: '/register',
       name: 'register',
-      component: RegisterView,
+      component: () => import('@/views/RegisterView.vue'),
       meta: { title: 'Регистрация' },
     },
     {
       path: '/register/password',
       name: 'register-password',
-      component: RegisterPasswordView,
+      component: () => import('@/views/RegisterPasswordView.vue'),
       meta: { title: 'Создание пароля' },
     },
     {
       path: '/register/activate',
       name: 'register-activation',
-      component: RegisterActivationView,
+      component: () => import('@/views/RegisterActivationView.vue'),
       meta: { title: 'Активация аккаунта' },
     },
     {
       path: '/activate',
       name: 'activate',
-      component: AccountActivateView,
+      component: () => import('@/views/AccountActivateView.vue'),
       meta: { title: 'Активация аккаунта' },
     },
     {
       path: '/account/settings',
       name: 'account-settings',
-      component: AccountSettingsView,
+      component: () => import('@/views/AccountSettingsView.vue'),
       meta: { title: 'Настройки аккаунта' },
     },
     {
@@ -88,23 +81,23 @@ const router = createRouter({
       component: PlaceholderView,
       meta: { title: 'Политика обработки персональных данных' },
     },
-    { path: '/article/:id', name: 'article', component: ArticleView, meta: { title: 'Статья' } },
+    { path: '/article/:id', name: 'article', component: () => import('@/views/ArticleView.vue'), meta: { title: 'Статья' } },
     {
       path: '/editor/articles',
       name: 'editor-articles',
-      component: EditorArticlesView,
+      component: () => import('@/views/EditorArticlesView.vue'),
       meta: { title: 'Статьи', requiresEditorRole: true },
     },
     {
       path: '/editor',
       name: 'editor',
-      component: EditorView,
+      component: () => import('@/views/EditorView.vue'),
       meta: { title: 'Новая статья', requiresEditorRole: true },
     },
     {
       path: '/editor/:id',
       name: 'editor-edit',
-      component: EditorView,
+      component: () => import('@/views/EditorView.vue'),
       meta: { title: 'Редактирование статьи', requiresEditorRole: true },
     },
     { path: '/:pathMatch(.*)*', redirect: '/' },
@@ -118,10 +111,14 @@ const router = createRouter({
 })
 
 /** Only editors, owners and moderators may open the article editor. */
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   if (!to.meta.requiresEditorRole) return true
 
   const auth = useAuthStore()
+
+  // The app mounts before the session is restored, so load it here on hard
+  // navigation straight to an editor route.
+  if (!auth.initialized) await auth.init()
 
   if (!auth.account) return { name: 'login' }
   if (!auth.canModerate) return { path: '/' }

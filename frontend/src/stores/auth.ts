@@ -144,6 +144,7 @@ export const useAuthStore = defineStore('auth', () => {
     account,
     pendingRegistration,
     pendingLogin,
+    initialized,
     canUseTwoFactor,
     canEditArticles,
     canModerate,

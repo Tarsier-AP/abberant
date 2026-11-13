@@ -132,6 +132,9 @@ const groups: FooterGroup[] = [
 }
 
 .footer__link {
+  display: inline-block;
+  /* 16px line + 2×5px padding keeps the touch target at 26px (>= 24px). */
+  padding: 5px 0;
   font: 400 14px/16px Roboto, sans-serif;
 }
 

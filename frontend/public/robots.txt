@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /account/
+Disallow: /editor/
+Disallow: /login
+Disallow: /register
+Disallow: /2fa
+Disallow: /activate

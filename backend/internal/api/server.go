@@ -44,7 +44,7 @@ func New(cfg config.Config, service *auth.Service, store *session.Store, article
 	v1.Post("/login", server.handleLogin)
 	v1.Post("/login/2fa", server.handleLogin2FA)
 	v1.Post("/logout", server.handleLogout)
-	v1.Get("/me", server.requireSession, server.handleMe)
+	v1.Get("/me", server.handleMe)
 	v1.Patch("/me", server.requireSession, server.handlePatchMe)
 	v1.Post("/2fa/totp/setup", server.requireSession, server.handleTotpSetup)
 	v1.Post("/2fa/totp/confirm", server.requireSession, server.handleTotpConfirm)
