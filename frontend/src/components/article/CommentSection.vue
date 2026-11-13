@@ -33,7 +33,8 @@ const account = computed(() => auth.account)
 const canReply = (comment: CommentPayload) => account.value !== null && comment.parentId === null
 
 const canDelete = (comment: CommentPayload) =>
-  account.value !== null && (auth.canEditArticles || comment.author.username === account.value.username)
+  account.value !== null &&
+  (auth.canModerate || comment.author.username === account.value.username)
 
 /** Top-level comments, oldest first (the API order). */
 const topLevel = computed(() => comments.value.filter((comment) => comment.parentId === null))

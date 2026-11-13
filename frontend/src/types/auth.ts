@@ -12,7 +12,7 @@ export interface RegisterCredentials {
 
 export type TwoFactorMethod = 'authenticator' | 'sms' | 'email'
 
-export type UserRole = 'reader' | 'editor' | 'owner'
+export type UserRole = 'reader' | 'user' | 'editor' | 'owner' | 'moderator' | 'creator'
 
 export interface AuthAccount {
   login: string

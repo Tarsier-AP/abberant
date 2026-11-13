@@ -45,7 +45,7 @@ func newArticleResponse(article *articles.Article) articleResponse {
 }
 
 func canModerateArticles(user *auth.User) bool {
-	return user != nil && (user.Role == "editor" || user.Role == "owner")
+	return user != nil && auth.CanModerate(user.Role)
 }
 
 func (s *Server) handleListArticles(ctx *fiber.Ctx) error {

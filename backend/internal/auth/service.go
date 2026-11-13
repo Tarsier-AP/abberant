@@ -132,8 +132,15 @@ func (s *Service) StartRegistration(ctx context.Context, email, username string)
 		if _, err := s.users.Create(ctx, email, username, tokenHash); err != nil {
 			return "", err
 		}
-	case existing.Activated || existing.PasswordHash != "":
+
+	case existing.Activated:
+		// A finished account cannot be registered again: report it instead of
+		// issuing a registration token that leads nowhere.
+		return "", fail(409, "Аккаунт с этой электронной почтой уже зарегистрирован.")
+
 	default:
+		// Not activated yet: restart the registration (a fresh password and
+		// activation code will be issued) instead of leaving a dead end.
 		if err := s.users.SetRegistrationToken(ctx, existing.ID, tokenHash); err != nil {
 			return "", err
 		}

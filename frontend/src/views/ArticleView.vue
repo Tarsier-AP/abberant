@@ -29,6 +29,8 @@ const canView = computed(() => {
 
   return (
     auth.account?.role === 'owner' ||
+    auth.account?.role === 'editor' ||
+    auth.account?.role === 'moderator' ||
     (article.value.author !== '' && article.value.author === auth.account?.username)
   )
 })

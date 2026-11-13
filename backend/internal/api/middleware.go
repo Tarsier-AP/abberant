@@ -87,7 +87,7 @@ func (s *Server) requireEditor(ctx *fiber.Ctx) error {
 		return fail401()
 	}
 
-	if user.Role != "editor" && user.Role != "owner" {
+	if !auth.CanEditArticles(user.Role) {
 		return auth.Fail(403, "Недостаточно прав для управления статьями.")
 	}
 

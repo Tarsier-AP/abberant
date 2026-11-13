@@ -62,7 +62,17 @@ export const useAuthStore = defineStore('auth', () => {
   )
 
   const canEditArticles = computed(
-    () => account.value?.role === 'editor' || account.value?.role === 'owner',
+    () =>
+      account.value?.role === 'editor' ||
+      account.value?.role === 'owner' ||
+      account.value?.role === 'creator',
+  )
+
+  const canModerate = computed(
+    () =>
+      account.value?.role === 'editor' ||
+      account.value?.role === 'owner' ||
+      account.value?.role === 'moderator',
   )
 
   function setAccount(next: AuthAccount | null) {
@@ -145,6 +155,7 @@ export const useAuthStore = defineStore('auth', () => {
     pendingLogin,
     canUseTwoFactor,
     canEditArticles,
+    canModerate,
     init,
     setAccount,
     startRegistration,
