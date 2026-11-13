@@ -129,9 +129,9 @@ watch(
 .article__card {
   display: flex;
   flex-direction: column;
-  gap: clamp(12px, 2vw, 16px);
+  gap: clamp(10px, 1.5vw, 12px);
   width: 100%;
-  max-width: 1060px;
+  max-width: 960px;
   margin-inline: auto;
 }
 
@@ -139,7 +139,7 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: clamp(8px, 2vw, 16px);
+  padding: clamp(8px, 1.5vw, 12px);
   background: var(--color-header);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -166,7 +166,7 @@ watch(
 }
 
 .article__title {
-  font: 600 clamp(20px, 3vw, 24px)/clamp(26px, 3.5vw, 30px) Roboto, sans-serif;
+  font: 600 clamp(18px, 2.4vw, 22px)/clamp(24px, 3vw, 28px) Roboto, sans-serif;
 }
 
 .article__meta {
@@ -195,13 +195,13 @@ watch(
 
 .article__cover {
   width: 100%;
-  height: clamp(160px, 38vw, 420px);
+  height: clamp(140px, 26vw, 320px);
   object-fit: cover;
   border-radius: var(--radius);
 }
 
 .article__body {
-  padding: clamp(8px, 2vw, 16px);
+  padding: clamp(8px, 1.5vw, 12px);
   background: var(--color-header);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -234,7 +234,7 @@ watch(
 }
 
 .article__placeholder {
-  padding: clamp(8px, 2vw, 16px);
+  padding: clamp(8px, 1.5vw, 12px);
   color: var(--color-muted);
   background: var(--color-header);
   border-radius: var(--radius);
@@ -246,7 +246,7 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: clamp(8px, 2vw, 16px);
+  padding: clamp(8px, 1.5vw, 12px);
   background: var(--color-card);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
