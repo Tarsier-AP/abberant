@@ -194,8 +194,10 @@ watch(
 }
 
 .article__cover {
-  width: 100%;
+  width: clamp(300px, 50vw, 600px);
+  max-width: 100%;
   height: clamp(120px, 20vw, 260px);
+  margin-inline: auto;
   object-fit: cover;
   border-radius: var(--radius);
 }
