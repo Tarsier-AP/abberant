@@ -71,15 +71,15 @@ watch(
 
         <h1 class="article__title">{{ article.title }}</h1>
 
+        <div v-if="article.kind === 'review'" class="article__review-meta">
+          <ReviewStars v-if="article.rating" :rating="article.rating" />
+          <span v-if="article.platform" class="article__platform">{{ article.platform }}</span>
+        </div>
+
         <div class="article__meta">
           <time class="article__date" :datetime="article.date">{{ formatDate(article.date) }}</time>
           <span class="article__author">{{ article.author }}</span>
           <ShareButton :url="shareUrl" label="Поделиться статьёй" />
-        </div>
-
-        <div v-if="article.kind === 'review'" class="article__review-meta">
-          <ReviewStars v-if="article.rating" :rating="article.rating" />
-          <span v-if="article.platform" class="article__platform">{{ article.platform }}</span>
         </div>
 
         <img
@@ -140,7 +140,7 @@ watch(
   flex-direction: column;
   gap: 8px;
   padding: 8px;
-  background: var(--color-card);
+  background: var(--color-header);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }
