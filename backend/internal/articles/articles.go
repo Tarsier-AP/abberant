@@ -14,8 +14,9 @@ import (
 )
 
 const (
-	KindNews   = "news"
-	KindReview = "review"
+	KindNews        = "news"
+	KindReview      = "review"
+	KindWalkthrough = "walkthrough"
 )
 
 const (
@@ -243,7 +244,7 @@ func ParseDate(value string) (time.Time, bool) {
 }
 
 func ValidKind(kind string) bool {
-	return kind == KindNews || kind == KindReview
+	return kind == KindNews || kind == KindReview || kind == KindWalkthrough
 }
 
 func ValidStatus(status string) bool {

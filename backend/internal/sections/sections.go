@@ -86,10 +86,15 @@ func (r *Repo) List(ctx context.Context) ([]*Section, error) {
 	return list, rows.Err()
 }
 
-// ByID returns one section or pgx.ErrNoRows when absent.
+// ByID returns one section, or nil when absent.
 func (r *Repo) ByID(ctx context.Context, id string) (*Section, error) {
-	return scanSection(r.pool.QueryRow(ctx,
+	s, err := scanSection(r.pool.QueryRow(ctx,
 		`SELECT `+sectionColumns+` FROM sections WHERE id = $1`, id))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+
+	return s, err
 }
 
 // Create inserts a section under an auto-generated slug derived from title.
@@ -132,6 +137,13 @@ func (r *Repo) Rename(ctx context.Context, id, title string) (*Section, error) {
 	return scanSection(r.pool.QueryRow(ctx,
 		`UPDATE sections SET title = $2 WHERE id = $1
 		 RETURNING `+sectionColumns, id, title))
+}
+
+// Update persists title and archived state of an already loaded section.
+func (r *Repo) Update(ctx context.Context, s *Section) (*Section, error) {
+	return scanSection(r.pool.QueryRow(ctx,
+		`UPDATE sections SET title = $2, archived = $3 WHERE id = $1
+		 RETURNING `+sectionColumns, s.ID, s.Title, s.Archived))
 }
 
 // SetArchived soft-deletes (or restores) a section.

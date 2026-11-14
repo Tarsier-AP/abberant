@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"abberant/backend/internal/articles"
 	"abberant/backend/internal/auth"
 	"abberant/backend/internal/ratings"
+	"abberant/backend/internal/sections"
 )
 
 type articleResponse struct {
@@ -70,6 +72,54 @@ func newArticleResponse(article *articles.Article) articleResponse {
 
 func canModerateArticles(user *auth.User) bool {
 	return user != nil && auth.CanModerate(user.Role)
+}
+
+// validateArticleSection enforces the kind↔section rules for published
+// material: walkthroughs need a live hub, news an optional live platform
+// section, reviews no section at all. Drafts are exempt so half-finished
+// work can always be saved.
+func (s *Server) validateArticleSection(ctx context.Context, article *articles.Article) error {
+	if article.Kind == articles.KindReview {
+		if article.Section != "" {
+			return auth.Fail(400, "Для обзоров раздел не указывается.")
+		}
+
+		return nil
+	}
+
+	if article.Section == "" {
+		if article.Kind == articles.KindWalkthrough {
+			return auth.Fail(400, "Выберите игровой хаб для прохождения.")
+		}
+
+		return nil
+	}
+
+	section, err := s.sections.ByID(ctx, article.Section)
+	if err != nil {
+		return err
+	}
+
+	if section == nil {
+		return auth.Fail(400, "Указанный раздел не найден.")
+	}
+
+	switch article.Kind {
+	case articles.KindWalkthrough:
+		if section.Type != sections.TypeWalkthrough {
+			return auth.Fail(400, "Указанный раздел не является хабом прохождения.")
+		}
+	case articles.KindNews:
+		if section.Type != sections.TypeNews {
+			return auth.Fail(400, "Указанный раздел не является новостной секцией.")
+		}
+	}
+
+	if section.Archived {
+		return auth.Fail(400, "Раздел находится в архиве.")
+	}
+
+	return nil
 }
 
 // notifyAboutPublish creates "new material" notifications for section
@@ -182,6 +232,12 @@ func (s *Server) handleCreateArticle(ctx *fiber.Ctx) error {
 	}
 
 	article.Author = user.Username
+
+	if article.Status == articles.StatusPublished {
+		if err := s.validateArticleSection(ctx.Context(), article); err != nil {
+			return err
+		}
+	}
 
 	requestedID := ""
 	if req.ID != nil {
@@ -434,6 +490,12 @@ func (s *Server) handleUpdateArticle(ctx *fiber.Ctx) error {
 
 	if existing.Status == articles.StatusPublished && strings.TrimSpace(existing.Content) == "" {
 		return auth.Fail(400, "Добавьте текст статьи перед публикацией.")
+	}
+
+	if existing.Status == articles.StatusPublished {
+		if err := s.validateArticleSection(ctx.Context(), existing); err != nil {
+			return err
+		}
 	}
 
 	updated, err := s.articles.Update(ctx.Context(), existing)

@@ -15,6 +15,7 @@ import (
 	"abberant/backend/internal/media"
 	"abberant/backend/internal/notifications"
 	"abberant/backend/internal/ratings"
+	"abberant/backend/internal/sections"
 	"abberant/backend/internal/session"
 )
 
@@ -27,6 +28,7 @@ type Server struct {
 	bookmarks     *bookmarks.Repo
 	notifications *notifications.Repo
 	ratings       *ratings.Repo
+	sections      *sections.Repo
 	media         *media.Store
 	app           *fiber.App
 }
@@ -40,6 +42,7 @@ func New(
 	bookmarksRepo *bookmarks.Repo,
 	notificationsRepo *notifications.Repo,
 	ratingsRepo *ratings.Repo,
+	sectionsRepo *sections.Repo,
 	mediaStore *media.Store,
 ) *fiber.App {
 	app := fiber.New(fiber.Config{
@@ -62,6 +65,7 @@ func New(
 		bookmarks:     bookmarksRepo,
 		notifications: notificationsRepo,
 		ratings:       ratingsRepo,
+		sections:      sectionsRepo,
 		media:         mediaStore,
 	}
 
@@ -85,6 +89,9 @@ func New(
 	v1.Post("/2fa/backup/codes/regenerate", server.requireSession, server.handleBackupRegenerate)
 
 	v1.Get("/articles", server.handleListArticles)
+	v1.Get("/sections", server.handleListSections)
+	v1.Post("/sections", server.requireSession, server.requireEditor, server.handleCreateSection)
+	v1.Patch("/sections/:id", server.requireSession, server.requireEditor, server.handleUpdateSection)
 	v1.Get("/articles/:id/comments", server.handleListComments)
 	v1.Post("/articles/:id/comments", server.requireSession, server.handleCreateComment)
 	v1.Delete("/comments/:id", server.requireSession, server.handleDeleteComment)

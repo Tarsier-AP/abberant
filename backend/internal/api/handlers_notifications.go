@@ -121,6 +121,15 @@ func (s *Server) handleSubscribe(ctx *fiber.Ctx) error {
 		return auth.Fail(400, "Некорректный идентификатор раздела.")
 	}
 
+	exists, err := s.sections.ByID(ctx.Context(), section)
+	if err != nil {
+		return err
+	}
+
+	if exists == nil {
+		return auth.Fail(400, "Раздел не найден.")
+	}
+
 	if _, err := s.notifications.Subscribe(ctx.Context(), user.ID, section); err != nil {
 		return err
 	}

@@ -18,6 +18,7 @@ import (
 	"abberant/backend/internal/media"
 	"abberant/backend/internal/notifications"
 	"abberant/backend/internal/ratings"
+	"abberant/backend/internal/sections"
 	"abberant/backend/internal/session"
 )
 
@@ -49,6 +50,7 @@ func main() {
 		bookmarks.NewRepo(pool),
 		notifications.NewRepo(pool),
 		ratings.NewRepo(pool),
+		sections.NewRepo(pool),
 		mediaStore,
 	)
 
