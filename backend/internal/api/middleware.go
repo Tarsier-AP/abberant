@@ -1,6 +1,8 @@
 package api
 
 import (
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 
 	"abberant/backend/internal/auth"
@@ -45,6 +47,7 @@ func (s *Server) setSessionCookie(ctx *fiber.Ctx, token string) {
 		HTTPOnly: true,
 		Secure:   s.cfg.CookieSecure,
 		SameSite: "Lax",
+		MaxAge:   int(s.cfg.SessionTTL / time.Second),
 	})
 }
 
@@ -62,6 +65,20 @@ func (s *Server) clearSessionCookie(ctx *fiber.Ctx) {
 
 func (s *Server) sessionToken(ctx *fiber.Ctx) string {
 	return ctx.Cookies(session.CookieName)
+}
+
+func (s *Server) optionalSession(ctx *fiber.Ctx) error {
+	session, user, err := s.resolve(ctx)
+	if err != nil {
+		return err
+	}
+
+	if session != nil && !session.Pending {
+		ctx.Locals("session", session)
+		ctx.Locals("user", user)
+	}
+
+	return ctx.Next()
 }
 
 func (s *Server) requireSession(ctx *fiber.Ctx) error {
