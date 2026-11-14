@@ -3,6 +3,7 @@ import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import * as api from '@/api/auth'
+import { uploadImage } from '@/api/media'
 import type { TwoFactorMethod } from '@/types/auth'
 
 const router = useRouter()
@@ -10,7 +11,6 @@ const auth = useAuthStore()
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const AVATAR_MAX_BYTES = 5 * 1024 * 1024
-const AVATAR_SIZE = 160
 
 const busy = ref(false)
 const settingsError = ref('')
@@ -59,29 +59,6 @@ async function withBusy(action: () => Promise<void>) {
   }
 }
 
-async function createAvatarDataUrl(file: File): Promise<string> {
-  const bitmap = await createImageBitmap(file)
-  const canvas = document.createElement('canvas')
-  const context = canvas.getContext('2d')
-
-  canvas.width = AVATAR_SIZE
-  canvas.height = AVATAR_SIZE
-
-  if (!context) {
-    bitmap.close()
-    throw new Error('Canvas is not supported')
-  }
-
-  const scale = Math.max(AVATAR_SIZE / bitmap.width, AVATAR_SIZE / bitmap.height)
-  const width = bitmap.width * scale
-  const height = bitmap.height * scale
-
-  context.drawImage(bitmap, (AVATAR_SIZE - width) / 2, (AVATAR_SIZE - height) / 2, width, height)
-  bitmap.close()
-
-  return canvas.toDataURL('image/webp', 0.85)
-}
-
 async function handleAvatarChange(event: Event) {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
@@ -102,11 +79,14 @@ async function handleAvatarChange(event: Event) {
   }
 
   try {
-    const dataUrl = await createAvatarDataUrl(file)
+    const { url } = await uploadImage(file, 'avatar')
 
-    await withBusy(() => auth.applyPatch({ avatar: dataUrl }))
-  } catch {
-    avatarError.value = 'Не удалось обработать изображение. Попробуйте другой файл.'
+    await withBusy(() => auth.applyPatch({ avatar: url }))
+  } catch (uploadError) {
+    avatarError.value =
+      uploadError instanceof Error && uploadError.message
+        ? uploadError.message
+        : 'Не удалось обработать изображение. Попробуйте другой файл.'
   }
 }
 

@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import type { Article } from '@/types/article'
 import { formatDate } from '@/utils/date'
+import { CARD_SIZES, imageSrcset } from '@/utils/image'
 import CommentCount from '@/components/ui/CommentCount.vue'
 import ShareButton from '@/components/ui/ShareButton.vue'
 import BookmarkButton from '@/components/ui/BookmarkButton.vue'
@@ -22,7 +23,14 @@ const shareUrl = computed(() => new URL(props.article.url, window.location.origi
       tabindex="-1"
       aria-hidden="true"
     >
-      <img :src="article.image" :alt="article.title" loading="lazy" />
+      <img
+        :src="article.image"
+        :srcset="imageSrcset(article.image) || undefined"
+        :sizes="imageSrcset(article.image) ? CARD_SIZES : undefined"
+        :alt="article.title"
+        loading="lazy"
+        decoding="async"
+      />
       <GradeBadge
         v-if="article.readerRating && article.readerRating.votes > 0"
         class="card__grade"

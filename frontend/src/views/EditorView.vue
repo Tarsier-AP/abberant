@@ -9,7 +9,7 @@ import type { ArticleCreatePayload, ArticlePatchPayload } from '@/api/articles'
 import { useAuthStore } from '@/stores/auth'
 import { useArticlesStore } from '@/stores/articles'
 import { newsPlatformSections, reviewGroupSections, walkthroughSections } from '@/data/sections'
-import { createImageDataUrl } from '@/utils/image'
+import { uploadImage } from '@/api/media'
 import { renderMarkdown } from '@/utils/markdown'
 
 const FALLBACK_IMAGE = '/img/news-placeholder.svg'
@@ -306,13 +306,16 @@ function handleCoverChange(event: Event) {
     return
   }
 
-  createImageDataUrl(file)
-    .then((dataUrl) => {
-      form.image = dataUrl
+  uploadImage(file, 'cover')
+    .then(({ url }) => {
+      form.image = url
       coverError.value = ''
     })
-    .catch(() => {
-      coverError.value = 'Не удалось обработать изображение. Попробуйте другой файл.'
+    .catch((uploadError) => {
+      coverError.value =
+        uploadError instanceof Error && uploadError.message
+          ? uploadError.message
+          : 'Не удалось обработать изображение. Попробуйте другой файл.'
     })
 }
 

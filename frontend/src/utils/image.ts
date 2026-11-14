@@ -1,34 +1,15 @@
-/** Largest edge of an uploaded image; bigger files are scaled down. */
-const MAX_DIMENSION = 1200
-const WEBP_QUALITY = 0.85
+import { buildSrcset } from '@/api/media'
 
 /**
- * Scales an uploaded image down to `maxSize` on its longest edge and encodes
- * it as a WebP data URL so it survives in localStorage. Falls back to PNG
- * when the browser cannot encode WebP.
+ * Card sizes attribute: one column on phones, two on tablets, three on
+ * desktop — mirrors the HomeSection grid breakpoints.
  */
-export async function createImageDataUrl(file: File, maxSize = MAX_DIMENSION): Promise<string> {
-  const bitmap = await createImageBitmap(file)
+export const CARD_SIZES = '(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 33vw'
 
-  try {
-    const scale = Math.min(1, maxSize / Math.max(bitmap.width, bitmap.height))
-    const width = Math.max(1, Math.round(bitmap.width * scale))
-    const height = Math.max(1, Math.round(bitmap.height * scale))
-
-    const canvas = document.createElement('canvas')
-    canvas.width = width
-    canvas.height = height
-
-    const context = canvas.getContext('2d')
-
-    if (!context) throw new Error('Canvas is not supported')
-
-    context.drawImage(bitmap, 0, 0, width, height)
-
-    const webp = canvas.toDataURL('image/webp', WEBP_QUALITY)
-
-    return webp.startsWith('data:image/webp') ? webp : canvas.toDataURL('image/png')
-  } finally {
-    bitmap.close()
-  }
+/**
+ * Returns the srcset attribute value for an image URL: media-store images
+ * get the full width variant set, anything else renders without srcset.
+ */
+export function imageSrcset(url: string): string {
+  return buildSrcset(url)
 }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { nextTick, ref, watch } from 'vue'
-import { createImageDataUrl } from '@/utils/image'
+import { uploadImage } from '@/api/media'
 import type { EditorImagePayload } from '@/types/editor'
 
 const props = defineProps<{ open: boolean }>()
@@ -72,10 +72,15 @@ async function handleFileChange(event: Event) {
   uploading.value = true
 
   try {
-    url.value = await createImageDataUrl(file)
+    const { url: uploaded } = await uploadImage(file, 'body')
+
+    url.value = uploaded
     error.value = ''
-  } catch {
-    error.value = 'Не удалось обработать изображение. Попробуйте другой файл.'
+  } catch (uploadError) {
+    error.value =
+      uploadError instanceof Error && uploadError.message
+        ? uploadError.message
+        : 'Не удалось обработать изображение. Попробуйте другой файл.'
   } finally {
     uploading.value = false
   }

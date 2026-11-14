@@ -62,10 +62,23 @@ go vet ./...
 | `ABBERANT_DATABASE_DSN` | — (встроенный PG) | строка подключения к внешнему PostgreSQL |
 | `ABBERANT_DB_DATA_DIR` | `.data/postgres` | каталог данных встроенного PostgreSQL |
 | `ABBERANT_DB_PORT` | `55432` | порт встроенного PostgreSQL |
+| `ABBERANT_MEDIA_DIR` | `.data/media` | каталог загруженных изображений (`/media/{hash}/…`) |
 | `ABBERANT_COOKIE_SECURE` | `false` | флаг Secure у cookie сессии (включайте за HTTPS) |
 | `ABBERANT_PUBLIC_ORIGIN` | `http://localhost:5173` | origin сайта для писем |
 | `ABBERANT_DEV_MODE` | `true` | dev-режим (видимость кодов) |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM` | — | отправка писем; без `SMTP_HOST` — dev-режим |
+
+### Изображения (медиа-хранилище)
+
+Загруженные обложки, картинки в тексте статей и аватары сохраняются на диск
+(`ABBERANT_MEDIA_DIR`) в виде оригинала и WebP-вариантов ширины 320/480/828/1200
+(аватары — 160×160); адреса вида `/media/{hash}/{файл}` неизменяемы и
+кэшируются навсегда. Кодировка WebP идёт через cgo (`libwebp`), поэтому:
+
+- Linux: достаточно установленной runtime-библиотеки `libwebp` (soname
+  `libwebp.so.7`); заголовочные файлы не нужны.
+- Windows: сборка требует mingw-w64 и библиотеку импорта libwebp
+  (`webp.dll` + `libwebp.a`); кросс-компиляция без cgo больше не работает.
 
 ## Сборка и запуск на Linux
 
@@ -75,7 +88,8 @@ go vet ./...
    cd frontend && npm ci && npm run build
    ```
 
-2. Бэкенд:
+2. Бэкенд (нужна установленная библиотека libwebp — пакет `libwebp7` /
+   `libwebp`, заголовки не требуются):
 
    ```sh
    cd backend && go build -o server ./cmd/server
@@ -99,19 +113,17 @@ cookie сессии работает без CORS.
    cd frontend && npm ci && npm run build
    ```
 
-2. Бэкенд — соберите нативно на Windows (если установлен Go):
+2. Бэкенд — соберите нативно на Windows. Понадобятся Go, компилятор C
+   (mingw-w64) и библиотека libwebp (импортная библиотека `libwebp.a` +
+   `webp.dll` рядом с `server.exe` или в PATH):
 
    ```bat
    cd backend
    go build -o server.exe .\cmd\server
    ```
 
-   или кросс-компиляцией с Linux (весь код — чистый Go, без cgo):
-
-   ```sh
-   cd backend
-   GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -o server.exe ./cmd/server
-   ```
+   Разместите каталог медиа (по умолчанию `.data\media`, см.
+   `ABBERANT_MEDIA_DIR`) там, куда указывает `alias` в nginx-конфиге.
 
 3. Запуск бэкенда (например, из `C:\abberant\`; каталог должен допускать
    запись — там появится `.data\postgres`):
