@@ -38,7 +38,6 @@ type readerRatingResponse struct {
 // withReaderRating attaches the reader vote summary to the article response.
 func withReaderRating(
 	response articleResponse,
-	article *articles.Article,
 	stats ratings.Stats,
 	myVote int,
 ) articleResponse {
@@ -145,7 +144,7 @@ func (s *Server) handleListArticles(ctx *fiber.Ctx) error {
 			item.Comments = count
 		}
 
-		item = withReaderRating(item, article, voteStats[article.ID], myVotes[article.ID])
+		item = withReaderRating(item, voteStats[article.ID], myVotes[article.ID])
 
 		response = append(response, item)
 	}
