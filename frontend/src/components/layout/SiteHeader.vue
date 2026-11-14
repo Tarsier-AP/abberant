@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import ThemeIcon from '@/components/ui/ThemeIcon.vue'
 import NotificationsBell from '@/components/layout/NotificationsBell.vue'
 import NotificationsPanel from '@/components/layout/NotificationsPanel.vue'
@@ -14,11 +14,11 @@ type Theme = 'light' | 'dark'
 const THEME_KEY = 'abberant-theme'
 
 const route = useRoute()
+const router = useRouter()
 
 const menuOpen = ref(false)
 const mobileBellOpen = ref(false)
 const userMenuOpen = ref(false)
-const mobileUserOpen = ref(false)
 const accountMenuRoot = ref<HTMLElement | null>(null)
 const auth = useAuthStore()
 const notifications = useNotificationsStore()
@@ -53,20 +53,16 @@ function toggleTheme() {
   applyTheme(theme.value === 'dark' ? 'light' : 'dark')
 }
 
-// Closing the burger menu hides the inline bell and user panels with it.
+// Closing the burger menu hides the inline bell panel with it.
 watch(menuOpen, (open) => {
-  if (!open) {
-    mobileBellOpen.value = false
-    mobileUserOpen.value = false
-  }
+  if (!open) mobileBellOpen.value = false
 })
 
-// Navigation closes the user menus (mobile links close the burger themselves).
+// Navigation closes the desktop user menu.
 watch(
   () => route.fullPath,
   () => {
     userMenuOpen.value = false
-    mobileUserOpen.value = false
   },
 )
 
@@ -74,10 +70,7 @@ watch(
 watch(
   () => auth.account,
   (account) => {
-    if (!account) {
-      userMenuOpen.value = false
-      mobileUserOpen.value = false
-    }
+    if (!account) userMenuOpen.value = false
   },
 )
 
@@ -90,10 +83,7 @@ function onDocumentClick(event: MouseEvent) {
 }
 
 function onDocumentKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape') {
-    userMenuOpen.value = false
-    mobileUserOpen.value = false
-  }
+  if (event.key === 'Escape') userMenuOpen.value = false
 }
 
 onMounted(() => {
@@ -108,13 +98,31 @@ onBeforeUnmount(() => {
 })
 
 // Desktop nav keeps every section; the burger list stays short because
-// Закладки/Активность/Редактор live in the user menu now.
+// the user's own pages live in the user section of the mobile menu.
 const mobileLinks = [
   { label: 'Новости', to: '/news' },
   { label: 'Обзоры', to: '/reviews' },
   { label: 'Прохождения', to: '/walkthroughs' },
   { label: 'Помощь', to: '/help' },
 ]
+
+const mobileUserItems = computed(() => {
+  const base = [
+    { label: 'Закладки', to: { name: 'bookmarks' } },
+    { label: 'Активность', to: { name: 'activity' } },
+    { label: 'Настройки аккаунта', to: { name: 'account-settings' } },
+  ]
+
+  return auth.canModerate
+    ? [...base, { label: 'Редактор', to: { name: 'editor-articles' } }]
+    : base
+})
+
+async function logoutFromMenu() {
+  menuOpen.value = false
+  await auth.endSession()
+  router.push({ name: 'home' })
+}
 
 const links = computed(() => {  const base = [
     { label: 'Новости', to: '/news' },
@@ -193,7 +201,6 @@ const links = computed(() => {  const base = [
           <UserMenu
             v-if="userMenuOpen"
             class="account-menu__dropdown"
-            variant="dropdown"
             @select="userMenuOpen = false"
           />
         </div>
@@ -241,6 +248,35 @@ const links = computed(() => {  const base = [
           </svg>
         </RouterLink>
 
+        <template v-if="auth.account">
+          <RouterLink
+            v-for="item in mobileUserItems"
+            :key="item.label"
+            class="mobile-menu__link"
+            :to="item.to"
+            @click="menuOpen = false"
+          >
+            <span>{{ item.label }}</span>
+            <svg width="8" height="16" viewBox="0 0 8 16" fill="none" aria-hidden="true">
+              <path
+                d="m1 1 6 7-6 7"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </RouterLink>
+
+          <button
+            class="mobile-menu__link mobile-menu__link--logout"
+            type="button"
+            @click="logoutFromMenu"
+          >
+            <span>Выйти</span>
+          </button>
+        </template>
+
         <div class="mobile-menu__actions">
           <button
             class="mobile-menu__action"
@@ -276,24 +312,8 @@ const links = computed(() => {  const base = [
             </svg>
           </button>
 
-          <button
-            v-if="auth.account"
-            class="mobile-menu__action"
-            type="button"
-            :aria-expanded="mobileUserOpen"
-            aria-haspopup="menu"
-            aria-label="Меню аккаунта"
-            @click="mobileUserOpen = !mobileUserOpen"
-          >
-            <UserAvatar
-              :name="auth.account.username"
-              :avatar="auth.account.avatar"
-              :size="22"
-            />
-          </button>
-
           <RouterLink
-            v-else
+            v-if="!auth.account"
             class="mobile-menu__action"
             :to="{ name: 'login' }"
             @click="menuOpen = false"
@@ -308,14 +328,6 @@ const links = computed(() => {  const base = [
           @click="menuOpen = false"
         >
           <NotificationsPanel heading="Уведомления" />
-        </div>
-
-        <div
-          v-if="mobileUserOpen"
-          class="mobile-menu__user"
-          @click="menuOpen = false"
-        >
-          <UserMenu variant="stack" @select="mobileUserOpen = false" />
         </div>
       </div>
     </nav>
@@ -504,6 +516,13 @@ const links = computed(() => {  const base = [
   background: var(--color-card-hover);
 }
 
+.mobile-menu__link--logout {
+  width: 100%;
+  color: var(--color-danger);
+  border: 0;
+  cursor: pointer;
+}
+
 .mobile-menu__actions {
   display: flex;
   gap: 8px;
@@ -519,11 +538,6 @@ const links = computed(() => {  const base = [
   background: var(--color-card);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-}
-
-.mobile-menu__user {
-  display: flex;
-  flex-direction: column;
 }
 
 .mobile-menu__action {
