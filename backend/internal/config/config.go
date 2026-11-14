@@ -12,6 +12,7 @@ type Config struct {
 	Addr         string
 	DSN          string
 	DataDir      string
+	MediaDir     string
 	EmbeddedPort int
 	CookieSecure bool
 	PublicOrigin string
@@ -101,6 +102,7 @@ func Load() Config {
 		Addr:         env("ABBERANT_ADDR", ":8090"),
 		DSN:          env("ABBERANT_DATABASE_DSN", ""),
 		DataDir:      env("ABBERANT_DB_DATA_DIR", ".data/postgres"),
+		MediaDir:     env("ABBERANT_MEDIA_DIR", ".data/media"),
 		EmbeddedPort: envInt("ABBERANT_DB_PORT", 55432),
 		CookieSecure: envBool("ABBERANT_COOKIE_SECURE", false),
 		PublicOrigin: env("ABBERANT_PUBLIC_ORIGIN", "http://localhost:5173"),

@@ -18,7 +18,7 @@ type User struct {
 	PasswordHash          string
 	Activated             bool
 	Role                  string
-	AvatarDataURL         string
+	Avatar                string
 	AdditionalEmail       string
 	Phone                 string
 	SmsNotifications      bool
@@ -36,7 +36,7 @@ const (
 )
 
 const userColumns = `
-	id, email, username, password_hash, activated, role, avatar_data_url,
+	id, email, username, password_hash, activated, role, avatar,
 	additional_email, phone, sms_notifications, email_notifications,
 	two_factor_enabled, two_factor_method, totp_secret, registration_token_hash, created_at
 `
@@ -52,7 +52,7 @@ func scanUser(row pgx.Row) (*User, error) {
 
 	err := row.Scan(
 		&user.ID, &user.Email, &user.Username, &user.PasswordHash, &user.Activated,
-		&user.Role, &user.AvatarDataURL, &user.AdditionalEmail, &user.Phone,
+		&user.Role, &user.Avatar, &user.AdditionalEmail, &user.Phone,
 		&user.SmsNotifications, &user.EmailNotifications, &user.TwoFactorEnabled,
 		&user.TwoFactorMethod, &user.TotpSecret, &user.RegistrationTokenHash, &user.CreatedAt,
 	)
@@ -123,13 +123,13 @@ func (u *Users) SaveProfile(ctx context.Context, user *User) error {
 	_, err := u.pool.Exec(ctx, `
 		UPDATE users
 		SET username = $2,
-		    avatar_data_url = $3,
+		    avatar = $3,
 		    additional_email = $4,
 		    phone = $5,
 		    sms_notifications = $6,
 		    email_notifications = $7
 		WHERE id = $1
-	`, user.ID, user.Username, user.AvatarDataURL, user.AdditionalEmail,
+	`, user.ID, user.Username, user.Avatar, user.AdditionalEmail,
 		user.Phone, user.SmsNotifications, user.EmailNotifications)
 
 	return err

@@ -27,7 +27,7 @@ func newAccount(user *auth.User) *Account {
 	return &Account{
 		Login:              user.Email,
 		Username:           user.Username,
-		Avatar:             user.AvatarDataURL,
+		Avatar:             user.Avatar,
 		AdditionalEmail:    user.AdditionalEmail,
 		Phone:              user.Phone,
 		Activated:          user.Activated,

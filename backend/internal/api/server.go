@@ -12,6 +12,7 @@ import (
 	"abberant/backend/internal/bookmarks"
 	"abberant/backend/internal/comments"
 	"abberant/backend/internal/config"
+	"abberant/backend/internal/media"
 	"abberant/backend/internal/notifications"
 	"abberant/backend/internal/ratings"
 	"abberant/backend/internal/session"
@@ -26,6 +27,7 @@ type Server struct {
 	bookmarks     *bookmarks.Repo
 	notifications *notifications.Repo
 	ratings       *ratings.Repo
+	media         *media.Store
 	app           *fiber.App
 }
 
@@ -38,10 +40,13 @@ func New(
 	bookmarksRepo *bookmarks.Repo,
 	notificationsRepo *notifications.Repo,
 	ratingsRepo *ratings.Repo,
+	mediaStore *media.Store,
 ) *fiber.App {
 	app := fiber.New(fiber.Config{
 		ErrorHandler:          errorHandler,
 		DisableStartupMessage: false,
+		// Multipart media uploads carry files up to media.MaxUpload.
+		BodyLimit: 12 << 20,
 	})
 
 	app.Use(logger.New(logger.Config{
@@ -57,7 +62,10 @@ func New(
 		bookmarks:     bookmarksRepo,
 		notifications: notificationsRepo,
 		ratings:       ratingsRepo,
+		media:         mediaStore,
 	}
+
+	app.Get("/media/*", server.handleMediaFile)
 
 	v1 := app.Group("/api/v1")
 
@@ -93,6 +101,7 @@ func New(
 	v1.Put("/articles/:id/vote", server.requireSession, server.handleVote)
 	v1.Delete("/articles/:id/vote", server.requireSession, server.handleRemoveVote)
 	v1.Get("/activity", server.requireSession, server.handleActivity)
+	v1.Post("/media", server.requireSession, server.handleUploadMedia)
 	v1.Post("/articles", server.requireSession, server.requireEditor, server.handleCreateArticle)
 	v1.Patch("/articles/:id", server.requireSession, server.requireEditor, server.handleUpdateArticle)
 	v1.Delete("/articles/:id", server.requireSession, server.handleDeleteArticle)

@@ -38,7 +38,7 @@ func NewRepo(pool *pgxpool.Pool) *Repo { return &Repo{pool: pool} }
 // List returns the newest notifications of a user with actor and article data.
 func (r *Repo) List(ctx context.Context, userID int64, limit int) ([]*Notification, error) {
 	rows, err := r.pool.Query(ctx, `
-		SELECT n.id, n.type, n.actor_id, u.username, u.avatar_data_url,
+		SELECT n.id, n.type, n.actor_id, u.username, u.avatar,
 		       n.article_id, a.title, n.comment_id, n.created_at,
 		       (n.read_at IS NOT NULL)
 		FROM notifications n

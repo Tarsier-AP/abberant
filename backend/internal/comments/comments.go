@@ -32,7 +32,7 @@ type Author struct {
 
 const commentColumns = `
 	c.id, c.article_id, c.user_id, c.parent_id, c.body, c.created_at,
-	u.id, u.username, u.avatar_data_url, u.role
+	u.id, u.username, u.avatar, u.role
 `
 
 const commentJoin = `

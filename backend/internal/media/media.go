@@ -293,6 +293,13 @@ func writeFileSync(dir, name string, data []byte) error {
 		return fmt.Errorf("media: close: %w", err)
 	}
 
+	// Temp files are private; derivatives must be readable by the static
+	// file server (nginx) in production.
+	if err := os.Chmod(tempName, 0o644); err != nil {
+		os.Remove(tempName)
+		return fmt.Errorf("media: chmod: %w", err)
+	}
+
 	if err := os.Rename(tempName, filepath.Join(dir, name)); err != nil {
 		os.Remove(tempName)
 		return fmt.Errorf("media: rename: %w", err)

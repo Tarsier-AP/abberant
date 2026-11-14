@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 	"os/signal"
@@ -14,6 +15,7 @@ import (
 	"abberant/backend/internal/config"
 	"abberant/backend/internal/db"
 	"abberant/backend/internal/mailer"
+	"abberant/backend/internal/media"
 	"abberant/backend/internal/notifications"
 	"abberant/backend/internal/ratings"
 	"abberant/backend/internal/session"
@@ -32,6 +34,12 @@ func main() {
 	sessions := session.NewStore(pool, cfg.SessionTTL, cfg.PendingTTL)
 	service := auth.NewService(pool, sessions, mailer.New(cfg), cfg)
 
+	mediaStore := media.NewStore(cfg.MediaDir)
+
+	// One-time data-URL migration plus a daily garbage-collection sweep run
+	// alongside the server.
+	go media.RunMaintenance(context.Background(), pool, mediaStore)
+
 	app := api.New(
 		cfg,
 		service,
@@ -41,6 +49,7 @@ func main() {
 		bookmarks.NewRepo(pool),
 		notifications.NewRepo(pool),
 		ratings.NewRepo(pool),
+		mediaStore,
 	)
 
 	go func() {

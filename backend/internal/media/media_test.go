@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	_ "golang.org/x/image/webp" // register decoder
 )
@@ -140,6 +141,45 @@ func TestPutAvatar(t *testing.T) {
 
 	if bounds.Dx() != AvatarSize || bounds.Dy() != AvatarSize {
 		t.Fatalf("avatar is %dx%d, want %dx%d", bounds.Dx(), bounds.Dy(), AvatarSize, AvatarSize)
+	}
+}
+
+func TestGarbageCollect(t *testing.T) {
+	dir := t.TempDir()
+	store := NewStore(dir)
+
+	upload := gradientPNG(t, 400, 300)
+
+	referenced, err := store.Put(upload)
+	if err != nil {
+		t.Fatalf("put: %v", err)
+	}
+
+	orphan, err := store.Put(gradientPNG(t, 401, 301))
+	if err != nil {
+		t.Fatalf("put: %v", err)
+	}
+
+	// Pretend the orphan is old enough to be collected.
+	if err := os.Chtimes(filepath.Join(dir, orphan.Hash), time.Unix(0, 0), time.Unix(0, 0)); err != nil {
+		t.Fatalf("chtimes: %v", err)
+	}
+
+	removed, err := store.GarbageCollect(map[string]struct{}{referenced.Hash: {}})
+	if err != nil {
+		t.Fatalf("gc: %v", err)
+	}
+
+	if removed != 1 {
+		t.Fatalf("removed %d directories, want 1", removed)
+	}
+
+	if _, err := os.Stat(filepath.Join(dir, referenced.Hash)); err != nil {
+		t.Fatalf("referenced upload was removed: %v", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(dir, orphan.Hash)); !os.IsNotExist(err) {
+		t.Fatalf("orphan survived: %v", err)
 	}
 }
 

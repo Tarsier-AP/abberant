@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"abberant/backend/internal/auth"
+	"abberant/backend/internal/media"
 	"abberant/backend/internal/session"
 )
 
@@ -287,7 +288,7 @@ func (s *Server) handlePatchMe(ctx *fiber.Ctx) error {
 			return auth.Fail(400, "Некорректное изображение аватара.")
 		}
 
-		user.AvatarDataURL = *req.Avatar
+		user.Avatar = *req.Avatar
 	}
 
 	if req.AdditionalEmail != nil {
@@ -361,14 +362,23 @@ func (s *Server) changeTwoFactorState(ctx *fiber.Ctx, user *auth.User, enabled b
 	return nil
 }
 
-func validAvatar(dataURL string) bool {
+func validAvatar(value string) bool {
 	const maxAvatarLength = 6 * 1024 * 1024
 
-	if dataURL == "" {
+	if value == "" {
 		return true
 	}
 
-	return strings.HasPrefix(dataURL, "data:image/") && len(dataURL) <= maxAvatarLength
+	// Legacy inline data URLs keep working; new avatars are media URLs.
+	if strings.HasPrefix(value, "data:image/") {
+		return len(value) <= maxAvatarLength
+	}
+
+	if !strings.HasPrefix(value, "/media/") {
+		return false
+	}
+
+	return media.ValidMediaPath(strings.TrimPrefix(value, "/media/"))
 }
 
 func (s *Server) currentUser(ctx *fiber.Ctx) *auth.User {
