@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -23,8 +25,198 @@ var contentImagePattern = regexp.MustCompile(
 	`!\[[^\]]*\]\(\s*data:image/(?:png|jpeg|jpg|webp);base64,[A-Za-z0-9+/=]+(?:\s+"[^"]*")?\s*\)`,
 )
 
+// localImagePattern matches the site-relative /img/ URL of a seeded static
+// image (frontend/public/img) inside a matched snippet.
+var localImagePattern = regexp.MustCompile(`/img/[A-Za-z0-9._/-]+`)
+
+// localContentImagePattern matches markdown image syntax with a seeded
+// static image, as used by the article seed migrations:
+// ![alt](/img/news-zelda.jpg "caption").
+var localContentImagePattern = regexp.MustCompile(
+	`!\[[^\]]*\]\(\s*/img/[A-Za-z0-9._/-]+(?:\s+"[^"]*")?\s*\)`,
+)
+
 // mediaHashPattern extracts the hash directory of site-relative media URLs.
 var mediaHashPattern = regexp.MustCompile(`/media/([0-9a-f]{64})/`)
+
+// MigrateLocalImages imports the seeded static images from the frontend
+// public directory into the media store: article covers and body images
+// stored as /img/... URLs are processed like uploads (original kept verbatim
+// plus every fixed-width variant) and the rows are rewritten to /media/...
+// URLs. The migration is idempotent: rows already carrying /media/ URLs are
+// never touched, and files that cannot be processed (the SVG placeholder,
+// missing files) stay as they are.
+func MigrateLocalImages(ctx context.Context, pool *pgxpool.Pool, store *Store, dir string) error {
+	if dir == "" {
+		return nil
+	}
+
+	if info, err := os.Stat(dir); err != nil || !info.IsDir() {
+		log.Printf("media: seed image dir %q is missing, /img/ URLs stay as they are", dir)
+		return nil
+	}
+
+	if err := migrateLocalCovers(ctx, pool, store, dir); err != nil {
+		return fmt.Errorf("media: migrate local covers: %w", err)
+	}
+
+	if err := migrateLocalContent(ctx, pool, store, dir); err != nil {
+		return fmt.Errorf("media: migrate local content: %w", err)
+	}
+
+	return nil
+}
+
+func migrateLocalCovers(ctx context.Context, pool *pgxpool.Pool, store *Store, dir string) error {
+	rows, err := pool.Query(ctx, `
+		SELECT id, image FROM articles
+		WHERE image LIKE '/img/%'
+	`)
+	if err != nil {
+		return err
+	}
+
+	defer rows.Close()
+
+	type update struct {
+		id  string
+		url string
+	}
+
+	updates := make([]update, 0, 16)
+
+	for rows.Next() {
+		var (
+			id    string
+			image string
+		)
+
+		if err := rows.Scan(&id, &image); err != nil {
+			return err
+		}
+
+		result, err := importLocalImage(store, dir, image)
+		if err != nil {
+			// Undecodable or missing seed images keep their /img/ URL,
+			// which stays valid through the static handlers.
+			log.Printf("media: cover of %s stays %s: %v", id, image, err)
+			continue
+		}
+
+		updates = append(updates, update{id: id, url: result.MainURL()})
+	}
+
+	if err := rows.Err(); err != nil {
+		return err
+	}
+
+	for _, item := range updates {
+		if _, err := pool.Exec(ctx, `UPDATE articles SET image = $2 WHERE id = $1`, item.id, item.url); err != nil {
+			return err
+		}
+	}
+
+	if len(updates) > 0 {
+		log.Printf("media: migrated %d local article cover(s)", len(updates))
+	}
+
+	return nil
+}
+
+func migrateLocalContent(ctx context.Context, pool *pgxpool.Pool, store *Store, dir string) error {
+	rows, err := pool.Query(ctx, `
+		SELECT id, content FROM articles WHERE content LIKE '%/img/%'
+	`)
+	if err != nil {
+		return err
+	}
+
+	defer rows.Close()
+
+	type update struct {
+		id      string
+		content string
+	}
+
+	updates := make([]update, 0, 16)
+
+	for rows.Next() {
+		var (
+			id      string
+			content string
+		)
+
+		if err := rows.Scan(&id, &content); err != nil {
+			return err
+		}
+
+		replacements := make(map[string]string)
+
+		for _, snippet := range localContentImagePattern.FindAllString(content, -1) {
+			url := localImagePattern.FindString(snippet)
+			if url == "" {
+				continue
+			}
+
+			if _, ok := replacements[url]; ok {
+				continue
+			}
+
+			result, err := importLocalImage(store, dir, url)
+			if err != nil {
+				log.Printf("media: content image of %s stays %s: %v", id, url, err)
+				continue
+			}
+
+			// Keep the largest generated variant as the inline image; it is
+			// also what the article zoom view shows.
+			replacements[url] = result.MainURL()
+		}
+
+		if len(replacements) == 0 {
+			continue
+		}
+
+		for url, newURL := range replacements {
+			content = strings.ReplaceAll(content, url, newURL)
+		}
+
+		updates = append(updates, update{id: id, content: content})
+	}
+
+	if err := rows.Err(); err != nil {
+		return err
+	}
+
+	for _, item := range updates {
+		if _, err := pool.Exec(ctx, `UPDATE articles SET content = $2 WHERE id = $1`, item.id, item.content); err != nil {
+			return err
+		}
+	}
+
+	if len(updates) > 0 {
+		log.Printf("media: migrated content of %d article(s)", len(updates))
+	}
+
+	return nil
+}
+
+// importLocalImage reads a seeded static image from dir and stores it like an
+// upload: original verbatim plus every fixed-width variant.
+func importLocalImage(store *Store, dir, url string) (*Result, error) {
+	name := strings.TrimPrefix(url, "/img/")
+
+	if name == "" || filepath.Base(name) != name {
+		return nil, fmt.Errorf("media: некорректный путь %q", url)
+	}
+
+	data, err := os.ReadFile(filepath.Join(dir, name))
+	if err != nil {
+		return nil, fmt.Errorf("media: %w", err)
+	}
+
+	return store.Put(data)
+}
 
 // MigrateDataURLs converts legacy inline data URLs to media storage:
 //
@@ -306,11 +498,17 @@ func ReferencedHashes(ctx context.Context, pool *pgxpool.Pool) (map[string]struc
 	return referenced, nil
 }
 
-// RunMaintenance performs the one-time data-URL migration and then garbage
-// collects unreferenced uploads once a day until ctx is done.
-func RunMaintenance(ctx context.Context, pool *pgxpool.Pool, store *Store) {
+// RunMaintenance performs the one-time data-URL and seed-image migrations
+// and then garbage collects unreferenced uploads once a day until ctx is
+// done. seedImagesDir is the frontend public image directory the seeded
+// /img/ URLs are imported from (may be empty to skip that migration).
+func RunMaintenance(ctx context.Context, pool *pgxpool.Pool, store *Store, seedImagesDir string) {
 	if err := MigrateDataURLs(ctx, pool, store); err != nil {
 		log.Printf("media: data-url migration failed: %v", err)
+	}
+
+	if err := MigrateLocalImages(ctx, pool, store, seedImagesDir); err != nil {
+		log.Printf("media: seed-image migration failed: %v", err)
 	}
 
 	sweep := func() {

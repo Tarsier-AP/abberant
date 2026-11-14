@@ -36,9 +36,9 @@ func main() {
 
 	mediaStore := media.NewStore(cfg.MediaDir)
 
-	// One-time data-URL migration plus a daily garbage-collection sweep run
-	// alongside the server.
-	go media.RunMaintenance(context.Background(), pool, mediaStore)
+	// Data-URL and seed-image migrations plus a daily garbage-collection
+	// sweep run alongside the server.
+	go media.RunMaintenance(context.Background(), pool, mediaStore, cfg.SeedImagesDir)
 
 	app := api.New(
 		cfg,

@@ -14,6 +14,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"image"
+	_ "image/jpeg" // register JPEG decoder
 	"os"
 	"path/filepath"
 	"regexp"

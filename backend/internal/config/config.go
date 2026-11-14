@@ -9,14 +9,15 @@ import (
 )
 
 type Config struct {
-	Addr         string
-	DSN          string
-	DataDir      string
-	MediaDir     string
-	EmbeddedPort int
-	CookieSecure bool
-	PublicOrigin string
-	DevMode      bool
+	Addr          string
+	DSN           string
+	DataDir       string
+	MediaDir      string
+	SeedImagesDir string
+	EmbeddedPort  int
+	CookieSecure  bool
+	PublicOrigin  string
+	DevMode       bool
 
 	SMTPHost    string
 	SMTPPort    string
@@ -99,14 +100,17 @@ func Load() Config {
 	loadDotEnv(".env")
 
 	return Config{
-		Addr:         env("ABBERANT_ADDR", ":8090"),
-		DSN:          env("ABBERANT_DATABASE_DSN", ""),
-		DataDir:      env("ABBERANT_DB_DATA_DIR", ".data/postgres"),
-		MediaDir:     env("ABBERANT_MEDIA_DIR", ".data/media"),
-		EmbeddedPort: envInt("ABBERANT_DB_PORT", 55432),
-		CookieSecure: envBool("ABBERANT_COOKIE_SECURE", false),
-		PublicOrigin: env("ABBERANT_PUBLIC_ORIGIN", "http://localhost:5173"),
-		DevMode:      envBool("ABBERANT_DEV_MODE", true),
+		Addr:     env("ABBERANT_ADDR", ":8090"),
+		DSN:      env("ABBERANT_DATABASE_DSN", ""),
+		DataDir:  env("ABBERANT_DB_DATA_DIR", ".data/postgres"),
+		MediaDir: env("ABBERANT_MEDIA_DIR", ".data/media"),
+		// Seed images of the article migrations live in the frontend public
+		// directory; the backend is normally run from backend/.
+		SeedImagesDir: env("ABBERANT_SEED_IMAGES_DIR", "../frontend/public/img"),
+		EmbeddedPort:  envInt("ABBERANT_DB_PORT", 55432),
+		CookieSecure:  envBool("ABBERANT_COOKIE_SECURE", false),
+		PublicOrigin:  env("ABBERANT_PUBLIC_ORIGIN", "http://localhost:5173"),
+		DevMode:       envBool("ABBERANT_DEV_MODE", true),
 
 		SMTPHost:    env("SMTP_HOST", ""),
 		SMTPPort:    env("SMTP_PORT", "587"),
