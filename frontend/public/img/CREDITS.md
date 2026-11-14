@@ -19,10 +19,10 @@ with full attribution details.
 | news-cloud-2.jpg | [Xbox Series X 2](https://commons.wikimedia.org/wiki/File:Xbox_Series_X_2.jpg) | Der. Bellemer | CC BY-SA 4.0 |
 | news-lightyear.jpg | [ROG XBOX ALLY and ROG XBOX ALLY X](https://commons.wikimedia.org/wiki/File:ROG_XBOX_ALLY_and_ROG_XBOX_ALLY_X.jpg) | Kyu3a | CC BY-SA 4.0 |
 | news-lightyear-2.jpg | [ROG Xbox Ally X](https://commons.wikimedia.org/wiki/File:ROG_Xbox_Ally_X.jpg) | XBOX 360 ONE | Public domain |
-| news-joystick.jpg | [4X-GJA LLMG 06-10-2017a](https://commons.wikimedia.org/wiki/File:4X-GJA_LLMG_06-10-2017a.jpg) | Oyoyoy | CC BY-SA 4.0 |
-| news-joystick-2.jpg | [Tien gja](https://commons.wikimedia.org/wiki/File:Tien_gja.jpg) | vuminhngoctit | CC BY-SA 3.0 |
+| news-joystick.jpg | [Troxy, Limehouse (North Face - 01)](https://commons.wikimedia.org/wiki/File:Troxy,_Limehouse_(North_Face_-_01).jpg) | Doyle of London | CC BY-SA 4.0 |
+| news-joystick-2.jpg | [1990 Golden Joystick Awards (Paul Patterson, Jaz Rignall, Jonathan Ross)](https://commons.wikimedia.org/wiki/File:1990_Golden_Joystick_Awards_(Paul_Patterson,_Jaz_Rignall,_Jonathan_Ross).jpg) | Jaz Rignall | CC BY-SA 3.0 |
 | news-fm27.jpg | [Mecz piłkarski Wisła Kraków - Zagłębie Sosnowiec, 28 października 2022](https://commons.wikimedia.org/wiki/File:Mecz_pi%C5%82karski_Wis%C5%82a_Krak%C3%B3w_-_Zag%C5%82%C4%99bie_Sosnwoiec,_28_pa%C5%BAdziernika_2022,_Po%C5%BCegnanie_Stadionu_Ludowego,_KP.jpg) | Krzysztof Popławski | CC BY 4.0 |
-| news-fm27-2.jpg | [RWS at night](https://commons.wikimedia.org/wiki/File:RWS_at_night.jpg) | MUhl24 | CC BY-SA 3.0 |
+| news-fm27-2.jpg | [FC Dallas Evening Game](https://commons.wikimedia.org/wiki/File:FC_Dallas_Evening_Game.jpg) | TylerDurdenXXX | CC BY-SA 4.0 |
 | news-payday.jpg | [Meta Quest 3 front View](https://commons.wikimedia.org/wiki/File:Meta_Quest_3_front_View.jpg) | Roy.wonder.cohen | CC BY-SA 4.0 |
 | news-payday-2.jpg | [Man wearing Oculus Meta Quest 3](https://commons.wikimedia.org/wiki/File:Man_wearing_Oculus_Meta_Quest_3.jpg) | Assembleia Legislativa do Paraná | Public domain |
 | news-ram.jpg | [SK Hynix DDR5 form factors](https://commons.wikimedia.org/wiki/File:SK_Hynix_DDR5_form_factors.jpg) | 4300streetcar | CC BY 4.0 |
