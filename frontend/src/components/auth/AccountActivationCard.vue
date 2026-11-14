@@ -131,17 +131,18 @@ function handleSubmit() {
         {{ error || errors.code }}
       </p>
 
-      <p class="account-activation__resend">
-        <span>Письмо не пришло? Проверьте папку «Спам».</span>
-        <button
-          class="account-activation__resend-link"
-          type="button"
-          :disabled="loading || resending"
-          @click="emit('resend')"
-        >
-          Отправить снова
-        </button>
+      <p class="account-activation__resend-hint">
+        Письмо не пришло? Проверьте папку «Спам».
       </p>
+
+      <button
+        class="account-activation__resend"
+        type="button"
+        :disabled="loading || resending"
+        @click="emit('resend')"
+      >
+        {{ resending ? 'Отправляем…' : 'Отправить снова' }}
+      </button>
 
       <p class="account-activation__note">Код действует 5 минут и может быть использован один раз.</p>
 
@@ -207,32 +208,32 @@ function handleSubmit() {
   font: 600 12px/16px Roboto, sans-serif;
 }
 
+.account-activation__resend-hint {
+  color: var(--color-muted);
+  font: 400 12px/16px Roboto, sans-serif;
+  opacity: 0.7;
+}
+
 .account-activation__resend {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 0 8px;
-  font: 400 13px/16px Roboto, sans-serif;
-  text-align: center;
-}
-
-.account-activation__resend-link {
-  padding: 0;
-  color: var(--color-auth-link);
-  background: none;
+  min-height: 36px;
+  padding: 8px;
+  color: var(--color-text);
+  background: var(--color-card);
   border: 0;
-  font: 500 13px/16px Roboto, sans-serif;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  font: 400 14px/18px Roboto, sans-serif;
   cursor: pointer;
 }
 
-.account-activation__resend-link:hover:not(:disabled) {
-  opacity: 0.8;
+.account-activation__resend:hover:not(:disabled) {
+  background: var(--color-card-hover);
 }
 
-.account-activation__resend-link:disabled {
+.account-activation__resend:disabled {
   cursor: default;
   opacity: 0.6;
 }
