@@ -144,7 +144,10 @@ router.beforeEach(async (to) => {
   return true
 })
 
-/** Only editors, owners and moderators may open the article editor. */
+/**
+ * The backend lets owners, editors and creators write articles; the session
+ * is restored first on hard navigation straight to an editor route.
+ */
 router.beforeEach(async (to) => {
   if (!to.meta.requiresEditorRole) return true
 
@@ -155,7 +158,7 @@ router.beforeEach(async (to) => {
   if (!auth.initialized) await auth.init()
 
   if (!auth.account) return { name: 'login' }
-  if (!auth.canModerate) return { path: '/' }
+  if (!auth.canEditArticles) return { path: '/' }
 
   return true
 })

@@ -16,7 +16,7 @@ const items = computed(() => {
     { label: 'Настройки аккаунта', to: { name: 'account-settings' } },
   ]
 
-  return auth.canModerate
+  return auth.canEditArticles
     ? [...base, { label: 'Редактор', to: { name: 'editor-articles' } }]
     : base
 })
