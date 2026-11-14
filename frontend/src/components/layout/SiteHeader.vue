@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import ThemeIcon from '@/components/ui/ThemeIcon.vue'
 import NotificationsBell from '@/components/layout/NotificationsBell.vue'
 import NotificationsPanel from '@/components/layout/NotificationsPanel.vue'
+import UserAvatar from '@/components/ui/UserAvatar.vue'
+import UserMenu from '@/components/layout/UserMenu.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useNotificationsStore } from '@/stores/notifications'
 
@@ -10,8 +13,13 @@ type Theme = 'light' | 'dark'
 
 const THEME_KEY = 'abberant-theme'
 
+const route = useRoute()
+
 const menuOpen = ref(false)
 const mobileBellOpen = ref(false)
+const userMenuOpen = ref(false)
+const mobileUserOpen = ref(false)
+const accountMenuRoot = ref<HTMLElement | null>(null)
 const auth = useAuthStore()
 const notifications = useNotificationsStore()
 
@@ -45,14 +53,68 @@ function toggleTheme() {
   applyTheme(theme.value === 'dark' ? 'light' : 'dark')
 }
 
-onMounted(() => {
-  document.documentElement.dataset.theme = theme.value
+// Closing the burger menu hides the inline bell and user panels with it.
+watch(menuOpen, (open) => {
+  if (!open) {
+    mobileBellOpen.value = false
+    mobileUserOpen.value = false
+  }
 })
 
-// Closing the burger menu hides the inline bell panel with it.
-watch(menuOpen, (open) => {
-  if (!open) mobileBellOpen.value = false
+// Navigation closes the user menus (mobile links close the burger themselves).
+watch(
+  () => route.fullPath,
+  () => {
+    userMenuOpen.value = false
+    mobileUserOpen.value = false
+  },
+)
+
+// Logging out clears the account — make sure no menu outlives it.
+watch(
+  () => auth.account,
+  (account) => {
+    if (!account) {
+      userMenuOpen.value = false
+      mobileUserOpen.value = false
+    }
+  },
+)
+
+function onDocumentClick(event: MouseEvent) {
+  const root = accountMenuRoot.value
+
+  if (userMenuOpen.value && root && !root.contains(event.target as Node)) {
+    userMenuOpen.value = false
+  }
+}
+
+function onDocumentKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    userMenuOpen.value = false
+    mobileUserOpen.value = false
+  }
+}
+
+onMounted(() => {
+  document.documentElement.dataset.theme = theme.value
+  document.addEventListener('click', onDocumentClick)
+  document.addEventListener('keydown', onDocumentKeydown)
 })
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onDocumentClick)
+  document.removeEventListener('keydown', onDocumentKeydown)
+})
+
+// Desktop nav keeps every section; the burger list stays short because
+// Закладки/Активность/Редактор live in the user menu now.
+const mobileLinks = [
+  { label: 'Новости', to: '/news' },
+  { label: 'Обзоры', to: '/reviews' },
+  { label: 'Прохождения', to: '/walkthroughs' },
+  { label: 'Помощь', to: '/help' },
+]
 
 const links = computed(() => {  const base = [
     { label: 'Новости', to: '/news' },
@@ -111,23 +173,30 @@ const links = computed(() => {  const base = [
 
         <NotificationsBell v-if="auth.account" class="bell-slot" />
 
-        <RouterLink
-          v-if="auth.account"
-          class="icon-btn account"
-          :to="{ name: 'account-settings' }"
-          aria-label="Аккаунт"
-          title="Аккаунт"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2" />
-            <path
-              d="M4 20c0-4.418 3.582-8 8-8s8 3.582 8 8"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
+        <div v-if="auth.account" ref="accountMenuRoot" class="account-menu">
+          <button
+            class="icon-btn account user-menu-trigger"
+            type="button"
+            :aria-expanded="userMenuOpen"
+            aria-haspopup="menu"
+            aria-label="Меню аккаунта"
+            title="Меню аккаунта"
+            @click="userMenuOpen = !userMenuOpen"
+          >
+            <UserAvatar
+              :name="auth.account.username"
+              :avatar="auth.account.avatar"
+              :size="28"
             />
-          </svg>
-        </RouterLink>
+          </button>
+
+          <UserMenu
+            v-if="userMenuOpen"
+            class="account-menu__dropdown"
+            variant="dropdown"
+            @select="userMenuOpen = false"
+          />
+        </div>
 
         <RouterLink v-else class="login" :to="{ name: 'login' }">Войти</RouterLink>
 
@@ -154,7 +223,7 @@ const links = computed(() => {  const base = [
     >
       <div class="mobile-menu__inner">
         <RouterLink
-          v-for="link in links"
+          v-for="link in mobileLinks"
           :key="link.to"
           class="mobile-menu__link"
           :to="link.to"
@@ -207,23 +276,21 @@ const links = computed(() => {  const base = [
             </svg>
           </button>
 
-          <RouterLink
+          <button
             v-if="auth.account"
             class="mobile-menu__action"
-            :to="{ name: auth.account?.activated ? 'account-settings' : 'login' }"
-            aria-label="Аккаунт"
-            @click="menuOpen = false"
+            type="button"
+            :aria-expanded="mobileUserOpen"
+            aria-haspopup="menu"
+            aria-label="Меню аккаунта"
+            @click="mobileUserOpen = !mobileUserOpen"
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2" />
-              <path
-                d="M4 20c0-4.418 3.582-8 8-8s8 3.582 8 8"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-              />
-            </svg>
-          </RouterLink>
+            <UserAvatar
+              :name="auth.account.username"
+              :avatar="auth.account.avatar"
+              :size="22"
+            />
+          </button>
 
           <RouterLink
             v-else
@@ -241,6 +308,14 @@ const links = computed(() => {  const base = [
           @click="menuOpen = false"
         >
           <NotificationsPanel heading="Уведомления" />
+        </div>
+
+        <div
+          v-if="mobileUserOpen"
+          class="mobile-menu__user"
+          @click="menuOpen = false"
+        >
+          <UserMenu variant="stack" @select="mobileUserOpen = false" />
         </div>
       </div>
     </nav>
@@ -363,6 +438,22 @@ const links = computed(() => {  const base = [
   background: var(--color-card-hover);
 }
 
+.account-menu {
+  position: relative;
+  flex: none;
+}
+
+.account-menu__dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+}
+
+.user-menu-trigger {
+  padding: 0;
+}
+
 .burger {
   display: none;
   flex-direction: column;
@@ -439,6 +530,13 @@ const links = computed(() => {  const base = [
   box-shadow: var(--shadow);
 }
 
+.mobile-menu__user {
+  padding: 8px;
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
 .mobile-menu__action {
   display: flex;
   align-items: center;
@@ -479,7 +577,7 @@ const links = computed(() => {  const base = [
   .theme-toggle,
   .bell-slot,
   .login,
-  .account {
+  .account-menu {
     display: none;
   }
 
