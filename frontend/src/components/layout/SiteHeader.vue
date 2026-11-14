@@ -248,6 +248,8 @@ const links = computed(() => {  const base = [
           </svg>
         </RouterLink>
 
+        <div v-if="auth.account" class="mobile-menu__divider" aria-hidden="true"></div>
+
         <template v-if="auth.account">
           <RouterLink
             v-for="item in mobileUserItems"
@@ -514,6 +516,11 @@ const links = computed(() => {  const base = [
 
 .mobile-menu__link:hover {
   background: var(--color-card-hover);
+}
+
+.mobile-menu__divider {
+  height: 1px;
+  background: var(--color-divider);
 }
 
 .mobile-menu__link--logout {
