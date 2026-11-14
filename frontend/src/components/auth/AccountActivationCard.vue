@@ -135,20 +135,21 @@ function handleSubmit() {
         Письмо не пришло? Проверьте папку «Спам».
       </p>
 
-      <button
-        class="account-activation__resend"
-        type="button"
-        :disabled="loading || resending"
-        @click="emit('resend')"
-      >
-        {{ resending ? 'Отправляем…' : 'Отправить снова' }}
-      </button>
-
       <p class="account-activation__note">Код действует 5 минут и может быть использован один раз.</p>
 
-      <button class="account-activation__submit" type="submit" :disabled="loading">
-        {{ loading ? 'Проверяем…' : 'Активировать' }}
-      </button>
+      <div class="account-activation__actions">
+        <button
+          class="account-activation__resend"
+          type="button"
+          :disabled="loading || resending"
+          @click="emit('resend')"
+        >
+          {{ resending ? 'Отправляем…' : 'Отправить снова' }}
+        </button>
+        <button class="account-activation__submit" type="submit" :disabled="loading">
+          {{ loading ? 'Проверяем…' : 'Активировать' }}
+        </button>
+      </div>
     </form>
   </AuthCard>
 </template>
@@ -214,7 +215,14 @@ function handleSubmit() {
   opacity: 0.7;
 }
 
+.account-activation__actions {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+}
+
 .account-activation__resend {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -245,6 +253,7 @@ function handleSubmit() {
 }
 
 .account-activation__submit {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
