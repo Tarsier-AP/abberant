@@ -92,7 +92,12 @@ async function remove(article: Article) {
   <div class="manage container">
     <header class="manage__header">
       <h1 class="manage__heading">Статьи</h1>
-      <RouterLink class="manage__new" :to="{ name: 'editor' }">Новая статья</RouterLink>
+      <div class="manage__header-actions">
+        <RouterLink class="manage__secondary" :to="{ name: 'editor-sections' }">
+          Секции
+        </RouterLink>
+        <RouterLink class="manage__new" :to="{ name: 'editor' }">Новая статья</RouterLink>
+      </div>
     </header>
 
     <p v-if="errorMessage" class="manage__error" role="alert">{{ errorMessage }}</p>
@@ -231,6 +236,12 @@ async function remove(article: Article) {
   font: 600 24px/30px Roboto, sans-serif;
 }
 
+.manage__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .manage__new {
   display: inline-flex;
   align-items: center;
@@ -243,6 +254,22 @@ async function remove(article: Article) {
 }
 
 .manage__new:hover {
+  background: var(--color-card-hover);
+}
+
+.manage__secondary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 6px 14px;
+  color: var(--color-text);
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  font: 500 13px/16px Roboto, sans-serif;
+}
+
+.manage__secondary:hover {
   background: var(--color-card-hover);
 }
 

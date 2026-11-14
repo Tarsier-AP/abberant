@@ -95,6 +95,12 @@ const router = createRouter({
     },
     { path: '/article/:id', name: 'article', component: () => import('@/views/ArticleView.vue'), meta: { title: 'Статья' } },
     {
+      path: '/editor/sections',
+      name: 'editor-sections',
+      component: () => import('@/views/EditorSectionsView.vue'),
+      meta: { title: 'Секции', requiresEditorRole: true },
+    },
+    {
       path: '/editor/articles',
       name: 'editor-articles',
       component: () => import('@/views/EditorArticlesView.vue'),
