@@ -96,13 +96,6 @@ watch(
           <span v-if="article.platform" class="article__platform">{{ article.platform }}</span>
         </div>
 
-        <ReaderStars
-          v-if="ready && store.isRateable(article)"
-          class="article__reader-rating"
-          :article-id="article.id"
-          :rating="article.readerRating ?? { average: 0, votes: 0, myVote: 0 }"
-        />
-
         <div class="article__meta">
           <time class="article__date" :datetime="article.date">{{ formatDate(article.date) }}</time>
           <span class="article__author">{{ article.author }}</span>
@@ -126,12 +119,17 @@ watch(
       ></div>
       <p v-else class="article__placeholder">Текст статьи скоро появится.</p>
 
-      <GradeBadge
-        v-if="article.readerRating && article.readerRating.votes > 0"
-        class="article__grade"
-        large
-        :average="article.readerRating.average"
-      />
+      <div v-if="ready && store.isRateable(article)" class="article__rating">
+        <GradeBadge
+          v-if="article.readerRating && article.readerRating.votes > 0"
+          :average="article.readerRating.average"
+        />
+
+        <ReaderStars
+          :article-id="article.id"
+          :rating="article.readerRating ?? { average: 0, votes: 0, myVote: 0 }"
+        />
+      </div>
 
       <CommentSection
         v-if="article.status === 'published'"
@@ -201,10 +199,6 @@ watch(
   text-transform: uppercase;
 }
 
-.article__grade {
-  align-self: flex-start;
-}
-
 .article__title {
   font: 600 clamp(18px, 2.4vw, 22px)/clamp(24px, 3vw, 28px) Roboto, sans-serif;
 }
@@ -244,11 +238,15 @@ watch(
   gap: 10px;
 }
 
-.article__reader-rating {
-  padding: 6px 10px;
+.article__rating {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  padding: 8px 12px;
   background: var(--color-surface);
   border-radius: var(--radius);
-  width: fit-content;
 }
 
 .article__platform {
