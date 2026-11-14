@@ -25,7 +25,7 @@ type articleResponse struct {
 	Platform string `json:"platform,omitempty"`
 	Verdict  string `json:"verdict,omitempty"`
 	Section  string `json:"section,omitempty"`
-	// ReaderRating is the aggregated reader vote, set for rateable materials.
+	// ReaderRating is the aggregated reader vote.
 	ReaderRating *readerRatingResponse `json:"readerRating,omitempty"`
 }
 
@@ -35,17 +35,13 @@ type readerRatingResponse struct {
 	MyVote  int     `json:"myVote,omitempty"`
 }
 
-// withReaderRating attaches the reader vote summary to a rateable article.
+// withReaderRating attaches the reader vote summary to the article response.
 func withReaderRating(
 	response articleResponse,
 	article *articles.Article,
 	stats ratings.Stats,
 	myVote int,
 ) articleResponse {
-	if !articles.Rateable(article) {
-		return response
-	}
-
 	response.ReaderRating = &readerRatingResponse{
 		Average: stats.Average,
 		Votes:   stats.Votes,
@@ -149,9 +145,7 @@ func (s *Server) handleListArticles(ctx *fiber.Ctx) error {
 			item.Comments = count
 		}
 
-		if articles.Rateable(article) {
-			item = withReaderRating(item, article, voteStats[article.ID], myVotes[article.ID])
-		}
+		item = withReaderRating(item, article, voteStats[article.ID], myVotes[article.ID])
 
 		response = append(response, item)
 	}

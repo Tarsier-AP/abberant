@@ -242,26 +242,6 @@ func ParseDate(value string) (time.Time, bool) {
 	return parsed, true
 }
 
-// WalkthroughHubSections mirrors the frontend walkthrough hub ids (see
-// frontend/src/data/sections.ts): news assigned to these hubs are walkthrough
-// guides and, like reviews, can be rated by readers.
-var WalkthroughHubSections = map[string]bool{
-	"control-resonant":     true,
-	"silent-hill-townfall": true,
-	"ghost-of-tsushima":    true,
-	"baldurs-gate-3":       true,
-}
-
-// Rateable reports whether readers may vote on the material: reviews and
-// walkthrough guides only, never plain news.
-func Rateable(article *Article) bool {
-	if article.Kind == KindReview {
-		return true
-	}
-
-	return article.Kind == KindNews && WalkthroughHubSections[article.Section]
-}
-
 func ValidKind(kind string) bool {
 	return kind == KindNews || kind == KindReview
 }

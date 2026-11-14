@@ -119,7 +119,7 @@ watch(
       ></div>
       <p v-else class="article__placeholder">Текст статьи скоро появится.</p>
 
-      <div v-if="ready && store.isRateable(article)" class="article__rating">
+      <div class="article__rating">
         <GradeBadge
           v-if="article.readerRating && article.readerRating.votes > 0"
           :average="article.readerRating.average"

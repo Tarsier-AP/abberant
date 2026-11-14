@@ -20,7 +20,7 @@ export interface Article {
   verdict?: string
   /** Platform feed, game hub or review group id; empty for unassigned articles. */
   section?: string
-  /** Aggregated reader vote; present on reviews and walkthrough guides. */
+  /** Aggregated reader vote; every article accepts reader grades. */
   readerRating?: ReaderRating
 }
 

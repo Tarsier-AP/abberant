@@ -1,5 +1,4 @@
-// Package ratings stores reader votes (1–5 stars) on rateable materials:
-// reviews and walkthrough guides.
+// Package ratings stores reader votes (1–5 stars) on articles.
 package ratings
 
 import (

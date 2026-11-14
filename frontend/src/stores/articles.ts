@@ -7,7 +7,6 @@ import {
   newsPlatformSections,
   reviewGroupSections,
   walkthroughHighlightIds,
-  walkthroughHubIds,
   walkthroughSections,
 } from '@/data/sections'
 
@@ -213,11 +212,6 @@ export const useArticlesStore = defineStore('articles', () => {
     return kind === 'review' ? 'Обзор' : 'Новость'
   }
 
-  /** Reviews and walkthrough guides accept reader votes; plain news do not. */
-  function isRateable(article: Article): boolean {
-    return article.kind === 'review' || walkthroughHubIds.includes(article.section ?? '')
-  }
-
   /** Replaces the cached reader rating after a vote changes. */
   function setReaderRating(id: string, rating: ReaderRating) {
     const index = articles.value.findIndex((item) => item.id === id)
@@ -265,7 +259,6 @@ export const useArticlesStore = defineStore('articles', () => {
     deleteArticle,
     setCommentCount,
     articleKindLabel,
-    isRateable,
     setReaderRating,
     voteArticle,
     removeVote,

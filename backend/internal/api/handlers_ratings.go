@@ -24,10 +24,6 @@ func (s *Server) handleVote(ctx *fiber.Ctx) error {
 		return auth.Fail(404, "Статья не найдена.")
 	}
 
-	if !articles.Rateable(article) {
-		return auth.Fail(400, "Оценивать можно только обзоры и прохождения.")
-	}
-
 	var req voteRequest
 
 	if err := decode(ctx, &req); err != nil {
