@@ -8,19 +8,13 @@ import type { ArticleKind, ArticleStatus } from '@/types/article'
 import type { ArticleCreatePayload, ArticlePatchPayload } from '@/api/articles'
 import { useAuthStore } from '@/stores/auth'
 import { useArticlesStore } from '@/stores/articles'
-import { newsPlatformSections, reviewGroupSections, walkthroughSections } from '@/data/sections'
+import { useSectionsStore } from '@/stores/sections'
 import { uploadImage } from '@/api/media'
 import { renderMarkdown } from '@/utils/markdown'
 import { detectPortraitFigures } from '@/utils/portraitFigures'
+import { imageSrcset } from '@/utils/image'
 
 const FALLBACK_IMAGE = '/img/news-placeholder.svg'
-
-/** Section picker groups; ids go into the article's `section` column. */
-const sectionGroups = [
-  { label: 'Новости', sections: newsPlatformSections },
-  { label: 'Прохождения', sections: walkthroughSections },
-  { label: 'Обзоры', sections: reviewGroupSections },
-]
 
 interface EditorForm {
   title: string
@@ -63,6 +57,7 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const store = useArticlesStore()
+const sectionsStore = useSectionsStore()
 
 const textarea = ref<HTMLTextAreaElement | null>(null)
 const coverInput = ref<HTMLInputElement | null>(null)
@@ -230,7 +225,20 @@ function validate(): string {
     return 'Добавьте текст статьи перед публикацией.'
   }
 
+  if (form.status === 'published' && form.kind === 'walkthrough' && !form.section) {
+    return 'Выберите игровой хаб для прохождения.'
+  }
+
   return ''
+}
+
+/** Switching the material kind resets the section: hub and platform ids are
+ * not interchangeable. */
+function setKind(kind: ArticleKind) {
+  if (form.kind === kind) return
+
+  form.kind = kind
+  form.section = ''
 }
 
 async function save(nextStatus?: ArticleStatus) {
@@ -516,16 +524,25 @@ onBeforeRouteLeave(() => {
             :class="{ 'editor__kind--active': form.kind === 'news' }"
             type="button"
             :aria-pressed="form.kind === 'news'"
-            @click="form.kind = 'news'"
+            @click="setKind('news')"
           >
             Новость
+          </button>
+          <button
+            class="editor__kind"
+            :class="{ 'editor__kind--active': form.kind === 'walkthrough' }"
+            type="button"
+            :aria-pressed="form.kind === 'walkthrough'"
+            @click="setKind('walkthrough')"
+          >
+            Прохождение
           </button>
           <button
             class="editor__kind"
             :class="{ 'editor__kind--active': form.kind === 'review' }"
             type="button"
             :aria-pressed="form.kind === 'review'"
-            @click="form.kind = 'review'"
+            @click="setKind('review')"
           >
             Обзор
           </button>
@@ -542,19 +559,37 @@ onBeforeRouteLeave(() => {
         />
       </div>
 
-      <div class="editor__field">
-        <label class="editor__label" for="editor-section">Раздел</label>
+      <div v-if="form.kind !== 'review'" class="editor__field">
+        <label class="editor__label" for="editor-section">
+          {{ form.kind === 'walkthrough' ? 'Игровой хаб' : 'Раздел' }}
+        </label>
         <select id="editor-section" v-model="form.section" class="editor__input editor__select">
-          <option value="">Без раздела</option>
-          <optgroup
-            v-for="group in sectionGroups"
-            :key="group.label"
-            :label="group.label"
-          >
-            <option v-for="section in group.sections" :key="section.id" :value="section.id">
+          <template v-if="form.kind === 'news'">
+            <option value="">Без раздела</option>
+            <option
+              v-for="section in sectionsStore.newsPlatforms"
+              :key="section.id"
+              :value="section.id"
+            >
               {{ section.title }}
             </option>
-          </optgroup>
+          </template>
+          <template v-else>
+            <option v-if="!form.section" value="">Выберите хаб…</option>
+            <option
+              v-for="hub in sectionsStore.walkthroughHubs"
+              :key="hub.id"
+              :value="hub.id"
+            >
+              {{ hub.title }}
+            </option>
+            <option
+              v-if="form.section && !sectionsStore.walkthroughHubs.some((hub) => hub.id === form.section)"
+              :value="form.section"
+            >
+              {{ sectionsStore.titleOf(form.section) }} (в архиве)
+            </option>
+          </template>
         </select>
       </div>
 
@@ -565,7 +600,10 @@ onBeforeRouteLeave(() => {
             v-if="form.image"
             class="editor__cover-preview"
             :src="form.image"
+            :srcset="imageSrcset(form.image)"
+            sizes="160px"
             alt="Предпросмотр обложки"
+            decoding="async"
           />
           <div v-else class="editor__cover-empty">Нет обложки</div>
 

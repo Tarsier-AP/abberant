@@ -1,4 +1,4 @@
-export type ArticleKind = 'news' | 'review'
+export type ArticleKind = 'news' | 'review' | 'walkthrough'
 
 export type ArticleStatus = 'draft' | 'published'
 

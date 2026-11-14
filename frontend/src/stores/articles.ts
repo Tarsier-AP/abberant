@@ -3,12 +3,8 @@ import { defineStore } from 'pinia'
 import type { Article, ArticleKind, ArticleSection, Headline, ReaderRating } from '@/types/article'
 import type { ArticlePatchPayload } from '@/api/articles'
 import * as api from '@/api/articles'
-import {
-  newsPlatformSections,
-  reviewGroupSections,
-  walkthroughHighlightIds,
-  walkthroughSections,
-} from '@/data/sections'
+import { reviewGroupSections, walkthroughRecentSection } from '@/data/sections'
+import { useSectionsStore } from '@/stores/sections'
 
 export type ArticlesLoadState = 'idle' | 'loading' | 'ready' | 'error'
 
@@ -25,6 +21,7 @@ function withUrl(payload: api.ArticlePayload): Article {
 }
 
 export const useArticlesStore = defineStore('articles', () => {
+  const sectionsStore = useSectionsStore()
   const articles = ref<Article[]>([])
   const loadState = ref<ArticlesLoadState>('idle')
   const errorMessage = ref('')
@@ -94,6 +91,10 @@ export const useArticlesStore = defineStore('articles', () => {
     all.value.filter((article) => article.kind === 'review' && article.status === 'published'),
   )
 
+  const publishedWalkthroughs = computed(() =>
+    all.value.filter((article) => article.kind === 'walkthrough' && article.status === 'published'),
+  )
+
   /** Published articles assigned to a named section (platform feed or game hub). */
   function sectionFeed(sectionId: string): Article[] {
     return all.value
@@ -108,18 +109,26 @@ export const useArticlesStore = defineStore('articles', () => {
       href: '/news/all',
       articles: [...publishedNews.value].sort(byDateDesc),
     },
-    ...newsPlatformSections.map((section) => ({
-      ...section,
+    ...sectionsStore.newsPlatforms.map((section) => ({
+      id: section.id,
+      title: section.title,
+      href: `/news/${section.id}`,
       articles: sectionFeed(section.id),
     })),
   ])
 
-  const walkthroughFeeds = computed<ArticleSection[]>(() =>
-    walkthroughSections.map((section) => ({
-      ...section,
+  const walkthroughFeeds = computed<ArticleSection[]>(() => [
+    {
+      ...walkthroughRecentSection,
+      articles: [...publishedWalkthroughs.value].sort(byDateDesc),
+    },
+    ...sectionsStore.walkthroughHubs.map((section) => ({
+      id: section.id,
+      title: section.title,
+      href: `/walkthroughs/${section.id}`,
       articles: sectionFeed(section.id),
     })),
-  )
+  ])
 
   const reviewSections = computed<ArticleSection[]>(() => {
     const recentConfig = reviewGroupSections.find((config) => config.id === 'recent')
@@ -139,11 +148,8 @@ export const useArticlesStore = defineStore('articles', () => {
   })
 
   const homeSections = computed<ArticleSection[]>(() => {
-    const byId = new Map(all.value.map((article) => [article.id, article]))
-
-    const highlights = walkthroughHighlightIds
-      .map((id) => byId.get(id))
-      .filter((article): article is Article => article?.status === 'published')
+    // Home «Прохождения» features the three newest published walkthroughs.
+    const highlights = [...publishedWalkthroughs.value].sort(byDateDesc).slice(0, 3)
 
     return [
       {
@@ -209,7 +215,10 @@ export const useArticlesStore = defineStore('articles', () => {
   }
 
   function articleKindLabel(kind: ArticleKind): string {
-    return kind === 'review' ? 'Обзор' : 'Новость'
+    if (kind === 'review') return 'Обзор'
+    if (kind === 'walkthrough') return 'Прохождение'
+
+    return 'Новость'
   }
 
   /** Replaces the cached reader rating after a vote changes. */
@@ -248,6 +257,7 @@ export const useArticlesStore = defineStore('articles', () => {
     all,
     publishedNews,
     publishedReviews,
+    publishedWalkthroughs,
     newsSections,
     walkthroughSections: walkthroughFeeds,
     reviewSections,

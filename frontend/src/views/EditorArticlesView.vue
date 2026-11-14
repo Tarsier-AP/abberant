@@ -4,27 +4,18 @@ import LoadState from '@/components/ui/LoadState.vue'
 import type { Article } from '@/types/article'
 import type { ArticlePatchPayload } from '@/api/articles'
 import { useArticlesStore } from '@/stores/articles'
-import {
-  newsPlatformSections,
-  reviewGroupSections,
-  walkthroughSections,
-} from '@/data/sections'
+import { useSectionsStore } from '@/stores/sections'
 import { formatDate } from '@/utils/date'
 
 const store = useArticlesStore()
+const sectionsStore = useSectionsStore()
 
 const errorMessage = ref('')
 const busyId = ref<string | null>(null)
 
-/** Section id → display title, resolved from the static section config. */
-const sectionTitles = new Map<string, string>()
-
-for (const config of [...newsPlatformSections, ...walkthroughSections, ...reviewGroupSections]) {
-  if (!sectionTitles.has(config.id)) sectionTitles.set(config.id, config.title)
-}
-
+/** Section id → display title, resolved from the server section registry. */
 function sectionTitle(article: Article): string {
-  return article.section ? (sectionTitles.get(article.section) ?? '') : ''
+  return article.section ? sectionsStore.titleOf(article.section) : ''
 }
 
 const drafts = computed(() =>

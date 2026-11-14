@@ -21,6 +21,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useArticlesStore } from '@/stores/articles'
 import { useBookmarksStore } from '@/stores/bookmarks'
 import { useNotificationsStore } from '@/stores/notifications'
+import { useSectionsStore } from '@/stores/sections'
 import { migrateLocalArticles } from '@/utils/migrateLocalArticles'
 
 const app = createApp(App)
@@ -35,8 +36,11 @@ app.use(router)
 // runs right after the session is restored.
 const auth = useAuthStore(pinia)
 const articles = useArticlesStore(pinia)
+const sections = useSectionsStore(pinia)
 
-Promise.all([auth.init(), articles.init()])
+// The section registry travels with the other startup requests so the first
+// paint already has the platform feeds and walkthrough hubs.
+Promise.all([auth.init(), articles.init(), sections.init()])
   .then(() => {
     // Instantiating these stores registers their login/logout watchers and
     // restores per-account data for the current session.
