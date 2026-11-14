@@ -34,8 +34,6 @@ func (m *smtpMailer) Send(to, subject, body string) error {
 	from := m.cfg.SMTPFrom
 	message := buildMessage(from, to, subject, body)
 
-	auth := smtp.PlainAuth("", m.cfg.SMTPUser, m.cfg.SMTPPass, m.cfg.SMTPHost)
-
 	client, err := dialSMTP(addr, m.cfg.SMTPPort, m.cfg.SMTPHost)
 	if err != nil {
 		return err
@@ -49,8 +47,15 @@ func (m *smtpMailer) Send(to, subject, body string) error {
 		}
 	}
 
-	if err := client.Auth(auth); err != nil {
-		return fmt.Errorf("smtp auth: %w", err)
+	// Local SMTP catchers (MailPit, MailDev, postfix on localhost) usually
+	// do not require authentication and do not advertise the AUTH
+	// extension, so authenticate only when credentials are configured.
+	if m.cfg.SMTPUser != "" || m.cfg.SMTPPass != "" {
+		auth := smtp.PlainAuth("", m.cfg.SMTPUser, m.cfg.SMTPPass, m.cfg.SMTPHost)
+
+		if err := client.Auth(auth); err != nil {
+			return fmt.Errorf("smtp auth: %w", err)
+		}
 	}
 
 	if err := client.Mail(from); err != nil {
