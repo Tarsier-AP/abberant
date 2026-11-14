@@ -112,10 +112,11 @@ const links = computed(() => {  const base = [
         <NotificationsBell v-if="auth.account" class="bell-slot" />
 
         <RouterLink
+          v-if="auth.account"
           class="icon-btn account"
-          :to="{ name: auth.account ? 'account-settings' : 'login' }"
-          :aria-label="auth.account ? 'Аккаунт' : 'Войти'"
-          :title="auth.account ? 'Аккаунт' : 'Войти'"
+          :to="{ name: 'account-settings' }"
+          aria-label="Аккаунт"
+          title="Аккаунт"
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2" />
@@ -127,6 +128,8 @@ const links = computed(() => {  const base = [
             />
           </svg>
         </RouterLink>
+
+        <RouterLink v-else class="login" :to="{ name: 'login' }">Войти</RouterLink>
 
         <button
           class="burger"
@@ -205,9 +208,10 @@ const links = computed(() => {  const base = [
           </button>
 
           <RouterLink
+            v-if="auth.account"
             class="mobile-menu__action"
             :to="{ name: auth.account?.activated ? 'account-settings' : 'login' }"
-            :aria-label="auth.account?.activated ? 'Аккаунт' : 'Войти'"
+            aria-label="Аккаунт"
             @click="menuOpen = false"
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -219,6 +223,15 @@ const links = computed(() => {  const base = [
                 stroke-linecap="round"
               />
             </svg>
+          </RouterLink>
+
+          <RouterLink
+            v-else
+            class="mobile-menu__action"
+            :to="{ name: 'login' }"
+            @click="menuOpen = false"
+          >
+            Войти
           </RouterLink>
         </div>
 
@@ -321,6 +334,23 @@ const links = computed(() => {  const base = [
 }
 
 .theme-toggle:hover {
+  background: var(--color-card-hover);
+}
+
+.login {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  min-height: 40px;
+  padding: 4px 16px;
+  color: inherit;
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  font: 500 13px/16px Roboto, sans-serif;
+}
+
+.login:hover {
   background: var(--color-card-hover);
 }
 
@@ -448,6 +478,7 @@ const links = computed(() => {  const base = [
   .search,
   .theme-toggle,
   .bell-slot,
+  .login,
   .account {
     display: none;
   }
