@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ReviewStars from '@/components/article/ReviewStars.vue'
+import ReaderStars from '@/components/article/ReaderStars.vue'
 import CommentSection from '@/components/article/CommentSection.vue'
 import ShareButton from '@/components/ui/ShareButton.vue'
 import BookmarkButton from '@/components/ui/BookmarkButton.vue'
@@ -93,6 +94,13 @@ watch(
           <ReviewStars v-if="article.rating" :rating="article.rating" />
           <span v-if="article.platform" class="article__platform">{{ article.platform }}</span>
         </div>
+
+        <ReaderStars
+          v-if="ready && store.isRateable(article)"
+          class="article__reader-rating"
+          :article-id="article.id"
+          :rating="article.readerRating ?? { average: 0, votes: 0, myVote: 0 }"
+        />
 
         <div class="article__meta">
           <time class="article__date" :datetime="article.date">{{ formatDate(article.date) }}</time>
@@ -222,6 +230,13 @@ watch(
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
+}
+
+.article__reader-rating {
+  padding: 6px 10px;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  width: fit-content;
 }
 
 .article__platform {

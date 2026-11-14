@@ -15,6 +15,7 @@ import (
 	"abberant/backend/internal/db"
 	"abberant/backend/internal/mailer"
 	"abberant/backend/internal/notifications"
+	"abberant/backend/internal/ratings"
 	"abberant/backend/internal/session"
 )
 
@@ -39,6 +40,7 @@ func main() {
 		comments.NewRepo(pool),
 		bookmarks.NewRepo(pool),
 		notifications.NewRepo(pool),
+		ratings.NewRepo(pool),
 	)
 
 	go func() {

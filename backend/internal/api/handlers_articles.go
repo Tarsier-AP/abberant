@@ -8,6 +8,7 @@ import (
 
 	"abberant/backend/internal/articles"
 	"abberant/backend/internal/auth"
+	"abberant/backend/internal/ratings"
 )
 
 type articleResponse struct {
@@ -24,6 +25,34 @@ type articleResponse struct {
 	Platform string `json:"platform,omitempty"`
 	Verdict  string `json:"verdict,omitempty"`
 	Section  string `json:"section,omitempty"`
+	// ReaderRating is the aggregated reader vote, set for rateable materials.
+	ReaderRating *readerRatingResponse `json:"readerRating,omitempty"`
+}
+
+type readerRatingResponse struct {
+	Average float64 `json:"average"`
+	Votes   int     `json:"votes"`
+	MyVote  int     `json:"myVote,omitempty"`
+}
+
+// withReaderRating attaches the reader vote summary to a rateable article.
+func withReaderRating(
+	response articleResponse,
+	article *articles.Article,
+	stats ratings.Stats,
+	myVote int,
+) articleResponse {
+	if !articles.Rateable(article) {
+		return response
+	}
+
+	response.ReaderRating = &readerRatingResponse{
+		Average: stats.Average,
+		Votes:   stats.Votes,
+		MyVote:  myVote,
+	}
+
+	return response
 }
 
 func newArticleResponse(article *articles.Article) articleResponse {
@@ -96,11 +125,32 @@ func (s *Server) handleListArticles(ctx *fiber.Ctx) error {
 
 	response := make([]articleResponse, 0, len(list))
 
+	var (
+		voteStats map[string]ratings.Stats
+		myVotes   map[string]int
+	)
+
+	if user != nil {
+		myVotes, err = s.ratings.VotesOf(ctx.Context(), user.ID)
+		if err != nil {
+			return err
+		}
+	}
+
+	voteStats, err = s.ratings.StatsByArticleMap(ctx.Context())
+	if err != nil {
+		return err
+	}
+
 	for _, article := range list {
 		item := newArticleResponse(article)
 
 		if count, ok := counts[article.ID]; ok {
 			item.Comments = count
+		}
+
+		if articles.Rateable(article) {
+			item = withReaderRating(item, article, voteStats[article.ID], myVotes[article.ID])
 		}
 
 		response = append(response, item)

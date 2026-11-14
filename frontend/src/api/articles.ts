@@ -1,5 +1,5 @@
 import { api } from './client'
-import type { ArticleKind, ArticleStatus } from '@/types/article'
+import type { ArticleKind, ArticleStatus, ReaderRating } from '@/types/article'
 
 /** Article as stored by the backend; `url` is derived on the client. */
 export interface ArticlePayload {
@@ -16,6 +16,7 @@ export interface ArticlePayload {
   platform?: string
   verdict?: string
   section?: string
+  readerRating?: ReaderRating
 }
 
 export interface ArticlesResponse {
@@ -69,4 +70,21 @@ export function updateArticle(id: string, patch: ArticlePatchPayload) {
 
 export function deleteArticle(id: string) {
   return api<{ status: string }>(`/articles/${encodeURIComponent(id)}`, { method: 'DELETE' })
+}
+
+export interface VoteResponse {
+  rating: ReaderRating
+}
+
+export function voteArticle(id: string, stars: number) {
+  return api<VoteResponse>(`/articles/${encodeURIComponent(id)}/vote`, {
+    method: 'PUT',
+    body: { stars },
+  })
+}
+
+export function removeVote(id: string) {
+  return api<VoteResponse>(`/articles/${encodeURIComponent(id)}/vote`, {
+    method: 'DELETE',
+  })
 }

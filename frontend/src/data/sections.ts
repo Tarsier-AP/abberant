@@ -25,6 +25,17 @@ export const walkthroughSections: SectionConfig[] = [
   { id: 'baldurs-gate-3', title: 'BALDUR’S GATE 3', href: '/walkthroughs/baldurs-gate-3' },
 ]
 
+/**
+ * Hub ids that mark walkthrough articles (the grouping `recent` excluded).
+ * Mirrors the rateable set on the backend (articles.Rateable).
+ */
+export const walkthroughHubIds: string[] = [
+  'control-resonant',
+  'silent-hill-townfall',
+  'ghost-of-tsushima',
+  'baldurs-gate-3',
+]
+
 /** Walkthrough cards featured in the home page «Прохождения» section. */
 export const walkthroughHighlightIds = ['walkthrough-1', 'walkthrough-2', 'walkthrough-3']
 

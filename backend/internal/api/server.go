@@ -13,6 +13,7 @@ import (
 	"abberant/backend/internal/comments"
 	"abberant/backend/internal/config"
 	"abberant/backend/internal/notifications"
+	"abberant/backend/internal/ratings"
 	"abberant/backend/internal/session"
 )
 
@@ -24,6 +25,7 @@ type Server struct {
 	comments      *comments.Repo
 	bookmarks     *bookmarks.Repo
 	notifications *notifications.Repo
+	ratings       *ratings.Repo
 	app           *fiber.App
 }
 
@@ -35,6 +37,7 @@ func New(
 	commentsRepo *comments.Repo,
 	bookmarksRepo *bookmarks.Repo,
 	notificationsRepo *notifications.Repo,
+	ratingsRepo *ratings.Repo,
 ) *fiber.App {
 	app := fiber.New(fiber.Config{
 		ErrorHandler:          errorHandler,
@@ -53,6 +56,7 @@ func New(
 		comments:      commentsRepo,
 		bookmarks:     bookmarksRepo,
 		notifications: notificationsRepo,
+		ratings:       ratingsRepo,
 	}
 
 	v1 := app.Group("/api/v1")
@@ -86,6 +90,8 @@ func New(
 	v1.Get("/subscriptions", server.requireSession, server.handleListSubscriptions)
 	v1.Put("/subscriptions/:section", server.requireSession, server.handleSubscribe)
 	v1.Delete("/subscriptions/:section", server.requireSession, server.handleUnsubscribe)
+	v1.Put("/articles/:id/vote", server.requireSession, server.handleVote)
+	v1.Delete("/articles/:id/vote", server.requireSession, server.handleRemoveVote)
 	v1.Post("/articles", server.requireSession, server.requireEditor, server.handleCreateArticle)
 	v1.Patch("/articles/:id", server.requireSession, server.requireEditor, server.handleUpdateArticle)
 	v1.Delete("/articles/:id", server.requireSession, server.handleDeleteArticle)

@@ -20,6 +20,16 @@ export interface Article {
   verdict?: string
   /** Platform feed, game hub or review group id; empty for unassigned articles. */
   section?: string
+  /** Aggregated reader vote; present on reviews and walkthrough guides. */
+  readerRating?: ReaderRating
+}
+
+/** Reader vote summary as returned by the backend. */
+export interface ReaderRating {
+  average: number
+  votes: number
+  /** The current user's own stars; 0 means no vote yet. */
+  myVote?: number
 }
 
 export interface Headline {
