@@ -77,7 +77,9 @@ func (m *smtpMailer) Send(to, subject, body string) error {
 	return client.Quit()
 }
 
-const implicitTLSPort = "465"
+// implicitTLSPort marks the port that speaks TLS from the first byte.
+// It is a variable only so tests can point it at an ephemeral port.
+var implicitTLSPort = "465"
 
 // dialSMTP connects to the server. Port 465 speaks implicit TLS from the
 // first byte, so it needs a TLS handshake instead of STARTTLS.
