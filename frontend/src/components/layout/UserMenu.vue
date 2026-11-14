@@ -55,7 +55,23 @@ async function logout() {
       :to="item.to"
       @click="emit('select')"
     >
-      {{ item.label }}
+      <span>{{ item.label }}</span>
+      <svg
+        v-if="variant === 'stack'"
+        width="8"
+        height="16"
+        viewBox="0 0 8 16"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path
+          d="m1 1 6 7-6 7"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
     </RouterLink>
 
     <button
@@ -63,7 +79,7 @@ async function logout() {
       type="button"
       @click="logout"
     >
-      Выйти
+      <span>Выйти</span>
     </button>
   </div>
 </template>
@@ -83,6 +99,11 @@ async function logout() {
   box-shadow: var(--shadow);
 }
 
+.user-menu--stack {
+  gap: 8px;
+  padding: 0;
+}
+
 .user-menu__head {
   display: flex;
   align-items: center;
@@ -90,6 +111,15 @@ async function logout() {
   padding: 8px;
   margin-bottom: 4px;
   border-bottom: 1px solid var(--color-divider);
+}
+
+.user-menu--stack .user-menu__head {
+  margin-bottom: 0;
+  padding: 8px 12px;
+  background: var(--color-card);
+  border-bottom: 0;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
 }
 
 .user-menu__name {
@@ -102,6 +132,7 @@ async function logout() {
 .user-menu__item {
   display: flex;
   align-items: center;
+  gap: 8px;
   min-height: 36px;
   padding: 8px 12px;
   color: inherit;
@@ -113,7 +144,27 @@ async function logout() {
   cursor: pointer;
 }
 
+.user-menu__item span {
+  flex: 1;
+}
+
+.user-menu__item svg {
+  flex: none;
+  color: var(--color-icon);
+}
+
 .user-menu__item:hover {
+  background: var(--color-card-hover);
+}
+
+.user-menu--stack .user-menu__item {
+  min-height: 35px;
+  background: var(--color-card);
+  box-shadow: var(--shadow);
+  font: 400 14px/17px Roboto, sans-serif;
+}
+
+.user-menu--stack .user-menu__item:hover {
   background: var(--color-card-hover);
 }
 

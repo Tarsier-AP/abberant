@@ -522,10 +522,8 @@ const links = computed(() => {  const base = [
 }
 
 .mobile-menu__user {
-  padding: 8px;
-  background: var(--color-card);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
 }
 
 .mobile-menu__action {
