@@ -175,7 +175,7 @@ const links = computed(() => {  const base = [
 
         <div v-if="auth.account" ref="accountMenuRoot" class="account-menu">
           <button
-            class="icon-btn account user-menu-trigger"
+            class="icon-btn user-menu-trigger"
             type="button"
             :aria-expanded="userMenuOpen"
             aria-haspopup="menu"
@@ -426,15 +426,6 @@ const links = computed(() => {  const base = [
 }
 
 .login:hover {
-  background: var(--color-card-hover);
-}
-
-.account {
-  background: var(--color-card);
-  box-shadow: var(--shadow);
-}
-
-.account:hover {
   background: var(--color-card-hover);
 }
 
