@@ -13,7 +13,9 @@ function figureFromImage(token: Tokens.Image): string {
   const href = escapeAttribute(token.href ?? '')
   const alt = escapeAttribute(token.text ?? '')
   const caption = token.title ? escapeAttribute(token.title) : ''
-  const img = `<img src="${href}" alt="${alt}" loading="lazy">`
+  // Fixed 16:9 intrinsic dimensions keep layout stable before the image
+  // loads; the frame is enforced by CSS (`article.css`) too.
+  const img = `<img src="${href}" alt="${alt}" width="1200" height="675" decoding="async">`
 
   return caption
     ? `<figure>${img}<figcaption>${caption}</figcaption></figure>`
