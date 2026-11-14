@@ -1,9 +1,11 @@
-// Package media stores uploaded images on disk and serves their WebP
-// derivatives under content-addressed /media/{hash}/{file} URLs.
+// Package media stores uploaded images on disk and serves their derivatives
+// under content-addressed /media/{hash}/{file} URLs.
 //
 // Layout: every upload is hashed (SHA-256); all derivatives of that upload
 // live in a single per-hash directory. Because identical bytes always map to
 // the same directory, /media responses can be cached immutably forever.
+// The original bytes are kept verbatim; generated variants use lossy WebP
+// on Linux (libwebp via cgo) and PNG elsewhere (Windows builds stay cgo-free).
 package media
 
 import (
@@ -23,7 +25,8 @@ import (
 )
 
 const (
-	// Quality is the WebP quality (0–100) used for every generated image.
+	// Quality is the lossy quality (0–100) used for every generated WebP
+	// variant; ignored by the PNG fallback encoder.
 	Quality = 80.0
 
 	// AvatarSize is the edge length of the square avatar derivative.
@@ -32,14 +35,16 @@ const (
 	// MaxUpload is the largest accepted upload in bytes.
 	MaxUpload = 10 << 20
 
-	// maxDimension caps the stored original so a single huge upload cannot
-	// monopolize disk or decode memory.
+	// maxDimension caps the pixel source used to generate variants so a
+	// huge upload cannot monopolize decode memory. The original itself is
+	// always stored verbatim.
 	maxDimension = 2560
 )
 
-// CoverWidths are the generated WebP widths for covers and body images.
+// CoverWidths are the generated variant widths for covers and body images.
 // The set is a fixed contract: the frontend derives srcset attributes from
-// it, so every raster upload gets all of these variants.
+// it, so every raster upload gets all of these variants. The file format of
+// a variant depends on the platform (webp.Extension).
 var CoverWidths = []int{320, 480, 828, 1200}
 
 // Kind selects how an upload is processed.
@@ -125,12 +130,14 @@ func (s *Store) Put(data []byte) (*Result, error) {
 		return nil, err
 	}
 
-	decoded = capDimension(decoded)
+	// Variants are generated from a dimension-capped copy; the original
+	// itself is written verbatim.
+	variants := capDimension(decoded)
 
 	hash := hashBytes(data)
 	dir := filepath.Join(s.dir, hash)
 
-	original, err := s.writeOriginal(dir, hash, decoded, format)
+	original, err := s.writeOriginal(dir, hash, data, decoded, format)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +145,7 @@ func (s *Store) Put(data []byte) (*Result, error) {
 	result := &Result{Hash: hash, Files: []File{original}}
 
 	for _, width := range CoverWidths {
-		file, err := s.writeVariant(dir, hash, decoded, width)
+		file, err := s.writeVariant(dir, hash, variants, width)
 		if err != nil {
 			return nil, err
 		}
@@ -165,17 +172,15 @@ func (s *Store) PutAvatar(data []byte) (*Result, error) {
 		return nil, err
 	}
 
-	decoded = capDimension(decoded)
-
 	hash := hashBytes(data)
 	dir := filepath.Join(s.dir, hash)
 
-	original, err := s.writeOriginal(dir, hash, decoded, format)
+	original, err := s.writeOriginal(dir, hash, data, decoded, format)
 	if err != nil {
 		return nil, err
 	}
 
-	rgba := toRGBA(squareCrop(decoded))
+	rgba := toRGBA(squareCrop(capDimension(decoded)))
 	scaled := resize(rgba, AvatarSize, AvatarSize)
 
 	encoded, err := webp.EncodeRGBA(scaled.Pix, AvatarSize, AvatarSize, scaled.Stride, Quality)
@@ -183,7 +188,9 @@ func (s *Store) PutAvatar(data []byte) (*Result, error) {
 		return nil, fmt.Errorf("media: webp: %w", err)
 	}
 
-	if err := writeFileSync(dir, "avatar.webp", encoded); err != nil {
+	name := "avatar" + webp.Extension
+
+	if err := writeFileSync(dir, name, encoded); err != nil {
 		return nil, err
 	}
 
@@ -191,45 +198,32 @@ func (s *Store) PutAvatar(data []byte) (*Result, error) {
 		Hash: hash,
 		Files: []File{
 			original,
-			{URL: mediaURL(hash, "avatar.webp"), Width: AvatarSize, Height: AvatarSize},
+			{URL: mediaURL(hash, name), Width: AvatarSize, Height: AvatarSize},
 		},
 	}, nil
 }
 
-func (s *Store) writeOriginal(dir, hash string, img image.Image, format string) (File, error) {
-	var (
-		name string
-		data []byte
-		err  error
-	)
+func (s *Store) writeOriginal(dir, hash string, data []byte, decoded image.Image, format string) (File, error) {
+	var extension string
 
 	switch format {
 	case "png":
-		name = "original.png"
-		data, err = pngEncode(img)
+		extension = ".png"
 	case "jpeg":
-		name = "original.jpg"
-		data, err = jpegEncode(img)
+		extension = ".jpg"
 	case "webp":
-		// The original came in as WebP: keep the source bytes verbatim by
-		// re-encoding the decoded pixels; libwebp lossy output is visually
-		// equivalent and keeps the store uniform.
-		name = "original.webp"
-		rgba := toRGBA(img)
-		data, err = webp.EncodeRGBA(rgba.Pix, rgba.Rect.Dx(), rgba.Rect.Dy(), rgba.Stride, Quality)
+		extension = ".webp"
 	default:
 		return File{}, fmt.Errorf("media: неизвестный формат %q", format)
 	}
 
-	if err != nil {
-		return File{}, fmt.Errorf("media: original: %w", err)
-	}
+	name := "original" + extension
 
 	if err := writeFileSync(dir, name, data); err != nil {
 		return File{}, err
 	}
 
-	bounds := img.Bounds()
+	bounds := decoded.Bounds()
 
 	return File{
 		URL:      mediaURL(hash, name),
@@ -252,10 +246,10 @@ func (s *Store) writeVariant(dir, hash string, img image.Image, width int) (File
 
 	encoded, err := webp.EncodeRGBA(scaled.Pix, scaled.Rect.Dx(), scaled.Rect.Dy(), scaled.Stride, Quality)
 	if err != nil {
-		return File{}, fmt.Errorf("media: webp %dw: %w", width, err)
+		return File{}, fmt.Errorf("media: variant %dw: %w", width, err)
 	}
 
-	name := fmt.Sprintf("%d.webp", width)
+	name := fmt.Sprintf("%d%s", width, webp.Extension)
 
 	if err := writeFileSync(dir, name, encoded); err != nil {
 		return File{}, err

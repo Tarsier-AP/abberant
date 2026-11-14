@@ -1,10 +1,7 @@
 package media
 
 import (
-	"bytes"
 	"image"
-	"image/jpeg"
-	"image/png"
 
 	"golang.org/x/image/draw"
 )
@@ -53,24 +50,4 @@ func resize(source *image.RGBA, width, height int) *image.RGBA {
 	draw.CatmullRom.Scale(out, out.Bounds(), source, source.Bounds(), draw.Over, nil)
 
 	return out
-}
-
-func pngEncode(img image.Image) ([]byte, error) {
-	var buffer bytes.Buffer
-
-	if err := png.Encode(&buffer, img); err != nil {
-		return nil, err
-	}
-
-	return buffer.Bytes(), nil
-}
-
-func jpegEncode(img image.Image) ([]byte, error) {
-	var buffer bytes.Buffer
-
-	if err := jpeg.Encode(&buffer, img, &jpeg.Options{Quality: 90}); err != nil {
-		return nil, err
-	}
-
-	return buffer.Bytes(), nil
 }

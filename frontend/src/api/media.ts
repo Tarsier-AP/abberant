@@ -12,6 +12,23 @@ interface MediaUploadResponse {
 
 export type MediaKind = 'cover' | 'body' | 'avatar'
 
+const STORED_IMAGE = /^\/media\/[0-9a-f]{64}\/[^/]+\.(?:webp|png)$/
+
+/**
+ * Builds a srcset attribute value for a stored image from the fixed width
+ * convention: /media/{hash}/{width}{ext} exists for every IMAGE_WIDTHS entry,
+ * with the extension matching the given URL (WebP on the backend's Linux
+ * builds, PNG on Windows builds).
+ */
+export function buildSrcset(url: string): string {
+  if (!STORED_IMAGE.test(url)) return ''
+
+  const base = url.slice(0, url.lastIndexOf('/') + 1)
+  const extension = url.slice(url.lastIndexOf('.'))
+
+  return IMAGE_WIDTHS.map((width) => `${base}${width}${extension} ${width}w`).join(', ')
+}
+
 /**
  * Uploads an image file to the backend media store and returns its URL
  * (plus the srcset attribute value when width variants were generated).
@@ -50,16 +67,4 @@ export async function uploadImage(
   const media = payload as MediaUploadResponse
 
   return { url: media.url, srcset: media.srcset ?? buildSrcset(media.url) }
-}
-
-/**
- * Builds a srcset attribute value for a stored image from the fixed width
- * convention: /media/{hash}/{width}.webp exists for every IMAGE_WIDTHS entry.
- */
-export function buildSrcset(url: string): string {
-  if (!/^\/media\/[0-9a-f]{64}\//.test(url)) return ''
-
-  const base = url.slice(0, url.lastIndexOf('/') + 1)
-
-  return IMAGE_WIDTHS.map((width) => `${base}${width}.webp ${width}w`).join(', ')
 }
