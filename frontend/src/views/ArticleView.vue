@@ -61,11 +61,17 @@ const bodyRef = ref<HTMLElement | null>(null)
 
 // Vertical figure images need their aspect ratio measured after the HTML
 // lands in the DOM; figures get `figure--portrait` once the image loads.
-watch(bodyHtml, async () => {
-  await nextTick()
+// `immediate` covers direct page loads: articles are already in the store
+// before this component mounts, so `bodyHtml` may never change again.
+watch(
+  bodyHtml,
+  async () => {
+    await nextTick()
 
-  if (bodyRef.value) detectPortraitFigures(bodyRef.value)
-})
+    if (bodyRef.value) detectPortraitFigures(bodyRef.value)
+  },
+  { immediate: true },
+)
 
 const shareUrl = computed(() =>
   article.value ? new URL(article.value.url, window.location.origin).href : '',

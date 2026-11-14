@@ -97,11 +97,16 @@ const previewRef = ref<HTMLElement | null>(null)
 
 // The editor preview matches the article page: vertical figures get their
 // blurred backdrop once the preview re-renders and images have dimensions.
-watch(previewHtml, async () => {
-  await nextTick()
+// `immediate` covers the case where the form is already filled on mount.
+watch(
+  previewHtml,
+  async () => {
+    await nextTick()
 
-  if (previewRef.value) detectPortraitFigures(previewRef.value)
-})
+    if (previewRef.value) detectPortraitFigures(previewRef.value)
+  },
+  { immediate: true },
+)
 
 const snapshot = ref('')
 
