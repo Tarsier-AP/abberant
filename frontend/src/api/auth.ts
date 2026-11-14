@@ -6,16 +6,10 @@ export interface RegistrationResponse {
   registrationId: string
 }
 
-export interface DevCodeResponse {
-  status: string
-  devCode?: string
-}
-
 export interface TwoFactorChallenge {
   status: '2fa_required'
   twoFactorMethod: TwoFactorMethod | ''
   emailCodeSent?: boolean
-  devCode?: string
 }
 
 export interface LoginResponse {
@@ -60,9 +54,16 @@ export function startRegistration(email: string, username: string) {
 }
 
 export function setRegistrationPassword(registrationId: string, password: string) {
-  return api<DevCodeResponse>('/register/password', {
+  return api<{ status: string }>('/register/password', {
     method: 'POST',
     body: { registrationId, password },
+  })
+}
+
+export function resendRegistrationCode(registrationId: string) {
+  return api<{ status: string }>('/register/resend', {
+    method: 'POST',
+    body: { registrationId },
   })
 }
 
@@ -115,7 +116,7 @@ export function confirmTotp(code: string) {
 }
 
 export function sendEmailTwoFactorCode() {
-  return api<{ status: string; emailCodeSent: boolean; devCode?: string }>('/2fa/email/send', {
+  return api<{ status: string; emailCodeSent: boolean }>('/2fa/email/send', {
     method: 'POST',
   })
 }

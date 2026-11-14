@@ -90,6 +90,7 @@ function handleSubmit() {
         <template v-else>
           <p class="activate__text">
             Введите код активации, отправленный на вашу электронную почту.
+            Если письмо не пришло, проверьте папку «Спам».
           </p>
 
           <form class="activate__form" novalidate @submit.prevent="handleSubmit">

@@ -107,6 +107,26 @@ func (s *Server) handleRegisterPassword(ctx *fiber.Ctx) error {
 	return ctx.JSON(response)
 }
 
+func (s *Server) handleRegisterResend(ctx *fiber.Ctx) error {
+	var req registrationTokenRequest
+
+	if err := decode(ctx, &req); err != nil {
+		return err
+	}
+
+	result, err := s.auth.ResendActivationCode(ctx.Context(), req.RegistrationID, auth.ClientIP(ctx.IP()))
+	if err != nil {
+		return err
+	}
+
+	response := fiber.Map{"status": "ok"}
+	for key, value := range devCodeField(result.RegistrationDevCode) {
+		response[key] = value
+	}
+
+	return ctx.JSON(response)
+}
+
 func (s *Server) handleRegisterActivate(ctx *fiber.Ctx) error {
 	var req codeRequest
 

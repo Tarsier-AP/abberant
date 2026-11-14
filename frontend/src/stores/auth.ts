@@ -22,8 +22,6 @@ export interface PendingRegistration {
   login: string
   username: string
   registrationId: string
-  /** Single-use code echoed back by the server in dev mode. */
-  devCode?: string
 }
 
 const PENDING_KEY = 'abberant-auth-pending-registration'

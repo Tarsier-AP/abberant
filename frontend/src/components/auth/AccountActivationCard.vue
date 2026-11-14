@@ -7,12 +7,13 @@ const props = defineProps<{
   login: string
   username: string
   loading?: boolean
+  resending?: boolean
   error?: string
-  devCode?: string
 }>()
 
 const emit = defineEmits<{
   submit: [code: string]
+  resend: []
 }>()
 
 const digits = ref<string[]>(['', '', '', '', '', ''])
@@ -130,8 +131,16 @@ function handleSubmit() {
         {{ error || errors.code }}
       </p>
 
-      <p v-if="devCode" class="account-activation__dev" role="note">
-        Почта не настроена (dev-режим), код активации: <strong>{{ devCode }}</strong>
+      <p class="account-activation__resend">
+        <span>Письмо не пришло? Проверьте папку «Спам».</span>
+        <button
+          class="account-activation__resend-link"
+          type="button"
+          :disabled="loading || resending"
+          @click="emit('resend')"
+        >
+          Отправить снова
+        </button>
       </p>
 
       <p class="account-activation__note">Код действует 5 минут и может быть использован один раз.</p>
@@ -198,12 +207,34 @@ function handleSubmit() {
   font: 600 12px/16px Roboto, sans-serif;
 }
 
-.account-activation__dev {
-  padding: 8px;
-  color: var(--color-text);
-  background: var(--color-surface);
-  border-radius: var(--radius);
-  font: 600 12px/16px Roboto, sans-serif;
+.account-activation__resend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 8px;
+  font: 400 13px/16px Roboto, sans-serif;
+  text-align: center;
+}
+
+.account-activation__resend-link {
+  padding: 0;
+  color: var(--color-auth-link);
+  background: none;
+  border: 0;
+  font: 500 13px/16px Roboto, sans-serif;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.account-activation__resend-link:hover:not(:disabled) {
+  opacity: 0.8;
+}
+
+.account-activation__resend-link:disabled {
+  cursor: default;
+  opacity: 0.6;
 }
 
 .account-activation__note {

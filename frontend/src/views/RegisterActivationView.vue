@@ -10,12 +10,32 @@ const router = useRouter()
 const auth = useAuthStore()
 
 const loading = ref(false)
+const resending = ref(false)
 const error = ref('')
 const activated = ref(false)
 
 const login = computed(() => auth.pendingRegistration?.login ?? '')
 const username = computed(() => auth.pendingRegistration?.username ?? '')
-const devCode = computed(() => auth.pendingRegistration?.devCode ?? '')
+
+async function handleResend() {
+  if (resending.value) return
+
+  const registrationId = auth.pendingRegistration?.registrationId
+
+  if (!registrationId) return
+
+  resending.value = true
+  error.value = ''
+
+  try {
+    await api.resendRegistrationCode(registrationId)
+  } catch (requestError) {
+    error.value =
+      requestError instanceof Error ? requestError.message : 'Не удалось отправить код.'
+  } finally {
+    resending.value = false
+  }
+}
 
 async function handleSubmit(code: string) {
   if (loading.value) return
@@ -65,9 +85,10 @@ async function handleSubmit(code: string) {
       :login="login"
       :username="username"
       :loading="loading"
+      :resending="resending"
       :error="error"
-      :dev-code="devCode"
       @submit="handleSubmit"
+      @resend="handleResend"
     />
   </div>
 </template>

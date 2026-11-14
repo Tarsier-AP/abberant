@@ -218,6 +218,34 @@ func (s *Service) devCode(code string) string {
 	return ""
 }
 
+// ResendActivationCode issues and sends a fresh activation code for a
+// pending registration. It mirrors SendEmail2FACode: the attempt keys
+// throttle the endpoint after failures and are cleared on success.
+func (s *Service) ResendActivationCode(ctx context.Context, registrationToken, ip string) (*LoginResult, error) {
+	user, err := s.userByRegistrationToken(ctx, registrationToken)
+	if err != nil {
+		return nil, err
+	}
+
+	keys := s.attemptKeys(user.Email, ip)
+	keys = append(keys, fmt.Sprintf("activation-send:%d", user.ID))
+
+	if err := s.checkAttempts(ctx, keys); err != nil {
+		return nil, err
+	}
+
+	result, err := s.sendActivationCode(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.clearAttempts(ctx, keys); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
 func (s *Service) ActivateByToken(ctx context.Context, registrationToken, code, ip string) error {
 	user, err := s.userByRegistrationToken(ctx, registrationToken)
 	if err != nil {

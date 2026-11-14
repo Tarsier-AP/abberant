@@ -24,12 +24,7 @@ async function handleSubmit(password: string) {
   error.value = ''
 
   try {
-    const result = await api.setRegistrationPassword(registrationId, password)
-
-    if (auth.pendingRegistration) {
-      // Keep the dev-mode code hint for the activation screen.
-      auth.pendingRegistration.devCode = result.devCode
-    }
+    await api.setRegistrationPassword(registrationId, password)
 
     void router.push({ name: 'register-activation' })
   } catch (requestError) {

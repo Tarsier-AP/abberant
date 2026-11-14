@@ -40,6 +40,7 @@ func New(cfg config.Config, service *auth.Service, store *session.Store, article
 	v1.Post("/register", server.handleRegister)
 	v1.Post("/register/password", server.handleRegisterPassword)
 	v1.Post("/register/activate", server.handleRegisterActivate)
+	v1.Post("/register/resend", server.handleRegisterResend)
 	v1.Post("/activate", server.handleActivate)
 	v1.Post("/login", server.handleLogin)
 	v1.Post("/login/2fa", server.handleLogin2FA)

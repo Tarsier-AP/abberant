@@ -143,7 +143,7 @@ function handleSubmit() {
       </p>
 
       <p v-if="resendable" class="two-factor-form__resend">
-        <span>Код не пришёл?</span>
+        <span>Код не пришёл? Проверьте папку «Спам».</span>
         <button
           class="two-factor-form__resend-link"
           type="button"
