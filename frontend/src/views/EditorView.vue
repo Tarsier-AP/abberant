@@ -11,6 +11,7 @@ import { useArticlesStore } from '@/stores/articles'
 import { newsPlatformSections, reviewGroupSections, walkthroughSections } from '@/data/sections'
 import { uploadImage } from '@/api/media'
 import { renderMarkdown } from '@/utils/markdown'
+import { detectPortraitFigures } from '@/utils/portraitFigures'
 
 const FALLBACK_IMAGE = '/img/news-placeholder.svg'
 
@@ -91,6 +92,16 @@ const canModify = computed(
 const canDelete = canModify
 
 const previewHtml = computed(() => renderMarkdown(form.content))
+
+const previewRef = ref<HTMLElement | null>(null)
+
+// The editor preview matches the article page: vertical figures get their
+// blurred backdrop once the preview re-renders and images have dimensions.
+watch(previewHtml, async () => {
+  await nextTick()
+
+  if (previewRef.value) detectPortraitFigures(previewRef.value)
+})
 
 const snapshot = ref('')
 
@@ -644,7 +655,12 @@ onBeforeRouteLeave(() => {
 
         <div class="editor__pane">
           <span class="editor__pane-label">Предпросмотр</span>
-          <div v-if="form.content.trim()" class="article-body editor__preview" v-html="previewHtml"></div>
+          <div
+            v-if="form.content.trim()"
+            ref="previewRef"
+            class="article-body editor__preview"
+            v-html="previewHtml"
+          ></div>
           <p v-else class="editor__preview-empty">Начните писать текст, и он появится здесь.</p>
         </div>
       </div>

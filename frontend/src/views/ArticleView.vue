@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ReviewStars from '@/components/article/ReviewStars.vue'
 import ReaderStars from '@/components/article/ReaderStars.vue'
@@ -12,6 +12,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useArticlesStore } from '@/stores/articles'
 import { formatDate } from '@/utils/date'
 import { renderMarkdown } from '@/utils/markdown'
+import { detectPortraitFigures } from '@/utils/portraitFigures'
 
 const route = useRoute()
 const router = useRouter()
@@ -56,6 +57,16 @@ const bodyHtml = computed(() => {
   return renderMarkdown(stripped)
 })
 
+const bodyRef = ref<HTMLElement | null>(null)
+
+// Vertical figure images need their aspect ratio measured after the HTML
+// lands in the DOM; figures get `figure--portrait` once the image loads.
+watch(bodyHtml, async () => {
+  await nextTick()
+
+  if (bodyRef.value) detectPortraitFigures(bodyRef.value)
+})
+
 const shareUrl = computed(() =>
   article.value ? new URL(article.value.url, window.location.origin).href : '',
 )
@@ -64,6 +75,8 @@ const zoomed = ref<string | null>(null)
 
 function openZoom(event: MouseEvent) {
   const target = event.target as HTMLElement
+  if (target.classList.contains('figure__bg')) return
+
   if (target.tagName === 'IMG' && target.getAttribute('src')) {
     zoomed.value = target.getAttribute('src')
   }
@@ -113,6 +126,7 @@ watch(
 
       <div
         v-if="bodyHtml"
+        ref="bodyRef"
         class="article-body article__body"
         v-html="bodyHtml"
         @click="openZoom"
@@ -263,7 +277,9 @@ watch(
   box-shadow: var(--shadow);
 }
 
-.article__body :deep(img) {
+/* Figure images (classes `figure__bg` / `figure__img`) are styled by the
+   global `article.css`; this fallback covers any other body image. */
+.article__body :deep(img:not(.figure__bg):not(.figure__img)) {
   display: block;
   width: min(100%, 560px);
   height: auto;

@@ -13,13 +13,17 @@ function figureFromImage(token: Tokens.Image): string {
   const href = escapeAttribute(token.href ?? '')
   const alt = escapeAttribute(token.text ?? '')
   const caption = token.title ? escapeAttribute(token.title) : ''
-  // Fixed 16:9 intrinsic dimensions keep layout stable before the image
-  // loads; the frame is enforced by CSS (`article.css`) too.
-  const img = `<img src="${href}" alt="${alt}" width="1200" height="675" decoding="async">`
+  // Vertical images are shown whole over a blurred backdrop of the same
+  // photo (`article.css` + `detectPortraitFigures`); the fixed 16:9 frame
+  // keeps the layout stable before anything loads. The backdrop reuses the
+  // same URL, so the browser downloads the image only once.
+  const bg = `<img class="figure__bg" src="${href}" alt="" aria-hidden="true" decoding="async">`
+  const img = `<img class="figure__img" src="${href}" alt="${alt}" width="1200" height="675" decoding="async">`
+  const media = `<span class="figure__media">${bg}${img}</span>`
 
   return caption
-    ? `<figure>${img}<figcaption>${caption}</figcaption></figure>`
-    : `<figure>${img}</figure>`
+    ? `<figure>${media}<figcaption>${caption}</figcaption></figure>`
+    : `<figure>${media}</figure>`
 }
 
 /**
