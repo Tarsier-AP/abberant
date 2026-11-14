@@ -21,6 +21,12 @@ export default defineConfig({
         target: 'http://localhost:8090',
         changeOrigin: false,
       },
+      // The media store is served by the backend in dev; nginx takes over
+      // `/media` in production.
+      '/media': {
+        target: 'http://localhost:8090',
+        changeOrigin: false,
+      },
     },
   },
 })
