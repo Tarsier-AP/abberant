@@ -131,7 +131,7 @@ function handleSubmit() {
       </p>
 
       <p v-if="devCode" class="account-activation__dev" role="note">
-        Сервер работает без настроенной почты, код активации: <strong>{{ devCode }}</strong>
+        Почта не настроена (dev-режим), код активации: <strong>{{ devCode }}</strong>
       </p>
 
       <p class="account-activation__note">Код действует 5 минут и может быть использован один раз.</p>
