@@ -4,6 +4,7 @@ package ratings
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -13,6 +14,13 @@ import (
 type Stats struct {
 	Average float64
 	Votes   int
+}
+
+// VoteRecord is one reader vote with its last-change time.
+type VoteRecord struct {
+	ArticleID string
+	Stars     int
+	UpdatedAt time.Time
 }
 
 type Repo struct {
@@ -144,6 +152,35 @@ func (r *Repo) VotesOf(ctx context.Context, userID int64) (map[string]int, error
 	}
 
 	return votes, rows.Err()
+}
+
+// VoteRecords returns the user's votes with their timestamps, newest first.
+func (r *Repo) VoteRecords(ctx context.Context, userID int64, limit int) ([]VoteRecord, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT article_id, stars, updated_at FROM article_votes
+		WHERE user_id = $1
+		ORDER BY updated_at DESC
+		LIMIT $2
+	`, userID, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	list := make([]VoteRecord, 0, limit)
+
+	for rows.Next() {
+		var record VoteRecord
+
+		if err := rows.Scan(&record.ArticleID, &record.Stars, &record.UpdatedAt); err != nil {
+			return nil, err
+		}
+
+		list = append(list, record)
+	}
+
+	return list, rows.Err()
 }
 
 func statsFrom(sum, count int) Stats {

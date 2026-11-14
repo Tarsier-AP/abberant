@@ -132,6 +132,40 @@ func (r *Repo) ByID(ctx context.Context, id string) (*Article, error) {
 	`, id))
 }
 
+// TitlesByIDs returns id → title for every article from the list. Unknown ids
+// are simply missing from the map.
+func (r *Repo) TitlesByIDs(ctx context.Context, ids []string) (map[string]string, error) {
+	if len(ids) == 0 {
+		return map[string]string{}, nil
+	}
+
+	rows, err := r.pool.Query(ctx, `
+		SELECT id, title FROM articles WHERE id = ANY($1)
+	`, ids)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	titles := make(map[string]string, len(ids))
+
+	for rows.Next() {
+		var (
+			id    string
+			title string
+		)
+
+		if err := rows.Scan(&id, &title); err != nil {
+			return nil, err
+		}
+
+		titles[id] = title
+	}
+
+	return titles, rows.Err()
+}
+
 func (r *Repo) Create(ctx context.Context, article *Article) (*Article, error) {
 	return ScanRow(r.pool.QueryRow(ctx, `
 		INSERT INTO articles (id, title, image, date, comments, kind, content, author, status, rating, platform, verdict, section)

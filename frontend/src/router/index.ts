@@ -28,6 +28,12 @@ const router = createRouter({
       component: () => import('@/views/BookmarksView.vue'),
       meta: { title: 'Закладки', requiresAuth: true },
     },
+    {
+      path: '/activity',
+      name: 'activity',
+      component: () => import('@/views/ActivityView.vue'),
+      meta: { title: 'История активности', requiresAuth: true },
+    },
     { path: '/login', name: 'login', component: () => import('@/views/LoginView.vue'), meta: { title: 'Вход' } },
     {
       path: '/2fa',

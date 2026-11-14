@@ -3,6 +3,7 @@ package bookmarks
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -14,6 +15,12 @@ type Repo struct {
 }
 
 func NewRepo(pool *pgxpool.Pool) *Repo { return &Repo{pool: pool} }
+
+// Record is one bookmark with the moment it was saved.
+type Record struct {
+	ArticleID string
+	CreatedAt time.Time
+}
 
 // articleColumns is the article column list qualified for the bookmarks join;
 // created_at exists in both tables, so every column needs the alias.
@@ -74,6 +81,35 @@ func (r *Repo) Articles(ctx context.Context, userID int64) ([]*articles.Article,
 		}
 
 		list = append(list, article)
+	}
+
+	return list, rows.Err()
+}
+
+// Records returns the user's bookmarks with their timestamps, newest first.
+func (r *Repo) Records(ctx context.Context, userID int64, limit int) ([]Record, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT article_id, created_at FROM bookmarks
+		WHERE user_id = $1
+		ORDER BY created_at DESC, article_id
+		LIMIT $2
+	`, userID, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	list := make([]Record, 0, limit)
+
+	for rows.Next() {
+		var record Record
+
+		if err := rows.Scan(&record.ArticleID, &record.CreatedAt); err != nil {
+			return nil, err
+		}
+
+		list = append(list, record)
 	}
 
 	return list, rows.Err()

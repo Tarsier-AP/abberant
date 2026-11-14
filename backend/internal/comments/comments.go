@@ -131,6 +131,34 @@ func (r *Repo) Delete(ctx context.Context, id int64) (bool, error) {
 	return tag.RowsAffected() > 0, nil
 }
 
+// ListByUser returns the newest comments of a user, newest first.
+func (r *Repo) ListByUser(ctx context.Context, userID int64, limit int) ([]*Comment, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT `+commentColumns+commentJoin+`
+		WHERE c.user_id = $1
+		ORDER BY c.created_at DESC, c.id DESC
+		LIMIT $2
+	`, userID, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	list := make([]*Comment, 0, limit)
+
+	for rows.Next() {
+		comment, err := scanComment(rows)
+		if err != nil {
+			return nil, err
+		}
+
+		list = append(list, comment)
+	}
+
+	return list, rows.Err()
+}
+
 // CountsByArticle returns the number of comments for every discussed article.
 func (r *Repo) CountsByArticle(ctx context.Context) (map[string]int, error) {
 	rows, err := r.pool.Query(ctx, `

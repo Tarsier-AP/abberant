@@ -92,6 +92,7 @@ func New(
 	v1.Delete("/subscriptions/:section", server.requireSession, server.handleUnsubscribe)
 	v1.Put("/articles/:id/vote", server.requireSession, server.handleVote)
 	v1.Delete("/articles/:id/vote", server.requireSession, server.handleRemoveVote)
+	v1.Get("/activity", server.requireSession, server.handleActivity)
 	v1.Post("/articles", server.requireSession, server.requireEditor, server.handleCreateArticle)
 	v1.Patch("/articles/:id", server.requireSession, server.requireEditor, server.handleUpdateArticle)
 	v1.Delete("/articles/:id", server.requireSession, server.handleDeleteArticle)

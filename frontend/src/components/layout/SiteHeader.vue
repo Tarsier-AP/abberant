@@ -61,7 +61,13 @@ const links = computed(() => {  const base = [
     { label: 'Помощь', to: '/help' },
   ]
 
-  const user = auth.account ? [...base, { label: 'Закладки', to: '/bookmarks' }] : base
+  const user = auth.account
+    ? [
+        ...base,
+        { label: 'Закладки', to: '/bookmarks' },
+        { label: 'Активность', to: '/activity' },
+      ]
+    : base
 
   return auth.canModerate ? [...user, { label: 'Редактор', to: '/editor/articles' }] : user
 })
