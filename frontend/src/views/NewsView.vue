@@ -5,6 +5,7 @@ import type { ArticleSection } from '@/types/article'
 import HomeSection from '@/components/home/HomeSection.vue'
 import PagePagination from '@/components/ui/PagePagination.vue'
 import LoadState from '@/components/ui/LoadState.vue'
+import SectionSubscribeButton from '@/components/ui/SectionSubscribeButton.vue'
 import { useArticlesStore } from '@/stores/articles'
 
 /** Maximum number of article cards on one news page (3x2 on desktop). */
@@ -100,6 +101,10 @@ watch(
       @retry="store.reload()"
     />
     <template v-else>
+      <div v-if="currentSection" class="news__subscribe">
+        <SectionSubscribeButton :section="currentSection.id" :title="currentSection.title" />
+      </div>
+
       <HomeSection v-for="group in groups" :key="group.id" v-bind="group" show-all />
 
       <PagePagination
@@ -118,5 +123,11 @@ watch(
   flex-direction: column;
   gap: var(--gap);
   padding-block: var(--gap);
+}
+
+.news__subscribe {
+  display: flex;
+  justify-content: flex-end;
+  padding-inline: 6px;
 }
 </style>

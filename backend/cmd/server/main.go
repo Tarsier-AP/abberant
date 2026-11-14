@@ -14,6 +14,7 @@ import (
 	"abberant/backend/internal/config"
 	"abberant/backend/internal/db"
 	"abberant/backend/internal/mailer"
+	"abberant/backend/internal/notifications"
 	"abberant/backend/internal/session"
 )
 
@@ -30,7 +31,15 @@ func main() {
 	sessions := session.NewStore(pool, cfg.SessionTTL, cfg.PendingTTL)
 	service := auth.NewService(pool, sessions, mailer.New(cfg), cfg)
 
-	app := api.New(cfg, service, sessions, articles.NewRepo(pool), comments.NewRepo(pool), bookmarks.NewRepo(pool))
+	app := api.New(
+		cfg,
+		service,
+		sessions,
+		articles.NewRepo(pool),
+		comments.NewRepo(pool),
+		bookmarks.NewRepo(pool),
+		notifications.NewRepo(pool),
+	)
 
 	go func() {
 		log.Printf("listening on %s", cfg.Addr)

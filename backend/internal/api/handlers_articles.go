@@ -48,6 +48,20 @@ func canModerateArticles(user *auth.User) bool {
 	return user != nil && auth.CanModerate(user.Role)
 }
 
+// notifyAboutPublish creates "new material" notifications for section
+// subscribers when a article appears published or a draft goes live.
+func (s *Server) notifyAboutPublish(ctx *fiber.Ctx, article *articles.Article, wasPublished bool) error {
+	if article.Status != articles.StatusPublished || wasPublished || article.Section == "" {
+		return nil
+	}
+
+	user := s.currentUser(ctx)
+
+	_, err := s.notifications.CreateArticleEvents(ctx.Context(), article.Section, article.ID, user.ID)
+
+	return err
+}
+
 func (s *Server) handleListArticles(ctx *fiber.Ctx) error {
 	_, user, err := s.resolve(ctx)
 	if err != nil {
@@ -160,6 +174,10 @@ func (s *Server) handleCreateArticle(ctx *fiber.Ctx) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	if err := s.notifyAboutPublish(ctx, created, false); err != nil {
+		return err
 	}
 
 	return ctx.Status(201).JSON(fiber.Map{"article": newArticleResponse(created)})
@@ -275,6 +293,8 @@ func (s *Server) handleUpdateArticle(ctx *fiber.Ctx) error {
 		return auth.Fail(404, "Статья не найдена.")
 	}
 
+	wasPublished := existing.Status == articles.StatusPublished
+
 	var req updateArticleRequest
 
 	if err := decode(ctx, &req); err != nil {
@@ -375,6 +395,10 @@ func (s *Server) handleUpdateArticle(ctx *fiber.Ctx) error {
 
 	updated, err := s.articles.Update(ctx.Context(), existing)
 	if err != nil {
+		return err
+	}
+
+	if err := s.notifyAboutPublish(ctx, updated, wasPublished); err != nil {
 		return err
 	}
 

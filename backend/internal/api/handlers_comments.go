@@ -121,6 +121,8 @@ func (s *Server) handleCreateComment(ctx *fiber.Ctx) error {
 
 	var parentID *int64
 
+	var replyTo *comments.Comment
+
 	if req.ParentID != nil {
 		parent, err := s.comments.ByID(ctx.Context(), *req.ParentID)
 		if err != nil {
@@ -136,12 +138,20 @@ func (s *Server) handleCreateComment(ctx *fiber.Ctx) error {
 
 		default:
 			parentID = &parent.ID
+			replyTo = parent
 		}
 	}
 
 	created, err := s.comments.Create(ctx.Context(), article.ID, user.ID, parentID, body)
 	if err != nil {
 		return err
+	}
+
+	// A reply is worth a notification unless the author answers themselves.
+	if replyTo != nil && replyTo.UserID != user.ID {
+		if err := s.notifications.CreateReply(ctx.Context(), replyTo.UserID, user.ID, article.ID, created.ID); err != nil {
+			return err
+		}
 	}
 
 	return ctx.Status(201).JSON(fiber.Map{"comment": newCommentResponse(created)})

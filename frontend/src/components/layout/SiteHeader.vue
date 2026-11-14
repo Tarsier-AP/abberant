@@ -1,14 +1,19 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import ThemeIcon from '@/components/ui/ThemeIcon.vue'
+import NotificationsBell from '@/components/layout/NotificationsBell.vue'
+import NotificationsPanel from '@/components/layout/NotificationsPanel.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useNotificationsStore } from '@/stores/notifications'
 
 type Theme = 'light' | 'dark'
 
 const THEME_KEY = 'abberant-theme'
 
 const menuOpen = ref(false)
+const mobileBellOpen = ref(false)
 const auth = useAuthStore()
+const notifications = useNotificationsStore()
 
 function readStoredTheme(): Theme | null {
   try {
@@ -44,8 +49,12 @@ onMounted(() => {
   document.documentElement.dataset.theme = theme.value
 })
 
-const links = computed(() => {
-  const base = [
+// Closing the burger menu hides the inline bell panel with it.
+watch(menuOpen, (open) => {
+  if (!open) mobileBellOpen.value = false
+})
+
+const links = computed(() => {  const base = [
     { label: 'Новости', to: '/news' },
     { label: 'Обзоры', to: '/reviews' },
     { label: 'Прохождения', to: '/walkthroughs' },
@@ -93,6 +102,8 @@ const links = computed(() => {
         >
           <ThemeIcon />
         </button>
+
+        <NotificationsBell v-if="auth.account" class="bell-slot" />
 
         <RouterLink
           class="icon-btn account"
@@ -163,6 +174,30 @@ const links = computed(() => {
             <ThemeIcon />
           </button>
 
+          <button
+            v-if="auth.account"
+            class="mobile-menu__action"
+            type="button"
+            :aria-expanded="mobileBellOpen"
+            :aria-label="notifications.unread > 0 ? `Уведомления: ${notifications.unread}` : 'Уведомления'"
+            @click="mobileBellOpen = !mobileBellOpen"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M6 16v-5a6 6 0 1 1 12 0v5l1.5 2.5h-15L6 16Z"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M10 21a2.4 2.4 0 0 0 4 0"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
+
           <RouterLink
             class="mobile-menu__action"
             :to="{ name: auth.account?.activated ? 'account-settings' : 'login' }"
@@ -179,6 +214,14 @@ const links = computed(() => {
               />
             </svg>
           </RouterLink>
+        </div>
+
+        <div
+          v-if="mobileBellOpen"
+          class="mobile-menu__notifications"
+          @click="menuOpen = false"
+        >
+          <NotificationsPanel heading="Уведомления" />
         </div>
       </div>
     </nav>
@@ -344,9 +387,20 @@ const links = computed(() => {
 }
 
 .mobile-menu__actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
   gap: 8px;
+}
+
+.mobile-menu__actions > * {
+  flex: 1;
+  min-width: 0;
+}
+
+.mobile-menu__notifications {
+  padding: 12px;
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
 }
 
 .mobile-menu__action {
@@ -387,6 +441,7 @@ const links = computed(() => {
   .nav,
   .search,
   .theme-toggle,
+  .bell-slot,
   .account {
     display: none;
   }

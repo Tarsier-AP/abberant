@@ -12,20 +12,30 @@ import (
 	"abberant/backend/internal/bookmarks"
 	"abberant/backend/internal/comments"
 	"abberant/backend/internal/config"
+	"abberant/backend/internal/notifications"
 	"abberant/backend/internal/session"
 )
 
 type Server struct {
-	cfg       config.Config
-	auth      *auth.Service
-	store     *session.Store
-	articles  *articles.Repo
-	comments  *comments.Repo
-	bookmarks *bookmarks.Repo
-	app       *fiber.App
+	cfg           config.Config
+	auth          *auth.Service
+	store         *session.Store
+	articles      *articles.Repo
+	comments      *comments.Repo
+	bookmarks     *bookmarks.Repo
+	notifications *notifications.Repo
+	app           *fiber.App
 }
 
-func New(cfg config.Config, service *auth.Service, store *session.Store, articlesRepo *articles.Repo, commentsRepo *comments.Repo, bookmarksRepo *bookmarks.Repo) *fiber.App {
+func New(
+	cfg config.Config,
+	service *auth.Service,
+	store *session.Store,
+	articlesRepo *articles.Repo,
+	commentsRepo *comments.Repo,
+	bookmarksRepo *bookmarks.Repo,
+	notificationsRepo *notifications.Repo,
+) *fiber.App {
 	app := fiber.New(fiber.Config{
 		ErrorHandler:          errorHandler,
 		DisableStartupMessage: false,
@@ -35,7 +45,15 @@ func New(cfg config.Config, service *auth.Service, store *session.Store, article
 		Format: "${status} ${method} ${path}\n",
 	}))
 
-	server := &Server{cfg: cfg, auth: service, store: store, articles: articlesRepo, comments: commentsRepo, bookmarks: bookmarksRepo}
+	server := &Server{
+		cfg:           cfg,
+		auth:          service,
+		store:         store,
+		articles:      articlesRepo,
+		comments:      commentsRepo,
+		bookmarks:     bookmarksRepo,
+		notifications: notificationsRepo,
+	}
 
 	v1 := app.Group("/api/v1")
 
@@ -62,6 +80,12 @@ func New(cfg config.Config, service *auth.Service, store *session.Store, article
 	v1.Get("/bookmarks/ids", server.requireSession, server.handleListBookmarkIDs)
 	v1.Put("/bookmarks/:articleId", server.requireSession, server.handleAddBookmark)
 	v1.Delete("/bookmarks/:articleId", server.requireSession, server.handleRemoveBookmark)
+	v1.Get("/notifications", server.requireSession, server.handleListNotifications)
+	v1.Get("/notifications/unread-count", server.requireSession, server.handleUnreadCount)
+	v1.Post("/notifications/read", server.requireSession, server.handleMarkAllRead)
+	v1.Get("/subscriptions", server.requireSession, server.handleListSubscriptions)
+	v1.Put("/subscriptions/:section", server.requireSession, server.handleSubscribe)
+	v1.Delete("/subscriptions/:section", server.requireSession, server.handleUnsubscribe)
 	v1.Post("/articles", server.requireSession, server.requireEditor, server.handleCreateArticle)
 	v1.Patch("/articles/:id", server.requireSession, server.requireEditor, server.handleUpdateArticle)
 	v1.Delete("/articles/:id", server.requireSession, server.handleDeleteArticle)
