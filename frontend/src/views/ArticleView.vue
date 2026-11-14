@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ReviewStars from '@/components/article/ReviewStars.vue'
 import ReaderStars from '@/components/article/ReaderStars.vue'
+import GradeBadge from '@/components/article/GradeBadge.vue'
 import CommentSection from '@/components/article/CommentSection.vue'
 import ShareButton from '@/components/ui/ShareButton.vue'
 import BookmarkButton from '@/components/ui/BookmarkButton.vue'
@@ -85,8 +86,17 @@ watch(
   <div v-if="article && canView" class="article container">
     <article class="article__card">
       <header class="article__header">
-        <span class="article__kind">{{ store.articleKindLabel(article.kind) }}</span>
-        <span v-if="article.status === 'draft'" class="article__badge">Черновик</span>
+        <div class="article__top">
+          <span class="article__kind">{{ store.articleKindLabel(article.kind) }}</span>
+          <span v-if="article.status === 'draft'" class="article__badge">Черновик</span>
+
+          <GradeBadge
+            v-if="article.readerRating && article.readerRating.votes > 0"
+            class="article__grade"
+            large
+            :average="article.readerRating.average"
+          />
+        </div>
 
         <h1 class="article__title">{{ article.title }}</h1>
 
@@ -173,6 +183,12 @@ watch(
   box-shadow: var(--shadow);
 }
 
+.article__top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .article__kind {
   align-self: flex-start;
   padding: 4px 10px;
@@ -191,6 +207,10 @@ watch(
   border-radius: var(--radius);
   font: 500 11px/14px Roboto, sans-serif;
   text-transform: uppercase;
+}
+
+.article__grade {
+  margin-left: auto;
 }
 
 .article__title {

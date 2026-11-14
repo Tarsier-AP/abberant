@@ -6,6 +6,7 @@ import CommentCount from '@/components/ui/CommentCount.vue'
 import ShareButton from '@/components/ui/ShareButton.vue'
 import BookmarkButton from '@/components/ui/BookmarkButton.vue'
 import ReviewStars from '@/components/article/ReviewStars.vue'
+import GradeBadge from '@/components/article/GradeBadge.vue'
 
 const props = defineProps<{ article: Article }>()
 
@@ -22,6 +23,11 @@ const shareUrl = computed(() => new URL(props.article.url, window.location.origi
       aria-hidden="true"
     >
       <img :src="article.image" :alt="article.title" loading="lazy" />
+      <GradeBadge
+        v-if="article.readerRating && article.readerRating.votes > 0"
+        class="card__grade"
+        :average="article.readerRating.average"
+      />
     </RouterLink>
 
     <h3 class="card__title">
@@ -53,11 +59,23 @@ const shareUrl = computed(() => new URL(props.article.url, window.location.origi
   border-radius: var(--radius);
 }
 
+.card__media {
+  position: relative;
+  display: block;
+}
+
 .card__media img {
   width: 100%;
   aspect-ratio: 330 / 208;
   object-fit: cover;
   border-radius: var(--radius);
+}
+
+.card__grade {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  box-shadow: var(--shadow);
 }
 
 .card__title {

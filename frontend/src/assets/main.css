@@ -14,6 +14,9 @@
   --color-accent-text: #ffffff;
   --color-danger: #d32f2f;
   --color-warning: #a15c00;
+  --color-grade-high: #2e7d32;
+  --color-grade-mid: #31adda;
+  --color-grade-low: #d32f2f;
   --color-input-border: rgb(0 0 0 / 50%);
   --color-auth-input: #ffffff;
   --color-auth-link: #3751b7;
@@ -45,6 +48,9 @@
   --color-accent-text: #ffffff;
   --color-danger: #ff8080;
   --color-warning: #ffb74d;
+  --color-grade-high: #4caf50;
+  --color-grade-mid: #31adda;
+  --color-grade-low: #e57373;
   --color-input-border: rgb(255 255 255 / 50%);
   --color-auth-input: #454545;
   --color-auth-link: #8ab4ff;
@@ -71,6 +77,9 @@
     --color-accent-text: #ffffff;
     --color-danger: #ff8080;
     --color-warning: #ffb74d;
+    --color-grade-high: #4caf50;
+    --color-grade-mid: #31adda;
+    --color-grade-low: #e57373;
     --color-input-border: rgb(255 255 255 / 50%);
     --color-auth-input: #454545;
     --color-auth-link: #8ab4ff;
