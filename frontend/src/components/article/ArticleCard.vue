@@ -89,6 +89,7 @@ const shareUrl = computed(() => new URL(props.article.url, window.location.origi
 
 .card__meta {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   padding: 10px;

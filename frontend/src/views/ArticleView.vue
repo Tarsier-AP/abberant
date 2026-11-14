@@ -205,6 +205,7 @@ watch(
 
 .article__meta {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
 }
@@ -243,6 +244,7 @@ watch(
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
+  max-width: 100%;
   width: fit-content;
   padding: 8px 12px;
   background: var(--color-surface);
