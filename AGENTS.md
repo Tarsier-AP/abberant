@@ -41,10 +41,13 @@ Backend (run from `backend/`):
 go build ./...
 go run ./cmd/server          # starts embedded PostgreSQL on :55432 + API on :8090
 ABBERANT_ADDR=":18080" go run ./cmd/server   # when :8090 is taken on this machine
+go test ./internal/media/ ./internal/webp/   # image pipeline tests
 ```
 
 - Dev proxy: `vite.config.ts` forwards `/api` → `http://localhost:8090`.
 - Without SMTP configured the backend logs every code and returns it to the client as `devCode` (dev mode).
+- The only Go tests in the repo are the image-pipeline ones above; there is no frontend test runner, test script, or test directory. Do not invent a test command; add Vitest only if tests are requested.
+- Linux backend builds need cgo: the media encoder links the libwebp **runtime** only (`libwebp.so.7`, no dev headers — `internal/webp/encode_cgo.go` declares the few C entry points inline). On Linux `CGO_ENABLED=0 go build` fails by design; Windows builds are pure Go (`GOOS=windows GOARCH=amd64 CGO_ENABLED=0`).
 
 - Both `dev` and `build` currently need `NAPI_RS_FORCE_WASI=true` on this machine because the native Rolldown binding crashes; the README only documents this for `dev`.
 - `build` runs `type-check` and `vite build` in parallel via `npm-run-all2`.
@@ -66,6 +69,16 @@ ABBERANT_ADDR=":18080" go run ./cmd/server   # when :8090 is taken on this machi
 - Dates are ISO strings displayed as `dd.mm.yyyy` via `src/utils/date.ts`.
 - `src/stores/counter.ts` is unused Vue template scaffolding; do not use it as a state-management pattern to copy.
 
+### Media storage (uploaded images)
+
+- Covers, article body images and avatars are stored on disk (`ABBERANT_MEDIA_DIR`, default `backend/.data/media`) under `backend/internal/media`: the original bytes **verbatim**, never re-encoded, plus resized variants at fixed widths **320/480/828/1200** (q80; avatars center-cropped to 160×160).
+- Files live in content-hash dirs (`/media/{hash}/{file}`, SHA-256 of the upload), so identical bytes reuse the same directory and URLs are immutable — `Cache-Control: public, max-age=31536000, immutable` is always safe.
+- Variant format is platform-dependent: **WebP on Linux** (cgo libwebp), **PNG elsewhere** (Windows builds stay cgo-free). The extension lives in `webp.Extension`; never hard-code `.webp` in new code.
+- Uploads go through `POST /api/v1/media` (multipart, raw file ≤10 MB, `kind=cover|body|avatar`): covers/body → editors only, avatars → any session. It returns `{url, srcset, width, height}`. Legacy `data:image/...;base64` inputs still validate everywhere for backward compatibility.
+- A startup migration (`media.MigrateDataURLs`, idempotent) converts legacy raster data URLs in article covers, markdown content and avatars to `/media/...` URLs; SVG data URLs (seeded example accounts) are left alone. A daily GC sweep deletes hash dirs no longer referenced by articles/users (1-hour grace period).
+- Frontend: `src/api/media.ts` has `uploadImage()` (multipart) and `buildSrcset()` — it derives the extension from the URL, matching whatever the backend produced. Cards render `srcset`/`sizes` (`src/utils/image.ts`, `CARD_SIZES`) plus `decoding="async"`; keep that on new `<img>` surfaces.
+- nginx serves `/media/` from the media dir with immutable caching in both Linux and Windows configs; the API body limit is 12m for multipart uploads.
+
 ### Account and auth pages
 
 - Auth is backed by the Go API (`src/api/client.ts`, `src/api/auth.ts`); the session lives in an HttpOnly cookie, `src/stores/auth.ts` holds only the loaded account and pending registration state. `useAuthStore().init()` runs before app mount (`src/main.ts`).
@@ -76,7 +89,7 @@ ABBERANT_ADDR=":18080" go run ./cmd/server   # when :8090 is taken on this machi
 - `.account-settings__card` is a transparent layout wrapper: `max-width: 800px`, `padding: 8px`, `gap: 10px`, `border-radius` only — **no `background` and no `box-shadow`**. Do not restore them; surfaces belong to the inner blocks.
 - Visual surfaces: `.account-settings__section` uses `--color-surface` + `--shadow`; `.account-settings__row`, `.account-settings__profile` and `.account-settings__email-form` use `--color-card` + `--shadow`.
 - Section order: «Личная информация» (avatar, phone, additional email, email), «Безопасность» (2FA switch + method, enrollment, sessions), «Уведомления» (email, SMS). The old debug role switch is gone — roles come from the server.
-- The avatar is a 72px circle with a hover/focus overlay «Изменить»; uploads are cropped to 160×160 WebP and stored as a data URL through `PATCH /me`.
+- The avatar is a 72px circle with a hover/focus overlay «Изменить»; uploads go to the media store via `POST /api/v1/media` (`kind=avatar`, server-side 160×160 crop) and `PATCH /me` stores the resulting `/media/...` URL.
 
 ### Grid system
 
