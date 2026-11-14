@@ -86,17 +86,8 @@ watch(
   <div v-if="article && canView" class="article container">
     <article class="article__card">
       <header class="article__header">
-        <div class="article__top">
-          <span class="article__kind">{{ store.articleKindLabel(article.kind) }}</span>
-          <span v-if="article.status === 'draft'" class="article__badge">Черновик</span>
-
-          <GradeBadge
-            v-if="article.readerRating && article.readerRating.votes > 0"
-            class="article__grade"
-            large
-            :average="article.readerRating.average"
-          />
-        </div>
+        <span class="article__kind">{{ store.articleKindLabel(article.kind) }}</span>
+        <span v-if="article.status === 'draft'" class="article__badge">Черновик</span>
 
         <h1 class="article__title">{{ article.title }}</h1>
 
@@ -134,6 +125,13 @@ watch(
         @click="openZoom"
       ></div>
       <p v-else class="article__placeholder">Текст статьи скоро появится.</p>
+
+      <GradeBadge
+        v-if="article.readerRating && article.readerRating.votes > 0"
+        class="article__grade"
+        large
+        :average="article.readerRating.average"
+      />
 
       <CommentSection
         v-if="article.status === 'published'"
@@ -183,12 +181,6 @@ watch(
   box-shadow: var(--shadow);
 }
 
-.article__top {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .article__kind {
   align-self: flex-start;
   padding: 4px 10px;
@@ -210,7 +202,7 @@ watch(
 }
 
 .article__grade {
-  margin-left: auto;
+  align-self: flex-start;
 }
 
 .article__title {
