@@ -36,20 +36,17 @@ func (m *smtpMailer) Send(to, subject, body string) error {
 
 	auth := smtp.PlainAuth("", m.cfg.SMTPUser, m.cfg.SMTPPass, m.cfg.SMTPHost)
 
-	conn, err := net.DialTimeout("tcp", addr, 10*time.Second)
+	client, err := dialSMTP(addr, m.cfg.SMTPPort, m.cfg.SMTPHost)
 	if err != nil {
-		return fmt.Errorf("dial smtp: %w", err)
-	}
-
-	client, err := smtp.NewClient(conn, m.cfg.SMTPHost)
-	if err != nil {
-		return fmt.Errorf("smtp handshake: %w", err)
+		return err
 	}
 
 	defer client.Close()
 
-	if err := m.startTLS(client); err != nil {
-		return err
+	if m.cfg.SMTPPort != implicitTLSPort {
+		if err := m.startTLS(client); err != nil {
+			return err
+		}
 	}
 
 	if err := client.Auth(auth); err != nil {
@@ -78,6 +75,40 @@ func (m *smtpMailer) Send(to, subject, body string) error {
 	}
 
 	return client.Quit()
+}
+
+const implicitTLSPort = "465"
+
+// dialSMTP connects to the server. Port 465 speaks implicit TLS from the
+// first byte, so it needs a TLS handshake instead of STARTTLS.
+func dialSMTP(addr, port, host string) (*smtp.Client, error) {
+	if port != implicitTLSPort {
+		conn, err := net.DialTimeout("tcp", addr, 10*time.Second)
+		if err != nil {
+			return nil, fmt.Errorf("dial smtp: %w", err)
+		}
+
+		client, err := smtp.NewClient(conn, host)
+		if err != nil {
+			conn.Close()
+			return nil, fmt.Errorf("smtp handshake: %w", err)
+		}
+
+		return client, nil
+	}
+
+	conn, err := tls.Dial("tcp", addr, &tls.Config{ServerName: host})
+	if err != nil {
+		return nil, fmt.Errorf("dial smtp over TLS: %w", err)
+	}
+
+	client, err := smtp.NewClient(conn, host)
+	if err != nil {
+		conn.Close()
+		return nil, fmt.Errorf("smtp handshake: %w", err)
+	}
+
+	return client, nil
 }
 
 func (m *smtpMailer) startTLS(client *smtp.Client) error {

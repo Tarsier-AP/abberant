@@ -1,8 +1,10 @@
 package config
 
 import (
+	"bufio"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -57,7 +59,44 @@ func envInt(key string, fallback int) int {
 	return value
 }
 
+// loadDotEnv reads KEY=value lines from the given file and sets any
+// variables that are not already present in the process environment, so
+// real environment variables always win over the file.
+func loadDotEnv(path string) {
+	file, err := os.Open(path)
+	if err != nil {
+		return
+	}
+
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		key, value, ok := strings.Cut(line, "=")
+		if !ok {
+			continue
+		}
+
+		key = strings.TrimSpace(key)
+		value = strings.Trim(strings.TrimSpace(value), `"'`)
+		if key == "" {
+			continue
+		}
+
+		if _, exists := os.LookupEnv(key); !exists {
+			os.Setenv(key, value)
+		}
+	}
+}
+
 func Load() Config {
+	loadDotEnv(".env")
+
 	return Config{
 		Addr:         env("ABBERANT_ADDR", ":8090"),
 		DSN:          env("ABBERANT_DATABASE_DSN", ""),
