@@ -56,7 +56,9 @@ type Repo struct {
 
 func NewRepo(pool *pgxpool.Pool) *Repo { return &Repo{pool: pool} }
 
-func scanArticle(row pgx.Row) (*Article, error) {
+// ScanRow builds an article from a database row. It is exported so other
+// packages can join the articles table with their own column alias.
+func ScanRow(row pgx.Row) (*Article, error) {
 	var (
 		article  Article
 		rating   *int
@@ -113,7 +115,7 @@ func (r *Repo) All(ctx context.Context) ([]*Article, error) {
 	list := make([]*Article, 0, 64)
 
 	for rows.Next() {
-		article, err := scanArticle(rows)
+		article, err := ScanRow(rows)
 		if err != nil {
 			return nil, err
 		}
@@ -125,13 +127,13 @@ func (r *Repo) All(ctx context.Context) ([]*Article, error) {
 }
 
 func (r *Repo) ByID(ctx context.Context, id string) (*Article, error) {
-	return scanArticle(r.pool.QueryRow(ctx, `
+	return ScanRow(r.pool.QueryRow(ctx, `
 		SELECT `+articleColumns+` FROM articles WHERE id = $1
 	`, id))
 }
 
 func (r *Repo) Create(ctx context.Context, article *Article) (*Article, error) {
-	return scanArticle(r.pool.QueryRow(ctx, `
+	return ScanRow(r.pool.QueryRow(ctx, `
 		INSERT INTO articles (id, title, image, date, comments, kind, content, author, status, rating, platform, verdict, section)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 		RETURNING `+articleColumns,
@@ -143,7 +145,7 @@ func (r *Repo) Create(ctx context.Context, article *Article) (*Article, error) {
 
 // Update rewrites every editable column of the article.
 func (r *Repo) Update(ctx context.Context, article *Article) (*Article, error) {
-	return scanArticle(r.pool.QueryRow(ctx, `
+	return ScanRow(r.pool.QueryRow(ctx, `
 		UPDATE articles
 		SET title = $2, image = $3, date = $4, comments = $5, kind = $6, content = $7,
 		    author = $8, status = $9, rating = $10, platform = $11, verdict = $12, section = $13

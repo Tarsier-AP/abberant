@@ -12,7 +12,7 @@ export class ApiError extends Error {
 const BASE_URL = '/api/v1'
 
 interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE'
+  method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE'
   body?: unknown
 }
 

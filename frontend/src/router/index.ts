@@ -22,6 +22,12 @@ const router = createRouter({
       component: () => import('@/views/HelpView.vue'),
       meta: { title: 'Помощь по сайту' },
     },
+    {
+      path: '/bookmarks',
+      name: 'bookmarks',
+      component: () => import('@/views/BookmarksView.vue'),
+      meta: { title: 'Закладки', requiresAuth: true },
+    },
     { path: '/login', name: 'login', component: () => import('@/views/LoginView.vue'), meta: { title: 'Вход' } },
     {
       path: '/2fa',
@@ -108,6 +114,22 @@ const router = createRouter({
 
     return { top: 0 }
   },
+})
+
+/**
+ * Authenticated pages send guests to the login form; the session is restored
+ * first on hard navigation straight to such a route.
+ */
+router.beforeEach(async (to) => {
+  if (!to.meta.requiresAuth) return true
+
+  const auth = useAuthStore()
+
+  if (!auth.initialized) await auth.init()
+
+  if (!auth.account) return { name: 'login' }
+
+  return true
 })
 
 /** Only editors, owners and moderators may open the article editor. */

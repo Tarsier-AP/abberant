@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import ReviewStars from '@/components/article/ReviewStars.vue'
 import CommentSection from '@/components/article/CommentSection.vue'
 import ShareButton from '@/components/ui/ShareButton.vue'
+import BookmarkButton from '@/components/ui/BookmarkButton.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useArticlesStore } from '@/stores/articles'
@@ -104,6 +105,7 @@ watch(
             Редактировать
           </RouterLink>
           <ShareButton :url="shareUrl" label="Поделиться статьёй" />
+          <BookmarkButton :article-id="article.id" />
         </div>
       </header>
 

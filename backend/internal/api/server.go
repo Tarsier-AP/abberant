@@ -9,21 +9,23 @@ import (
 
 	"abberant/backend/internal/articles"
 	"abberant/backend/internal/auth"
+	"abberant/backend/internal/bookmarks"
 	"abberant/backend/internal/comments"
 	"abberant/backend/internal/config"
 	"abberant/backend/internal/session"
 )
 
 type Server struct {
-	cfg      config.Config
-	auth     *auth.Service
-	store    *session.Store
-	articles *articles.Repo
-	comments *comments.Repo
-	app      *fiber.App
+	cfg       config.Config
+	auth      *auth.Service
+	store     *session.Store
+	articles  *articles.Repo
+	comments  *comments.Repo
+	bookmarks *bookmarks.Repo
+	app       *fiber.App
 }
 
-func New(cfg config.Config, service *auth.Service, store *session.Store, articlesRepo *articles.Repo, commentsRepo *comments.Repo) *fiber.App {
+func New(cfg config.Config, service *auth.Service, store *session.Store, articlesRepo *articles.Repo, commentsRepo *comments.Repo, bookmarksRepo *bookmarks.Repo) *fiber.App {
 	app := fiber.New(fiber.Config{
 		ErrorHandler:          errorHandler,
 		DisableStartupMessage: false,
@@ -33,7 +35,7 @@ func New(cfg config.Config, service *auth.Service, store *session.Store, article
 		Format: "${status} ${method} ${path}\n",
 	}))
 
-	server := &Server{cfg: cfg, auth: service, store: store, articles: articlesRepo, comments: commentsRepo}
+	server := &Server{cfg: cfg, auth: service, store: store, articles: articlesRepo, comments: commentsRepo, bookmarks: bookmarksRepo}
 
 	v1 := app.Group("/api/v1")
 
@@ -56,6 +58,10 @@ func New(cfg config.Config, service *auth.Service, store *session.Store, article
 	v1.Get("/articles/:id/comments", server.handleListComments)
 	v1.Post("/articles/:id/comments", server.requireSession, server.handleCreateComment)
 	v1.Delete("/comments/:id", server.requireSession, server.handleDeleteComment)
+	v1.Get("/bookmarks", server.requireSession, server.handleListBookmarks)
+	v1.Get("/bookmarks/ids", server.requireSession, server.handleListBookmarkIDs)
+	v1.Put("/bookmarks/:articleId", server.requireSession, server.handleAddBookmark)
+	v1.Delete("/bookmarks/:articleId", server.requireSession, server.handleRemoveBookmark)
 	v1.Post("/articles", server.requireSession, server.requireEditor, server.handleCreateArticle)
 	v1.Patch("/articles/:id", server.requireSession, server.requireEditor, server.handleUpdateArticle)
 	v1.Delete("/articles/:id", server.requireSession, server.handleDeleteArticle)

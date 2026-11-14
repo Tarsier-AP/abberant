@@ -19,6 +19,7 @@ import App from './App.vue'
 import router from './router'
 import { useAuthStore } from '@/stores/auth'
 import { useArticlesStore } from '@/stores/articles'
+import { useBookmarksStore } from '@/stores/bookmarks'
 import { migrateLocalArticles } from '@/utils/migrateLocalArticles'
 
 const app = createApp(App)
@@ -36,6 +37,9 @@ const articles = useArticlesStore(pinia)
 
 Promise.all([auth.init(), articles.init()])
   .then(() => {
+    // Instantiating the store registers its login/logout watcher and restores
+    // the bookmark id set for the current session.
+    void useBookmarksStore(pinia).init()
     void migrateLocalArticles()
   })
   .finally(() => {

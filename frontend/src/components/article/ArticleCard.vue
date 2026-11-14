@@ -4,6 +4,7 @@ import type { Article } from '@/types/article'
 import { formatDate } from '@/utils/date'
 import CommentCount from '@/components/ui/CommentCount.vue'
 import ShareButton from '@/components/ui/ShareButton.vue'
+import BookmarkButton from '@/components/ui/BookmarkButton.vue'
 import ReviewStars from '@/components/article/ReviewStars.vue'
 
 const props = defineProps<{ article: Article }>()
@@ -36,6 +37,7 @@ const shareUrl = computed(() => new URL(props.article.url, window.location.origi
         class="card__rating"
       />
       <CommentCount :count="article.comments" :url="article.url" />
+      <BookmarkButton :article-id="article.id" />
       <ShareButton :url="shareUrl" label="Поделиться статьёй" />
     </div>
   </article>
